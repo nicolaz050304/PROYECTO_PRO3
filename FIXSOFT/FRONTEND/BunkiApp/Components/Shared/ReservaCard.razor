@@ -1,0 +1,88 @@
+@* Components/Shared/ReservaCard.razor *@
+@inject NavigationManager Navigation
+
+<div class="card mb-20">
+    <div class="reserva-grid">
+        <div class="reserva-placeholder" style="background: linear-gradient(135deg, #FF6B6B, #FFB3B3);"></div>
+
+        <div>
+            <h3 style="margin-bottom: 10px;">@Reserva.AlojamientoNombre</h3>
+            <p class="card-text"><i class="fas fa-calendar"></i> @Reserva.FechasTexto</p>
+            <p class="card-text"><i class="fas fa-users"></i> @Reserva.NumHuespedes huéspedes</p>
+            <p class="card-text"><i class="fas fa-map-marker-alt"></i> @Reserva.Ubicacion</p>
+            <div style="margin-top: 10px;">
+                <span class="badge @Reserva.EstadoBadgeClass">@Reserva.Estado</span>
+            </div>
+        </div>
+
+        <div class="text-right">
+            <p style="font-size: 20px; font-weight: bold; color: var(--primary); margin-bottom: 15px;">
+                S/ @Reserva.Total.ToString("N0")
+            </p>
+
+            @if (Reserva.Estado == "Pendiente")
+            {
+                <button class="btn btn-small btn-primary btn-block" @onclick="() => OnPagarReserva.InvokeAsync(Reserva)">
+                    Pagar Ahora
+                </button>
+                <button class="btn btn-small btn-outline btn-block" @onclick="OnCancelar">
+                    Cancelar
+                </button>
+            }
+            else if (Reserva.Estado == "Completada")
+            {
+                <button class="btn btn-small btn-secondary btn-block" @onclick='() => Navigation.NavigateTo($"/alojamiento/1")'>
+                    Ver Detalles
+                </button>
+                <button class="btn btn-small btn-outline btn-block" @onclick="OnDejarResena">
+                    Dejar Reseña
+                </button>
+            }
+            else
+            {
+                <button class="btn btn-small btn-secondary btn-block" @onclick='() => Navigation.NavigateTo($"/alojamiento/1")'>
+                    Ver Detalles
+                </button>
+                <button class="btn btn-small btn-outline btn-block" @onclick='() => Navigation.NavigateTo("/mensajes")'>
+                    Contactar
+                </button>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .reserva-grid {
+        display: grid;
+        grid-template-columns: 180px 1fr 160px;
+        gap: 20px;
+        padding: 20px;
+        align-items: center;
+    }
+
+    .reserva-placeholder {
+        width: 100%;
+        height: 130px;
+        border-radius: 8px;
+    }
+
+    @@media (max-width: 700px) {
+        .reserva-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .reserva-placeholder {
+            height: 160px;
+        }
+    }
+</style>
+
+@code {
+    [Parameter] public EventCallback<Reserva> OnPagarReserva { get; set; }
+    [Parameter, EditorRequired] public Reserva Reserva { get; set; } = default!;
+    [Parameter] public EventCallback<Reserva> OnCancelarReserva { get; set; }
+    [Parameter] public EventCallback<Reserva> OnDejarResenaCallback { get; set; }
+
+    private async Task OnCancelar() => await OnCancelarReserva.InvokeAsync(Reserva);
+    private async Task OnDejarResena() => await OnDejarResenaCallback.InvokeAsync(Reserva);
+}

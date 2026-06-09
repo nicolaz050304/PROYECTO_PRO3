@@ -1,0 +1,40 @@
+@* Components/Shared/AlertMessage.razor *@
+
+@if (Visible)
+{
+    <div class="alert alert-@Tipo" role="alert">
+        <i class="fas @IconoClase"></i>
+        <span>@Mensaje</span>
+        @if (Cerrable)
+        {
+            <button style="margin-left: auto; background: none; border: none; cursor: pointer; font-size: 16px;" @onclick="Cerrar">
+                <i class="fas fa-times"></i>
+            </button>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string Tipo { get; set; } = "success"; // success | warning | danger
+    [Parameter] public string Mensaje { get; set; } = "";
+    [Parameter] public bool Cerrable { get; set; } = true;
+
+    private bool Visible = true;
+
+    private string IconoClase => Tipo switch
+    {
+        "success" => "fa-check-circle",
+        "warning" => "fa-exclamation-circle",
+        "danger" => "fa-times-circle",
+        _ => "fa-info-circle"
+    };
+
+    public void Mostrar(string mensaje)
+    {
+        Mensaje = mensaje;
+        Visible = true;
+        StateHasChanged();
+    }
+
+    private void Cerrar() => Visible = false;
+}

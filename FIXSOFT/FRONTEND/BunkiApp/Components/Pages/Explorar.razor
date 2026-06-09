@@ -1,0 +1,1129 @@
+@page "/explorar"
+@page "/buscar"
+@rendermode InteractiveServer
+@inject DataService Data
+@inject MapInterop MapInterop
+@inject NavigationManager NavigationManager
+@implements IAsyncDisposable
+
+<PageTitle>Bunki - Buscar Alojamientos</PageTitle>
+
+<style>
+    .explorar-root {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 60px);
+        overflow: hidden;
+    }
+    
+    header, .top-row, nav {
+        z-index: 3000 !important;
+        position: relative;
+    }
+
+    /* ══ BARRA SUPERIOR ══ */
+    .search-topbar {
+        background: var(--bg-surface, #1a1a1a);
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        padding: 12px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center; /* ✨ Esto centra el ancla */
+        gap: 12px;
+        z-index: 2000; /* ✨ Esto evita que el mapa lo tape */
+        flex-shrink: 0;
+        position: relative;
+    }
+
+    .search-pill {
+        display: flex;
+        align-items: center;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 40px;
+        overflow: visible;
+        flex: 1;
+        max-width: 680px;
+        margin: 0 auto;
+        position: relative;
+    }
+
+    .search-pill-segment {
+        display: flex;
+        flex-direction: column;
+        padding: 8px 18px;
+        cursor: pointer;
+        border-radius: 40px;
+        transition: background .15s;
+        flex: 1;
+        min-width: 0;
+        user-select: none;
+    }
+
+        .search-pill-segment:hover,
+        .search-pill-segment.open {
+            background: rgba(255,255,255,0.08);
+        }
+
+        .search-pill-segment.open {
+            outline: 2px solid rgba(255,255,255,0.25);
+        }
+
+    .search-pill-divider {
+        width: 1px;
+        height: 28px;
+        background: rgba(255,255,255,0.12);
+        flex-shrink: 0;
+    }
+
+    .seg-label {
+        font-size: 10px;
+        font-weight: 600;
+        opacity: .5;
+        letter-spacing: .4px;
+        margin-bottom: 1px;
+        pointer-events: none;
+    }
+
+    .seg-value {
+        font-size: 13px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        pointer-events: none;
+    }
+
+        .seg-value.placeholder {
+            opacity: .35;
+            font-weight: 400;
+        }
+
+    .search-btn {
+        background: #f59e0b;
+        border: none;
+        border-radius: 40px;
+        width: 42px;
+        height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: background .15s, transform .1s;
+        color: #fff;
+        font-size: 15px;
+        margin-left: 4px;
+    }
+
+        .search-btn:hover {
+            background: #d97706;
+            transform: scale(1.05);
+        }
+
+    /* ══ DROPDOWNS — viven fuera del pill, posicionados desde topbar ══ */
+    .dropdown-portal {
+        position: absolute;
+        top: calc(100% + 8px);
+        background: #1e1e1e;
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 20px;
+        padding: 20px;
+        z-index: 500;
+        box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+        animation: dropIn .15s ease;
+    }
+
+    @@keyframes dropIn {
+        from {
+            opacity: 0;
+            transform: translateY(-6px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* posición de cada dropdown */
+    .dropdown-donde {
+        left: 50%;
+        transform: translateX(-110%);
+        width: 350px;
+    }
+
+    .dropdown-fechas {
+        left: 50%;
+        transform: translateX(-50%);
+        min-width: 580px;
+    }
+
+    .dropdown-quien {
+        left: 50%;
+        transform: translateX(10%);
+        width: 350px;
+    }
+
+    /* Dónde */
+    .dropdown-donde input {
+        width: 100%;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 12px;
+        padding: 10px 14px;
+        font-size: 14px;
+        color: inherit;
+        outline: none;
+        box-sizing: border-box;
+    }
+
+    .sugerencias {
+        margin-top: 10px;
+    }
+
+    .sugerencia-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 8px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background .12s;
+    }
+
+        .sugerencia-item:hover {
+            background: rgba(255,255,255,0.06);
+        }
+
+    .sugerencia-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background: rgba(255,255,255,0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+
+    .sugerencia-nombre {
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .sugerencia-sub {
+        font-size: 11px;
+        opacity: .45;
+    }
+
+    /* Calendario */
+    .cal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .cal-nav {
+        background: none;
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        cursor: pointer;
+        color: inherit;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+    }
+
+        .cal-nav:hover {
+            background: rgba(255,255,255,0.08);
+        }
+
+    .calendarios-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+    }
+
+    .cal-dias-header {
+        display: grid;
+        grid-template-columns: repeat(7,1fr);
+        margin-bottom: 4px;
+    }
+
+    .cal-dia-nombre {
+        text-align: center;
+        font-size: 11px;
+        opacity: .4;
+        padding: 4px 0;
+    }
+
+    .cal-dias {
+        display: grid;
+        grid-template-columns: repeat(7,1fr);
+        gap: 2px;
+    }
+
+    .cal-dia {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: background .12s, color .12s;
+        border: none;
+        background: none;
+        color: inherit;
+    }
+
+        .cal-dia:hover:not(:disabled):not(.vacio) {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .cal-dia.seleccionado {
+            background: #f59e0b;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .cal-dia.en-rango {
+            background: rgba(245,158,11,0.15);
+            border-radius: 0;
+        }
+
+        .cal-dia.inicio-rango {
+            border-radius: 50% 0 0 50%;
+            background: #f59e0b;
+            color: #fff;
+        }
+
+        .cal-dia.fin-rango {
+            border-radius: 0 50% 50% 0;
+            background: #f59e0b;
+            color: #fff;
+        }
+
+        .cal-dia.vacio {
+            cursor: default;
+        }
+
+        .cal-dia:disabled {
+            opacity: .25;
+            cursor: not-allowed;
+        }
+
+        .cal-dia.hoy {
+            font-weight: 700;
+            color: #f59e0b;
+        }
+
+    /* Huéspedes */
+    .huesped-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+
+        .huesped-row:last-child {
+            border-bottom: none;
+        }
+
+    .huesped-tipo {
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .huesped-sub {
+        font-size: 12px;
+        opacity: .4;
+    }
+
+    .contador-btns {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .cnt-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: 1px solid rgba(255,255,255,0.25);
+        background: none;
+        color: inherit;
+        cursor: pointer;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: border-color .12s, opacity .12s;
+    }
+
+        .cnt-btn:hover:not(:disabled) {
+            border-color: rgba(255,255,255,0.6);
+        }
+
+        .cnt-btn:disabled {
+            opacity: .2;
+            cursor: not-allowed;
+        }
+
+    .cnt-val {
+        font-size: 14px;
+        font-weight: 500;
+        min-width: 18px;
+        text-align: center;
+    }
+
+    /* Filtros extra */
+    .filtros-extra {
+        display: flex;
+        gap: 8px;
+        padding: 10px 24px;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        overflow-x: auto;
+        flex-shrink: 0;
+        align-items: center;
+    }
+
+    .filtro-pill {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        border: 1px solid rgba(255,255,255,0.15);
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all .15s;
+        flex-shrink: 0;
+    }
+
+        .filtro-pill.activo {
+            border-color: #f59e0b;
+            background: rgba(245,158,11,0.14);
+            color: #f59e0b;
+        }
+
+    /* ══ CUERPO 50/50 ══ */
+    .explorar-body {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    /* Contenedores Principales */
+    .explorar-body { display: grid; grid-template-columns: 1fr 1fr; flex: 1; overflow: hidden; padding-top: 16px; }
+    .resultados-col { overflow-y: auto; padding: 0 24px; border-right: none; } /* Quitamos borde derecho */
+    
+    /* Diseño del Mapa encapsulado */
+    .mapa-col { height: 100%; padding: 0 24px 24px 0; border-left: none; } /* Padding para separar de los bordes */
+    #mapa-bunki { width: 100%; height: 100%; border-radius: 16px; overflow: hidden; } /* Bordes redondeados */
+
+    /* La nueva cuadrícula para las tarjetas */
+    .resultados-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* Responsivo: 2 o 3 columnas auto */
+        gap: 24px;
+        padding-bottom: 24px;
+    }
+
+    /* Diseño de la Tarjeta estilo Airbnb */
+    .aloj-card { 
+        display: flex; flex-direction: column; 
+        cursor: pointer; border: none; /* Sin bordes */
+        background: transparent; margin-bottom: 0; padding: 0;
+    }
+    .aloj-card-img { 
+        width: 100%; height: 260px; /* Más alta y cuadrada */
+        object-fit: cover; border-radius: 16px; margin-bottom: 12px; 
+    }
+
+    .aloj-card-placeholder {
+        width: 110px;
+        height: 88px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+    }
+
+    .aloj-card-body {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-width: 0;
+    }
+
+    .aloj-tipo {
+        font-size: 10px;
+        opacity: .4;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+    }
+
+    .aloj-nombre {
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin: 2px 0;
+    }
+
+    .aloj-loc {
+        font-size: 11px;
+        opacity: .5;
+        margin-bottom: 4px;
+    }
+
+    .aloj-rating {
+        font-size: 11px;
+        color: #f59e0b;
+    }
+
+    .aloj-precio {
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+        .aloj-precio span {
+            font-size: 11px;
+            font-weight: 400;
+            opacity: .5;
+        }
+
+    .card-highlight {
+        background: rgba(245,158,11,0.1) !important;
+        outline: 2px solid #f59e0b;
+        border-radius: 10px;
+    }
+
+    .mapa-col {
+        height: 100%;
+    }
+
+    #mapa-bunki {
+        width: 100%;
+        height: 100%;
+    }
+
+    .bunki-pin {
+        background: #fff;
+        color: #111;
+        border: 2px solid #111;
+        border-radius: 20px;
+        padding: 5px 11px;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+        cursor: pointer;
+        box-shadow: 0 2px 10px rgba(0,0,0,.3);
+        transition: all .12s;
+    }
+
+        .bunki-pin:hover {
+            background: #222;
+            color: #fff;
+            transform: scale(1.1);
+        }
+
+    .bunki-popup img {
+        width: 100%;
+        height: 85px;
+        object-fit: cover;
+        border-radius: 6px;
+        margin-bottom: 7px;
+    }
+
+    .bunki-popup strong {
+        font-size: 13px;
+        display: block;
+        margin-bottom: 2px;
+        color: #111;
+    }
+
+    .bunki-popup-loc {
+        font-size: 11px;
+        color: #888;
+        margin-bottom: 4px;
+    }
+
+    .bunki-popup-precio {
+        font-size: 14px;
+        font-weight: 700;
+        color: #111;
+    }
+
+        .bunki-popup-precio span {
+            font-size: 11px;
+            color: #777;
+        }
+
+    .bunki-popup-rating {
+        font-size: 11px;
+        color: #f59e0b;
+        margin-top: 3px;
+    }
+
+    .pag-wrapper {
+        padding: 16px;
+        display: flex;
+        justify-content: center;
+    }
+
+    .empty-state {
+        padding: 40px 16px;
+        text-align: center;
+        opacity: .4;
+    }
+
+        .empty-state i {
+            font-size: 28px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+    @@media (max-width: 860px) {
+        .explorar-body {
+            grid-template-columns: 1fr;
+            overflow: visible;
+        }
+
+        .mapa-col {
+            height: 320px;
+        }
+        /* El contenedor ahora es un grid de 2 columnas */
+        .resultados-col {
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .resultados-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* ¡Esto crea las dos columnas! */
+            gap: 16px;
+        }
+        /* La tarjeta ahora es un bloque vertical, no una lista horizontal */
+        .aloj-card {
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 0;
+            border-bottom: none;
+            transition: transform 0.2s;
+        }
+
+            .aloj-card:hover {
+                transform: translateY(-5px);
+            }
+
+        .aloj-card-img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 8px;
+        }
+
+        .search-pill {
+            max-width: 100%;
+        }
+
+        .dropdown-fechas {
+            min-width: 320px;
+            left: 0;
+            transform: none;
+        }
+
+        .calendarios-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .dropdown-donde, .dropdown-fechas, .dropdown-quien {
+            left: 8px;
+            right: 8px;
+        }
+    }
+</style>
+
+@* ── Overlay cierra dropdowns ── *@
+@if (DropdownAbierto != null)
+{
+    <div style="position:fixed;inset:0;z-index:490;" @onclick="CerrarDropdowns"></div>
+}
+
+<div class="explorar-root">
+
+    @* ══ BARRA DE BÚSQUEDA ══ *@
+    <div class="search-topbar">
+        <div class="search-pill">
+
+            @* ── Dónde ── *@
+            <div class="search-pill-segment @(DropdownAbierto == "donde" ? "open" : "")"
+                 @onclick='() => ToggleDropdown("donde")'>
+                <span class="seg-label">Dónde</span>
+                <span class="seg-value @(string.IsNullOrEmpty(Filtros.Ubicacion) ? "placeholder" : "")">
+                    @(string.IsNullOrEmpty(Filtros.Ubicacion) ? "Buscar destino" : Filtros.Ubicacion)
+                </span>
+            </div>
+
+            <div class="search-pill-divider"></div>
+
+            @* ── Fechas ── *@
+            <div class="search-pill-segment @(DropdownAbierto == "fechas" ? "open" : "")"
+                 @onclick='() => ToggleDropdown("fechas")'>
+                <span class="seg-label">Fechas</span>
+                <span class="seg-value @(Filtros.FechaEntrada == default ? "placeholder" : "")">
+                    @TextoFechas
+                </span>
+            </div>
+
+            <div class="search-pill-divider"></div>
+
+            @* ── Quién ── *@
+            <div class="search-pill-segment @(DropdownAbierto == "quien" ? "open" : "")"
+                 @onclick='() => ToggleDropdown("quien")'>
+                <span class="seg-label">Quién</span>
+                <span class="seg-value @(TotalHuespedes == 0 ? "placeholder" : "")">
+                    @(TotalHuespedes == 0 ? "Agregar huéspedes" : $"{TotalHuespedes} huésped{(TotalHuespedes > 1 ? "es" : "")}")
+                </span>
+            </div>
+
+        </div>
+
+        <button class="search-btn" @onclick="AplicarFiltros">
+            <i class="fas fa-search"></i>
+        </button>
+
+        @* ══ DROPDOWNS — fuera del pill, dentro de topbar para z-index correcto ══ *@
+@if (DropdownAbierto == "donde")
+{
+    <div class="dropdown-portal dropdown-donde" @onclick:stopPropagation="true">
+        <input type="text" placeholder="Ej: Miraflores, Lima..." value="@Filtros.Ubicacion" @oninput="OnUbicacionInput" autofocus />
+        
+        <div class="sugerencias">
+            @if (Sugerencias.Any())
+            {
+                @foreach (var s in Sugerencias)
+                {
+                    var sLocal = s;
+                    <div class="sugerencia-item" @onclick="() => SeleccionarSugerencia(sLocal)">
+                        <div class="sugerencia-icon">📍</div>
+                        <div>
+                            <div style="font-size: 14px; font-weight: 500;">@s</div>
+                            <div style="font-size: 12px; opacity: .5;">Perú</div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div style="padding: 12px; text-align: center; opacity: 0.5; font-size: 13px;">
+                    <i class="fas fa-search" style="margin-bottom: 8px; display: block; font-size: 18px;"></i>
+                    Presiona el botón de buscar para explorar "@Filtros.Ubicacion"
+                </div>
+            }
+        </div>
+    </div>
+}
+
+        @if (DropdownAbierto == "fechas")
+        {
+            <div class="dropdown-portal dropdown-fechas" @onclick:stopPropagation="true">
+                <div class="calendarios-grid">
+                    @for (int m = 0; m < 2; m++)
+                    {
+                        var mesOffset = m;
+                        var fecha = new DateTime(CalMes.Year, CalMes.Month, 1).AddMonths(mesOffset);
+                        <div>
+                            <div class="cal-header">
+                                @if (mesOffset == 0)
+                                {
+                                    <button class="cal-nav" @onclick="() => CalMes = CalMes.AddMonths(-1)">‹</button>
+                                }
+                                else
+                                {
+
+                                    <span></span>
+                                }
+                                <span>@fecha.ToString("MMMM yyyy")</span>
+                                @if (mesOffset == 1)
+                                {
+                                    <button class="cal-nav" @onclick="() => CalMes = CalMes.AddMonths(1)">›</button>
+                                }
+                                else
+                                {
+
+                                    <span></span>
+                                }
+                            </div>
+                            <div class="cal-dias-header">
+                                @foreach (var dn in new[] { "L", "M", "Mi", "J", "V", "S", "D" })
+                                {
+                                    <div class="cal-dia-nombre">@dn</div>
+                                }
+                            </div>
+                            <div class="cal-dias">
+                                @{
+                                    var primerDia = (int)fecha.DayOfWeek;
+                                    primerDia = primerDia == 0 ? 6 : primerDia - 1;
+                                }
+                                @for (int v = 0; v < primerDia; v++)
+                                {
+                                    <div class="cal-dia vacio"></div>
+                                }
+                                @for (int dia = 1; dia <= DateTime.DaysInMonth(fecha.Year, fecha.Month); dia++)
+                                {
+                                    var d = new DateTime(fecha.Year, fecha.Month, dia);
+                                    var clases = GetDiaClases(d);
+                                    var dLocal = d;
+                                    <button class="cal-dia @clases"
+                                            disabled="@(d < DateTime.Today)"
+                                            @onclick="() => SeleccionarDia(dLocal)">
+                                        @dia
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+                @if (Filtros.FechaEntrada != default || Filtros.FechaSalida != default)
+                {
+                    <div style="text-align:right; margin-top:12px;">
+                        <button class="filtro-pill" @onclick="LimpiarFechas">Limpiar fechas</button>
+                    </div>
+                }
+            </div>
+        }
+
+        @if (DropdownAbierto == "quien")
+        {
+            <div class="dropdown-portal dropdown-quien" @onclick:stopPropagation="true">
+                @foreach (var (etiqueta, sub, getter, setter, min) in HuespedesConfig)
+                {
+                    <div class="huesped-row">
+                        <div>
+                            <div class="huesped-tipo">@etiqueta</div>
+                            <div class="huesped-sub">@sub</div>
+                        </div>
+                        <div class="contador-btns">
+                            <button class="cnt-btn" disabled="@(getter() <= min)"
+                                    @onclick="() => setter(getter() - 1)">
+                                −
+                            </button>
+                            <span class="cnt-val">@getter()</span>
+                            <button class="cnt-btn" @onclick="() => setter(getter() + 1)">+</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+    </div>
+
+    @* Filtros tipo: precio y pills *@
+    <div class="filtros-extra">
+        <span style="font-size:12px; opacity:.4; white-space:nowrap;">S/ @Filtros.PrecioMaximo máx</span>
+        <input type="range" min="50" max="500" step="10"
+               value="@Filtros.PrecioMaximo" style="width:90px;"
+               @oninput="@(e => { Filtros.PrecioMaximo = decimal.Parse(e.Value!.ToString()!); })" />
+
+        @foreach (var tipo in TiposAlojamiento)
+        {
+            bool sel = Filtros.TiposSeleccionados.Contains(tipo);
+            <button class="filtro-pill @(sel ? "activo" : "")"
+                    @onclick="() => ToggleTipo(tipo, !sel)">
+                @tipo
+            </button>
+        }
+
+        <button class="filtro-pill" style="margin-left:auto;" @onclick="LimpiarFiltros">
+            <i class="fas fa-times" style="margin-right:4px;"></i>Limpiar
+        </button>
+    </div>
+
+    @* ══ CUERPO: LISTA + MAPA ══ *@
+    <div class="explorar-body">
+        <div class="resultados-col">
+            <div class="resultados-header">
+                @AlojamientosFiltrados.Count alojamiento@(AlojamientosFiltrados.Count != 1 ? "s" : "") encontrado@(AlojamientosFiltrados.Count != 1 ? "s" : "")
+                @if (!string.IsNullOrEmpty(Filtros.Ubicacion))
+                {
+                    <span style="color:#f59e0b;"> en @Filtros.Ubicacion</span>
+                }
+            </div>
+
+            @if (AlojamientosFiltrados.Count == 0)
+            {
+                <div class="empty-state">
+                    <i class="fas fa-map-marker-alt"></i>
+                    Sin resultados — prueba otros filtros
+                </div>
+            }
+            else
+            {
+                <div class="resultados-grid">
+                    @foreach (var item in AlojamientosPaginados)
+                    {
+                        var itemLocal = item;
+                        <div id="card-@item.Id" class="aloj-card" @onclick="() => VerDetalle(itemLocal.Id)">
+                            @if (!string.IsNullOrEmpty(item.ImagenUrl))
+                            {
+                                <img class="aloj-card-img" src="@item.ImagenUrl" alt="@item.Nombre" />
+                            }
+                            else
+                            {
+                                <div class="aloj-card-placeholder" style="background:@item.GradienteColor; height:180px;">🏠</div>
+                            }
+
+                            <div class="aloj-card-body">
+                                <h3 class="aloj-nombre">@item.Nombre</h3>
+                                <div class="aloj-loc">@item.Distrito</div>
+                                <div class="aloj-precio" style="margin-top:5px;">S/ @item.PrecioNoche <span>/noche</span></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                @if (TotalPaginas > 1)
+                {
+                    <div class="pag-wrapper">
+                        <div class="pagination">
+                            @if (PaginaActual > 1)
+                            {
+                                <a href="#" @onclick:preventDefault @onclick="() => CambiarPagina(PaginaActual - 1)">←</a>
+                            }
+                            @for (int i = 1; i <= TotalPaginas; i++)
+                            {
+                                int n = i;
+                                if (n == PaginaActual)
+                                {
+                                    <span class="active">@n</span>
+                                }
+                                else
+                                {
+                                    <a href="#" @onclick:preventDefault @onclick="() => CambiarPagina(n)">@n</a>
+                                }
+                            }
+                            @if (PaginaActual < TotalPaginas)
+                            {
+                                <a href="#" @onclick:preventDefault @onclick="() => CambiarPagina(PaginaActual + 1)">→</a>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+
+        <div class="mapa-col">
+            <div id="mapa-bunki"></div>
+        </div>
+    </div>
+</div>
+
+@code {
+    // ── Filtros ──
+    private BusquedaFiltros Filtros = new() { PrecioMaximo = 500 };
+    private List<Alojamiento> AlojamientosFiltrados = new();
+    private int PaginaActual = 1;
+    private const int ElementosPorPagina = 9;
+    private static readonly string[] TiposAlojamiento = { "Casa", "Departamento", "Habitación", "Cabaña" };
+
+    // ── Dropdown ──
+    private string? DropdownAbierto = null;
+    private ElementReference InputUbicacion;
+
+    // ── Calendario ──
+    private DateTime CalMes = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+
+    // ── Huéspedes ──
+    private int HAdultos = 1, HNinos = 0, HBebes = 0, HMascotas = 0;
+    private int TotalHuespedes => HAdultos + HNinos;
+
+    private IEnumerable<(string, string, Func<int>, Action<int>, int)> HuespedesConfig => new[]
+    {
+        ("Adultos",  "13 años o más",   (Func<int>)(() => HAdultos),  (Action<int>)(v => { HAdultos = v;  Filtros.Huespedes = TotalHuespedes; }), 1),
+        ("Niños",    "Edades 2–12",     (Func<int>)(() => HNinos),    (Action<int>)(v => { HNinos = v;    Filtros.Huespedes = TotalHuespedes; }), 0),
+        ("Bebés",    "Menos de 2 años", (Func<int>)(() => HBebes),    (Action<int>)(v => HBebes = v),    0),
+        ("Mascotas", "¿Traes mascota?", (Func<int>)(() => HMascotas), (Action<int>)(v => HMascotas = v), 0),
+    };
+
+    // ── Sugerencias ──
+    private static readonly string[] TodosDistritos = {
+        "Miraflores","Barranco","San Isidro","La Molina","Pueblo Libre",
+        "Chaclacayo","Los Olivos","San Juan de Lurigancho","San Martín de Porres",
+        "Villa El Salvador","Puente Piedra","Comas","San Juan de Miraflores",
+        "Ate","Santa Anita","Villa María del Triunfo"
+    };
+    private List<string> Sugerencias = new(TodosDistritos.Take(5));
+
+    // ── Debounce con CancellationToken (sin System.Timers.Timer) ──
+    private CancellationTokenSource? _debounceCts;
+
+    // ── Texto resumen de fechas ──
+    private string TextoFechas
+    {
+        get
+        {
+            if (Filtros.FechaEntrada == default) return "Agrega fechas";
+            var entrada = Filtros.FechaEntrada.Value.ToString("d MMM");
+            if (Filtros.FechaSalida == default) return entrada;
+            return $"{entrada} – {Filtros.FechaSalida:d MMM}";
+        }
+    }
+
+    // ── Clases del día ──
+    private string GetDiaClases(DateTime d)
+    {
+        var sb = new System.Text.StringBuilder();
+        if (d == DateTime.Today) sb.Append("hoy ");
+        if (Filtros.FechaEntrada != default && d == Filtros.FechaEntrada)
+            sb.Append(Filtros.FechaSalida != default ? "inicio-rango " : "seleccionado ");
+        else if (Filtros.FechaSalida != default && d == Filtros.FechaSalida)
+            sb.Append("fin-rango ");
+        else if (Filtros.FechaEntrada != default && Filtros.FechaSalida != default
+                 && d > Filtros.FechaEntrada && d < Filtros.FechaSalida)
+            sb.Append("en-rango ");
+        return sb.ToString().Trim();
+    }
+
+    private void SeleccionarDia(DateTime d)
+    {
+        if (Filtros.FechaEntrada == default || (Filtros.FechaEntrada != default && Filtros.FechaSalida != default))
+        {
+            Filtros.FechaEntrada = d;
+            Filtros.FechaSalida = default;
+        }
+        else if (d > Filtros.FechaEntrada)
+        {
+            Filtros.FechaSalida = d;
+        }
+        else
+        {
+            Filtros.FechaEntrada = d;
+            Filtros.FechaSalida = default;
+        }
+    }
+
+    private void LimpiarFechas()
+    {
+        Filtros.FechaEntrada = default;
+        Filtros.FechaSalida = default;
+    }
+
+    // ── Paginación ──
+    private List<Alojamiento> AlojamientosPaginados =>
+        AlojamientosFiltrados.Skip((PaginaActual - 1) * ElementosPorPagina).Take(ElementosPorPagina).ToList();
+    private int TotalPaginas =>
+        (int)Math.Ceiling((double)AlojamientosFiltrados.Count / ElementosPorPagina);
+
+    // ── Ciclo de vida ──
+    protected override void OnInitialized()
+    {
+        AlojamientosFiltrados = Data.ObtenerAlojamientos()
+            .OrderByDescending(a => a.Rating).ThenByDescending(a => a.TotalResenas).ToList();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await MapInterop.InitAsync("mapa-bunki");
+            await MapInterop.ActualizarMarcadoresAsync(AlojamientosFiltrados);
+        }
+    }
+
+    // ── Toggle dropdown — un solo lugar, sin stopPropagation en el segmento ──
+    private void ToggleDropdown(string nombre) =>
+        DropdownAbierto = DropdownAbierto == nombre ? null : nombre;
+
+    private void CerrarDropdowns() => DropdownAbierto = null;
+
+    // ── Búsqueda con debounce ──
+    private async Task OnUbicacionInput(ChangeEventArgs e)
+    {
+        Filtros.Ubicacion = e.Value?.ToString() ?? string.Empty;
+
+        Sugerencias = string.IsNullOrWhiteSpace(Filtros.Ubicacion)
+            ? new List<string>(TodosDistritos.Take(5))
+            : TodosDistritos
+                .Where(d => d.Contains(Filtros.Ubicacion, StringComparison.OrdinalIgnoreCase))
+                .Take(6).ToList();
+
+        _debounceCts?.Cancel();
+        _debounceCts?.Dispose();
+        _debounceCts = new CancellationTokenSource();
+        var token = _debounceCts.Token;
+
+        try
+        {
+            await Task.Delay(500, token);
+            if (!string.IsNullOrWhiteSpace(Filtros.Ubicacion))
+                await MapInterop.ResaltarDistritoAsync(Filtros.Ubicacion);
+            else
+                await MapInterop.LimpiarDistritoAsync();
+        }
+        catch (TaskCanceledException) { }
+    }
+
+    private async Task SeleccionarSugerencia(string distrito)
+    {
+        Filtros.Ubicacion = distrito;
+        DropdownAbierto = null;
+        await MapInterop.ResaltarDistritoAsync(distrito);
+        await AplicarFiltros();
+    }
+
+    // ── Filtros ──
+    private async Task AplicarFiltros()
+    {
+        PaginaActual = 1;
+        DropdownAbierto = null;
+        AlojamientosFiltrados = Data.FiltrarAlojamientos(Filtros)
+            .OrderByDescending(a => a.Rating).ThenByDescending(a => a.TotalResenas).ToList();
+        await MapInterop.ActualizarMarcadoresAsync(AlojamientosFiltrados);
+        if (!string.IsNullOrWhiteSpace(Filtros.Ubicacion))
+            await MapInterop.ResaltarDistritoAsync(Filtros.Ubicacion);
+    }
+
+    private async Task LimpiarFiltros()
+    {
+        Filtros = new BusquedaFiltros { PrecioMaximo = 500 };
+        HAdultos = 1; HNinos = 0; HBebes = 0; HMascotas = 0;
+        PaginaActual = 1; DropdownAbierto = null;
+        AlojamientosFiltrados = Data.ObtenerAlojamientos()
+            .OrderByDescending(a => a.Rating).ThenByDescending(a => a.TotalResenas).ToList();
+        await MapInterop.LimpiarDistritoAsync();
+        await MapInterop.ActualizarMarcadoresAsync(AlojamientosFiltrados);
+    }
+
+    private void ToggleTipo(string tipo, bool sel)
+    {
+        if (sel) Filtros.TiposSeleccionados.Add(tipo);
+        else Filtros.TiposSeleccionados.Remove(tipo);
+    }
+
+    private void CambiarPagina(int p) => PaginaActual = p;
+    private void VerDetalle(int id) => NavigationManager.NavigateTo($"/alojamiento/{id}");
+
+    public async ValueTask DisposeAsync()
+    {
+        _debounceCts?.Cancel();
+        _debounceCts?.Dispose();
+        await MapInterop.InvalidarTamanoAsync();
+    }
+}

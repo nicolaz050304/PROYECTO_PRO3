@@ -1,0 +1,38 @@
+@inherits LayoutComponentBase
+@inject NavigationManager Navigation
+
+<div class="page-wrapper">
+    @if (MostrarNav)
+    {
+        <NavMenu />
+    }
+    <main>@Body</main>
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Bunki. Todos los derechos reservados.</p>
+            <p>
+                <a href="#">Privacidad</a> |
+                <a href="#">Términos</a> |
+                <a href="#">Contacto</a>
+            </p>
+        </div>
+    </footer>
+</div>
+
+<style>
+    .page-wrapper {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    main {
+        flex: 1;
+    }
+</style>
+
+@code {
+    private bool MostrarNav =>
+        !new[] { "/login", "/registro", "/recuperar-password" }
+            .Any(p => Navigation.Uri.Contains(p));
+}

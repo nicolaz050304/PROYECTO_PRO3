@@ -1,0 +1,198 @@
+@page "/mis-reservas"
+@rendermode InteractiveServer
+@inject DataService Data
+@inject NavigationManager Navigation
+@inject BunkiApp.Models.AppState AppState
+
+<PageTitle>Bunki - Mis Reservas</PageTitle>
+
+<div class="section">
+    <div class="container">
+        <h2 class="section-title" style="text-align: left;">Mis Reservas</h2>
+
+        @if (!string.IsNullOrEmpty(MensajeAccion))
+        {
+            <AlertMessage Tipo="success" Mensaje="@MensajeAccion" />
+        }
+
+        <div class="tabs">
+            @foreach (var tab in Tabs)
+            {
+                <button class="tab-btn @(TabActiva == tab ? "active" : "")"
+                        @onclick="() => CambiarTab(tab)">
+                    @tab
+                    <span class="badge @(tab == "Próximas" ? "badge-primary" : "badge-success")"
+                          style="margin-left: 8px; font-size: 11px;">
+                        @ContarReservasPorTab(tab)
+                    </span>
+                </button>
+            }
+        </div>
+
+        @if (TabActiva == "Próximas")
+        {
+            @if (!Proximas.Any())
+            {
+                <AlertMessage Tipo="warning" Mensaje="No tienes reservas próximas." Cerrable="false" />
+            }
+            else
+            {
+                @foreach (var r in Proximas)
+                {
+                    <ReservaCard Reserva="r"
+                                 OnCancelarReserva="CancelarReserva"
+                                 OnPagarReserva="IrAPagar" />
+                }
+            }
+        }
+        else if (TabActiva == "Anteriores")
+        {
+            @if (!Anteriores.Any())
+            {
+                <AlertMessage Tipo="warning" Mensaje="No tienes reservas anteriores." Cerrable="false" />
+            }
+            else
+            {
+                @foreach (var r in Anteriores)
+                {
+                    <ReservaCard Reserva="r"
+                                 OnDejarResenaCallback="AbrirModalResena" />
+                }
+            }
+        }
+        else
+        {
+            @if (!Canceladas.Any())
+            {
+                <AlertMessage Tipo="warning" Mensaje="No tienes reservas canceladas." Cerrable="false" />
+            }
+            else
+            {
+                @foreach (var r in Canceladas)
+                {
+                    <ReservaCard Reserva="r" />
+                }
+            }
+        }
+    </div>
+</div>
+
+@if (MostrarModalResena && ReservaParaResena != null)
+{
+    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; animation: fadeIn 0.3s ease;">
+        <div style="background: var(--light, #1e2235); padding: 40px; border-radius: 16px; width: 90%; max-width: 650px; border: 1px solid var(--border, #2c314a); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+
+            <h3 style="margin-top: 0; color: var(--text, #fff); font-size: 24px; text-align: center;">
+                Califica tu estancia
+            </h3>
+
+            <p style="text-align: center; color: var(--text-light, #a0a5b5); font-size: 15px; margin-bottom: 30px;">
+                ¿Qué tal estuvo tu experiencia en <strong>@ReservaParaResena.AlojamientoNombre</strong>?
+            </p>
+
+            <div style="display: flex; gap: 15px; margin-bottom: 30px; justify-content: center; font-size: 40px; color: #FFD700;">
+                @for (int i = 1; i <= 5; i++)
+                {
+                    int valorEstrella = i;
+                    <i class="@(CalificacionActual >= valorEstrella ? "fas" : "far") fa-star"
+                       style="cursor: pointer; transition: transform 0.2s;"
+                       @onclick="() => AsignarCalificacion(valorEstrella)"
+                       onmouseover="this.style.transform='scale(1.2)'"
+                       onmouseout="this.style.transform='scale(1)'"></i>
+                }
+            </div>
+
+            <div class="form-group" style="margin-bottom: 25px;">
+                <label style="display: block; color: var(--text, #fff); margin-bottom: 10px; font-weight: bold; font-size: 16px;">Escribe tu reseña pública</label>
+                <textarea rows="5" style="width: 100%; padding: 15px; border-radius: 10px; border: 1px solid var(--border, #2c314a); background: rgba(0,0,0,0.2); color: white; font-size: 15px;" placeholder="¿Cómo fue tu experiencia? ¿Estaba limpio el lugar? ¿El anfitrión fue amable?"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 15px; margin-top: 20px;">
+                <button type="button" class="btn btn-outline" style="flex: 1; padding: 12px; font-size: 16px;" @onclick="CerrarModalResena">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" style="flex: 1; padding: 12px; font-size: 16px;" @onclick="GuardarResena">
+                    Enviar Reseña
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private static readonly string[] Tabs = { "Próximas", "Anteriores", "Canceladas" };
+    private string TabActiva = "Próximas";
+    private string MensajeAccion = "";
+    private int CalificacionActual = 5;
+
+    private void AsignarCalificacion(int valor)
+    {
+        CalificacionActual = valor;
+    }
+
+    private bool MostrarModalResena = false;
+    private Reserva? ReservaParaResena;
+
+    private List<Reserva> Proximas = new();
+    private List<Reserva> Anteriores = new();
+    private List<Reserva> Canceladas = new();
+
+    protected override void OnInitialized()
+    {
+        if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
+        CargarDatos();
+    }
+
+    private void CargarDatos()
+    {
+        Proximas = Data.ObtenerReservasProximas();
+        Anteriores = Data.ObtenerReservasPasadas();
+        Canceladas = Data.ObtenerReservasCanceladas();
+    }
+
+    private void CambiarTab(string tab) => TabActiva = tab;
+
+    private int ContarReservasPorTab(string tab) => tab switch
+    {
+        "Próximas" => Proximas.Count,
+        "Anteriores" => Anteriores.Count,
+        "Canceladas" => Canceladas.Count,
+        _ => 0
+    };
+
+    private void CancelarReserva(Reserva reserva)
+    {
+        Proximas.Remove(reserva);
+        reserva.Estado = "Cancelada";
+        Canceladas.Add(reserva);
+        MensajeAccion = $"Reserva en {reserva.AlojamientoNombre} cancelada correctamente.";
+    }
+
+    private void AbrirModalResena(Reserva reserva)
+    {
+        ReservaParaResena = reserva;
+        MostrarModalResena = true;
+        CalificacionActual = 5;
+        MensajeAccion = "";
+    }
+
+    private void CerrarModalResena()
+    {
+        MostrarModalResena = false;
+        ReservaParaResena = null;
+    }
+
+    private async Task GuardarResena()
+    {
+        await Task.Delay(800);
+        MostrarModalResena = false;
+        MensajeAccion = $"¡Gracias por tu reseña sobre {ReservaParaResena?.AlojamientoNombre}! Tu valoración ha sido publicada.";
+        ReservaParaResena = null;
+    }
+
+    private void IrAPagar(Reserva reserva)
+    {
+        AppState.ReservaAPagar = reserva;
+        Navigation.NavigateTo("/pagos");
+    }
+}

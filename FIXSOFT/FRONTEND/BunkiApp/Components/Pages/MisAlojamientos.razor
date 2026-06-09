@@ -1,0 +1,164 @@
+@page "/mis-alojamientos"
+@rendermode InteractiveServer
+@inject DataService Data
+@inject NavigationManager Navigation
+@inject BunkiApp.Models.AppState AppState
+
+<PageTitle>Bunki - Mis Alojamientos</PageTitle>
+
+<div class="section">
+    <div class="container">
+        <div class="flex flex-between items-center mb-30">
+            <h2 style="font-size: 26px; font-weight: 700;">
+                <i class="fas fa-home" style="color: var(--gold); margin-right: 10px;"></i>
+                Mis Alojamientos
+            </h2>
+            <button class="btn btn-primary" @onclick='() => Navigation.NavigateTo("/crear-alojamiento")'>
+                <i class="fas fa-plus-circle"></i> Nuevo Alojamiento
+            </button>
+        </div>
+
+        <div class="grid grid-4" style="margin-bottom: 36px;">
+            <StatBox Valor="@_alojamientos.Count.ToString()" Etiqueta="Publicaciones" />
+            <StatBox Valor="@_alojamientos.Count(a => a.EstadoPublicacion == "Activo").ToString()" Etiqueta="Activos" />
+            <StatBox Valor="@_reservas.Count.ToString()" Etiqueta="Reservas recibidas" />
+            <StatBox Valor="@($"S/ {_reservas.Sum(r => r.Total).ToString("N0")}")" Etiqueta="Ingresos totales" />
+        </div>
+
+        @if (!_alojamientos.Any())
+        {
+            <div style="text-align: center; padding: 60px 20px;">
+                <i class="fas fa-home" style="font-size: 60px; color: var(--muted); margin-bottom: 20px; display: block;"></i>
+                <h3 style="margin-bottom: 12px;">Aún no tienes alojamientos publicados</h3>
+                <p class="card-text" style="margin-bottom: 24px;">
+                    Publica tu primer espacio y empieza a generar ingresos.
+                </p>
+                <button class="btn btn-primary" @onclick='() => Navigation.NavigateTo("/crear-alojamiento")'>
+                    <i class="fas fa-plus-circle"></i> Publicar mi primer alojamiento
+                </button>
+            </div>
+        }
+        else
+        {
+            <div class="grid grid-3" style="margin-bottom: 40px;">
+                @foreach (var aloj in _alojamientos)
+                {
+                    <div class="card">
+                        <div class="card-image-placeholder" style="background: @aloj.GradienteColor; position: relative;">
+                            <span class="badge @BadgeClass(aloj.EstadoPublicacion)"
+                                  style="position: absolute; top: 12px; right: 12px;">
+                                @aloj.EstadoPublicacion
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <h3 class="card-title">@aloj.Nombre</h3>
+                            <p class="card-text"><i class="fas fa-map-marker-alt" style="margin-right: 6px;"></i>@aloj.Distrito</p>
+                            <StarRating Valor="aloj.Rating" TotalResenas="aloj.TotalResenas" />
+                            <div class="card-footer">
+                                <span class="card-price">S/ @aloj.PrecioNoche/noche</span>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn btn-small btn-secondary"
+                                            @onclick='() => Navigation.NavigateTo($"/crear-alojamiento")'>
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-small btn-danger"
+                                            @onclick="() => ConfirmarEliminar(aloj)">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+        @if (_reservas.Any())
+        {
+            <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 20px;">
+                <i class="fas fa-inbox" style="color: var(--gold); margin-right: 8px;"></i>
+                Últimas reservas recibidas
+            </h3>
+            <div class="card">
+                <div style="padding: 20px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Huésped</th><th>Alojamiento</th><th>Fechas</th><th>Total</th><th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in _reservas.Take(5))
+                            {
+                                <tr>
+                                    <td>@r.AnfitrionNombre</td>
+                                    <td>@r.AlojamientoNombre</td>
+                                    <td class="card-text">@r.FechasTexto</td>
+                                    <td><strong style="color: var(--gold);">S/ @r.Total.ToString("N0")</strong></td>
+                                    <td><span class="badge @r.EstadoBadgeClass">@r.Estado</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@if (_alojamientoAEliminar is not null)
+{
+    <div style="position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 999;">
+        <div style="background: var(--card-bg); padding: 36px; border-radius: 20px; max-width: 400px; width: 90%; border: 1px solid rgba(212,175,55,0.25);">
+            <h3 style="margin-bottom: 16px;">¿Eliminar alojamiento?</h3>
+            <p class="card-text" style="margin-bottom: 28px;">
+                Estás por eliminar <strong>@_alojamientoAEliminar.Nombre</strong>. Esta acción no se puede deshacer.
+            </p>
+            <div style="display: flex; gap: 14px;">
+                <button class="btn btn-outline" style="flex:1;" @onclick="() => _alojamientoAEliminar = null">Cancelar</button>
+                <button class="btn btn-danger" style="flex:1;" @onclick="EliminarAlojamiento">Eliminar</button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(_mensajeAccion))
+{
+    <div style="position: fixed; bottom: 24px; right: 24px; z-index: 999;">
+        <AlertMessage Tipo="success" Mensaje="@_mensajeAccion" />
+    </div>
+}
+
+@code {
+    private List<Alojamiento> _alojamientos = new();
+    private List<Reserva> _reservas = new();
+    private Alojamiento? _alojamientoAEliminar;
+    private string _mensajeAccion = "";
+
+    protected override void OnInitialized()
+    {
+        if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
+        _alojamientos = Data.ObtenerAlojamientosAnfitrion();
+        _reservas = Data.ObtenerReservasProximas();
+    }
+
+    private string BadgeClass(string estado) => estado switch
+    {
+        "Activo"   => "badge-success",
+        "Revisión" => "badge-warning",
+        _          => "badge-danger"
+    };
+
+    private void ConfirmarEliminar(Alojamiento aloj) => _alojamientoAEliminar = aloj;
+
+    private async Task EliminarAlojamiento()
+    {
+        if (_alojamientoAEliminar is null) return;
+        var nombre = _alojamientoAEliminar.Nombre;
+        _alojamientos.Remove(_alojamientoAEliminar);
+        _alojamientoAEliminar = null;
+        _mensajeAccion = $"Alojamiento \"{nombre}\" eliminado.";
+        await Task.Delay(3000);
+        _mensajeAccion = "";
+    }
+}

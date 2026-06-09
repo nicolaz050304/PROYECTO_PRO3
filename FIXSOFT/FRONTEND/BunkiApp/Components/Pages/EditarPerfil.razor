@@ -1,0 +1,116 @@
+@page "/perfil/editar"
+@rendermode InteractiveServer
+@inject DataService Data
+@inject NavigationManager Navigation
+@inject BunkiApp.Models.AppState AppState
+
+<PageTitle>Bunki - Editar Perfil</PageTitle>
+
+<div class="section">
+    <div class="container" style="max-width: 700px;">
+        <div class="card">
+            <div style="padding: 35px;">
+                <div style="text-align: center; margin-bottom: 35px;">
+                    <div class="avatar avatar-large" style="margin: 0 auto 20px;">
+                        @Iniciales
+                    </div>
+                    <h2 style="color: var(--text); margin-bottom: 10px;">Editar Perfil</h2>
+                    <p class="card-text">Actualiza tu información personal.</p>
+                </div>
+
+                @if (!string.IsNullOrEmpty(MensajeExito))
+                {
+                    <AlertMessage Tipo="success" Mensaje="@MensajeExito" />
+                }
+
+                <EditForm Model="Formulario" OnValidSubmit="Guardar">
+                    <DataAnnotationsValidator />
+
+                    <div class="form-group">
+                        <label>Nombre Completo</label>
+                        <InputText @bind-Value="Formulario.NombreCompleto" placeholder="Ingresa tu nombre" />
+                        <ValidationMessage For="() => Formulario.NombreCompleto" class="validation-message" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Correo Electrónico</label>
+                        <InputText @bind-Value="Formulario.Email" type="email" placeholder="correo@ejemplo.com" />
+                        <ValidationMessage For="() => Formulario.Email" class="validation-message" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <InputText @bind-Value="Formulario.Telefono" type="tel" placeholder="+51 999 999 999" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Ciudad</label>
+                        <InputText @bind-Value="Formulario.Ciudad" placeholder="Tu ciudad" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Biografía</label>
+                        <InputTextArea @bind-Value="Formulario.Bio" rows="5" placeholder="Cuéntanos sobre ti..." />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Foto de Perfil</label>
+                        <div style="padding: 25px; border: 2px dashed var(--border); border-radius: 12px; text-align: center; background: var(--light);">
+                            <i class="fas fa-image" style="font-size: 32px; color: var(--text-light); margin-bottom: 15px; display: block;"></i>
+                            <p class="card-text" style="margin-bottom: 15px;">Arrastra una imagen o selecciona un archivo</p>
+                            <input type="file" accept="image/*" />
+                        </div>
+                    </div>
+
+                    <div class="flex gap-15 mt-30">
+                        <button type="button" class="btn btn-outline" style="flex: 1;"
+                                @onclick='() => Navigation.NavigateTo("/perfil")'>
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary" style="flex: 1;" disabled="@Guardando">
+                            @if (Guardando)
+                            {
+                                <i class="fas fa-spinner fa-spin"></i>
+                            }
+                            Guardar Cambios
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private EditarPerfilForm Formulario = new();
+    private string MensajeExito = "";
+    private bool Guardando = false;
+    private string Iniciales = "JP";
+
+    protected override void OnInitialized()
+    {
+        if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
+
+        var usuario = AppState.UsuarioActual ?? new Usuario();
+        Iniciales = usuario.Iniciales;
+        Formulario = new EditarPerfilForm
+        {
+            NombreCompleto = usuario.NombreCompleto,
+            Email = usuario.Email,
+            Telefono = usuario.Telefono,
+            Ciudad = usuario.Ciudad,
+            Bio = usuario.Bio
+        };
+    }
+
+    private async Task Guardar()
+    {
+        Guardando = true;
+        await Task.Delay(700);
+        MensajeExito = "¡Perfil actualizado correctamente!";
+        Guardando = false;
+
+        await Task.Delay(1500);
+        Navigation.NavigateTo("/perfil");
+    }
+}

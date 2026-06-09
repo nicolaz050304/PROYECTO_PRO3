@@ -1,0 +1,286 @@
+@page "/pagos"
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+@inject BunkiApp.Models.AppState AppState
+
+<PageTitle>Bunki - Pagos</PageTitle>
+
+<div class="section">
+    <div class="container two-column" style="max-width: 1000px;">
+        <!-- FORMULARIO -->
+        <div>
+            <h2 class="section-title" style="text-align: left;">Resumen de Pago</h2>
+
+            <!-- DETALLE RESERVA DINÁMICO -->
+            <div class="card" style="margin-bottom: 30px;">
+                <div style="padding: 20px;">
+                    <h3 style="margin-bottom: 20px;">Detalles de la Reserva</h3>
+                    <div style="background: var(--light); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <p style="margin-bottom: 8px;"><strong>Alojamiento:</strong> @(AppState.ReservaAPagar?.AlojamientoNombre ?? "Casa en La Molina")</p>
+                        <p style="margin-bottom: 8px;">
+                            <strong>Fechas:</strong>
+                            @(AppState.ReservaAPagar != null
+                                ? $"{AppState.ReservaAPagar.FechaEntrada:dd MMM} - {AppState.ReservaAPagar.FechaSalida:dd MMM yyyy}"
+                                : "28 Mayo - 3 Junio")
+                        </p>
+                        <p style="margin-bottom: 8px;"><strong>Huéspedes:</strong> @(AppState.ReservaAPagar?.NumHuespedes ?? 4)</p>
+                        <p><strong>Ubicación:</strong> @(AppState.ReservaAPagar?.Ubicacion ?? "Lima")</p>
+                    </div>
+
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr style="border-bottom: 1px solid var(--border);">
+                            <td style="padding: 10px 0;">
+                                @ObtenerSimboloMoneda() @CalcularMonto(SubtotalNoches / 6) x 6 noches
+                            </td>
+                            <td style="text-align: right; padding: 10px 0;">
+                                @ObtenerSimboloMoneda() @CalcularMonto(SubtotalNoches)
+                            </td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid var(--border);">
+                            <td style="padding: 10px 0;">Limpieza</td>
+                            <td style="text-align: right; padding: 10px 0;">
+                                @ObtenerSimboloMoneda() @CalcularMonto(CostoLimpieza)
+                            </td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid var(--border);">
+                            <td style="padding: 10px 0;">Comisión de servicio</td>
+                            <td style="text-align: right; padding: 10px 0;">
+                                @ObtenerSimboloMoneda() @CalcularMonto(ComisionServicio)
+                            </td>
+                        </tr>
+                        <tr style="font-weight: bold; border-top: 2px solid var(--primary); font-size: 18px;">
+                            <td style="padding: 15px 0 0 0;">Total (PEN)</td>
+                            <td style="text-align: right; color: var(--primary); padding: 15px 0 0 0;">
+                                @ObtenerSimboloMoneda() @CalcularMonto(TotalReserva)
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MÉTODO DE PAGO -->
+            <div class="card">
+                <div style="padding: 20px;">
+                    <h3 style="margin-bottom: 20px;">Método de Pago</h3>
+
+                    <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+                        @foreach (var metodo in MetodosPago)
+                        {
+                            <label style="display: flex; align-items: center; gap: 12px; padding: 14px; border: 2px solid @(Formulario.MetodoPago == metodo.Key ? "var(--primary)" : "var(--border)"); border-radius: var(--radius); cursor: pointer; transition: all 0.2s;">
+                                <input type="radio" name="payment" value="@metodo.Key"
+                                       checked="@(Formulario.MetodoPago == metodo.Key)"
+                                       @onchange="() => Formulario.MetodoPago = metodo.Key" />
+                                <i class="fas @metodo.Icono" style="color: var(--primary); font-size: 18px;"></i>
+                                <span style="font-weight: 600;">@metodo.Nombre</span>
+                            </label>
+                        }
+                    </div>
+
+                    @if (Formulario.MetodoPago == "tarjeta")
+                    {
+                        <EditForm Model="Formulario" OnValidSubmit="Pagar">
+                            <DataAnnotationsValidator />
+
+                            <h4 style="margin-bottom: 15px;">Datos de la Tarjeta</h4>
+
+                            <div class="form-group">
+                                <label>Número de Tarjeta</label>
+                                <InputText @bind-Value="Formulario.NumeroTarjeta" placeholder="1234 5678 9012 3456"
+                                           maxlength="19" />
+                                <ValidationMessage For="() => Formulario.NumeroTarjeta" class="validation-message" />
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Vencimiento</label>
+                                    <InputText @bind-Value="Formulario.Vencimiento" placeholder="MM/YY" maxlength="5" />
+                                    <ValidationMessage For="() => Formulario.Vencimiento" class="validation-message" />
+                                </div>
+                                <div class="form-group">
+                                    <label>CVV</label>
+                                    <InputText @bind-Value="Formulario.Cvv" placeholder="123" maxlength="4" />
+                                    <ValidationMessage For="() => Formulario.Cvv" class="validation-message" />
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Nombre en la Tarjeta</label>
+                                <InputText @bind-Value="Formulario.NombreTarjeta" placeholder="Juan Pérez" />
+                                <ValidationMessage For="() => Formulario.NombreTarjeta" class="validation-message" />
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-large" disabled="@Procesando">
+                                @if (Procesando)
+                                {
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    <span>Procesando pago...</span>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-lock"></i>
+                                    <span>Completar Pago - @ObtenerSimboloMoneda() @CalcularMonto(TotalReserva)</span>
+                                }
+                            </button>
+                        </EditForm>
+                    }
+                    else
+                    {
+                        <div style="padding: 20px; background: var(--light); border-radius: var(--radius); text-align: center;">
+                            <i class="fas fa-@(Formulario.MetodoPago == "billetera" ? "mobile-alt" : "university")"
+                               style="font-size: 40px; color: var(--primary); margin-bottom: 16px; display: block;"></i>
+                            <p class="card-text" style="margin-bottom: 20px;">
+                                @(Formulario.MetodoPago == "billetera"
+                                    ? "Serás redirigido a Yape/Plin para completar el pago."
+                                    : "Se mostrarán los datos de cuenta bancaria para realizar la transferencia.")
+                            </p>
+                            <button class="btn btn-primary btn-large" @onclick="PagarOtroMetodo" disabled="@Procesando">
+                                @if (Procesando)
+                                {
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                }
+                                Continuar
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- SIDEBAR RESUMEN DINÁMICO -->
+        <div class="sidebar">
+            <h3 style="margin-bottom: 20px;">Resumen</h3>
+
+            <div style="background: var(--light); padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--primary);">
+                <label style="font-weight: bold; display: block; margin-bottom: 8px;">
+                    <i class="fas fa-globe"></i> Moneda de Pago:
+                </label>
+                <select @bind="MonedaSeleccionada" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 16px;">
+                    <option value="PEN">Soles (PEN)</option>
+                    <option value="USD">Dólares (USD)</option>
+                    <option value="EUR">Euros (EUR)</option>
+                </select>
+            </div>
+
+            <div style="background: var(--light); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <div class="flex flex-between" style="margin-bottom: 10px;">
+                    <span>Subtotal</span><strong>@ObtenerSimboloMoneda() @CalcularMonto(SubtotalGeneral)</strong>
+                </div>
+                <div class="flex flex-between" style="margin-bottom: 10px;">
+                    <span>Comisión</span><strong>@ObtenerSimboloMoneda() @CalcularMonto(ComisionServicio)</strong>
+                </div>
+                <div class="flex flex-between" style="padding-top: 10px; border-top: 1px solid var(--border);">
+                    <span style="font-weight: bold;">Total</span>
+                    <span style="font-size: 24px; font-weight: bold; color: var(--primary);">@ObtenerSimboloMoneda() @CalcularMonto(TotalReserva)</span>
+                </div>
+            </div>
+
+            <AlertMessage Tipo="success" Mensaje="Los pagos son 100% seguros y protegidos." Cerrable="false" />
+
+            <div class="card" style="margin-bottom: 16px;">
+                <div style="padding: 16px;">
+                    <h4 style="margin-bottom: 10px;">Política de Cancelación</h4>
+                    <p class="card-text">Puedes cancelar tu reserva sin penalización hasta 48 horas antes del check-in.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div style="padding: 16px;">
+                    <h4 style="margin-bottom: 10px;"><i class="fas fa-shield-alt" style="color: var(--success);"></i> Protección de Privacidad</h4>
+                    <p class="card-text" style="font-size: 12px;">Tu información de pago está protegida con encriptación SSL de 256 bits.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (PagoCompletado)
+{
+    <div style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 999;">
+        <div style="background: white; padding: 50px; border-radius: var(--radius-xl); text-align: center; max-width: 440px; box-shadow: var(--shadow-lg);">
+            <div style="font-size: 60px; margin-bottom: 20px;">✅</div>
+            <h2 style="margin-bottom: 12px; color: var(--success);">¡Pago Completado!</h2>
+            <p class="card-text" style="margin-bottom: 24px;">
+                Tu reserva ha sido confirmada. Recibirás un correo de confirmación en breve.
+            </p>
+            <button class="btn btn-primary btn-large" @onclick='() => Navigation.NavigateTo("/mis-reservas")'>
+                Ver Mis Reservas
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
+    }
+
+    private PagoForm Formulario = new();
+    private bool Procesando = false;
+    private bool PagoCompletado = false;
+
+    // ✨ LÓGICA MATEMÁTICA DINÁMICA ✨
+    // Toma el Total exacto de la reserva (si es nulo, usa 1430 por defecto)
+    private decimal TotalReserva => AppState.ReservaAPagar?.Total ?? 1430m;
+
+    // Calcula la comisión al 10%
+    private decimal ComisionServicio => Math.Round(TotalReserva * 0.10m, 2);
+
+    // Costo de limpieza fijo
+    private decimal CostoLimpieza => 100m;
+
+    // Calcula cuánto es la tarifa por noches para que la suma cuadre perfecto
+    private decimal SubtotalNoches => TotalReserva - ComisionServicio - CostoLimpieza;
+
+    // Subtotal general (sin la comisión) para la barra lateral
+    private decimal SubtotalGeneral => TotalReserva - ComisionServicio;
+
+
+    // VARIABLES Y LÓGICA PARA MULTIMONEDA
+    private string MonedaSeleccionada { get; set; } = "PEN";
+
+    private string ObtenerSimboloMoneda() => MonedaSeleccionada switch
+    {
+        "USD" => "$",
+        "EUR" => "€",
+        _ => "S/"
+    };
+
+    private string CalcularMonto(decimal montoBaseSoles)
+    {
+        decimal tipoCambioUsd = 3.80m;
+        decimal tipoCambioEur = 4.10m;
+
+        decimal resultado = MonedaSeleccionada switch
+        {
+            "USD" => montoBaseSoles / tipoCambioUsd,
+            "EUR" => montoBaseSoles / tipoCambioEur,
+            _ => montoBaseSoles
+        };
+
+        return resultado.ToString("N2");
+    }
+
+    private static readonly (string Key, string Nombre, string Icono)[] MetodosPago =
+    {
+        ("tarjeta", "Tarjeta de Crédito/Débito", "fa-credit-card"),
+        ("transferencia", "Transferencia Bancaria", "fa-university"),
+        ("billetera", "Billetera Digital (Yape/Plin)", "fa-mobile-alt")
+    };
+
+    private async Task Pagar()
+    {
+        Procesando = true;
+        await Task.Delay(2000);
+        Procesando = false;
+        PagoCompletado = true;
+    }
+
+    private async Task PagarOtroMetodo()
+    {
+        Procesando = true;
+        await Task.Delay(1500);
+        Procesando = false;
+        PagoCompletado = true;
+    }
+}

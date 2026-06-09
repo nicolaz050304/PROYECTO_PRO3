@@ -1,0 +1,125 @@
+@page "/notificaciones"
+@rendermode InteractiveServer
+@inject DataService Data
+@inject NavigationManager Navigation
+@inject BunkiApp.Models.AppState AppState
+<PageTitle>Bunki - Notificaciones</PageTitle>
+
+<div class="section">
+    <div class="container" style="max-width: 700px;">
+        <div class="flex flex-between items-center mb-30">
+            <h2 style="font-size: 24px; font-weight: 700;">Notificaciones</h2>
+            @if (ListaNotificaciones.Any(n => !n.Leida))
+            {
+                <button class="btn btn-outline btn-small" @onclick="MarcarTodasLeidas">
+                    Marcar todas como leídas
+                </button>
+            }
+        </div>
+
+        <div class="flex gap-10 mb-20">
+            @foreach (var cat in Categorias)
+            {
+                <button class="filter-btn @(CategoriaActiva == cat ? "active" : "")"
+                        @onclick="() => CategoriaActiva = cat">
+                    @cat
+                </button>
+            }
+        </div>
+
+        @if (!NotificacionesFiltradas.Any())
+        {
+            <AlertMessage Tipo="warning" Mensaje="No hay notificaciones en esta categoría." Cerrable="false" />
+        }
+
+        @foreach (var notif in NotificacionesFiltradas)
+        {
+            <div class="notification @(!notif.Leida ? "unread" : "")" style="cursor: pointer;" @onclick="() => AbrirNotificacion(notif)">
+                <div class="notif-icono">
+                    <i class="fas @ObtenerIcono(notif.Categoria)" style="font-size: 22px; color: var(--primary);"></i>
+                </div>
+                <div style="flex: 1;">
+                    <div class="flex flex-between">
+                        <h4 style="font-size: 15px;">
+                            @notif.Titulo
+                            @if (!notif.Leida)
+                            {
+                                <span style="display: inline-block; width: 8px; height: 8px; background: var(--primary); border-radius: 50%; margin-left: 8px;"></span>
+                            }
+                        </h4>
+                        <span class="card-text" style="font-size: 12px; white-space: nowrap; margin-left: 12px;">
+                            @notif.Tiempo
+                        </span>
+                    </div>
+                    <p class="card-text" style="margin-top: 8px; font-size: 14px;">@notif.Descripcion</p>
+                </div>
+                <button class="btn btn-small @notif.AccionBtnClass"
+                        @onclick:stopPropagation
+                        @onclick="() => IrA(notif.AccionUrl)">
+                    @notif.AccionTexto
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .notif-icono {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: var(--light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+</style>
+
+@code {
+    private static readonly string[] Categorias = { "Todas", "Reservas", "Mensajes", "Pagos" };
+    private string CategoriaActiva = "Todas";
+    
+    // Cambiado aquí para evitar el error CS0542
+    private List<Notificacion> ListaNotificaciones = new();
+
+    private List<Notificacion> NotificacionesFiltradas => CategoriaActiva == "Todas"
+        ? ListaNotificaciones
+        : ListaNotificaciones.Where(n => n.Categoria == MapearCategoria(CategoriaActiva)).ToList();
+
+    protected override void OnInitialized()
+    {
+        if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
+
+        ListaNotificaciones = Data.ObtenerNotificaciones();
+    }
+
+    private string MapearCategoria(string cat) => cat switch
+    {
+        "Reservas" => "Reserva",
+        "Mensajes" => "Mensaje",
+        "Pagos" => "Pago",
+        _ => cat
+    };
+
+    private string ObtenerIcono(string categoria) => categoria switch
+    {
+        "Reserva" => "fa-calendar-check",
+        "Mensaje" => "fa-envelope",
+        "Pago" => "fa-credit-card",
+        _ => "fa-bell"
+    };
+
+    private void AbrirNotificacion(Notificacion notif)
+    {
+        notif.Leida = true;
+    }
+
+    private void MarcarTodasLeidas()
+    {
+        foreach (var n in ListaNotificaciones)
+            n.Leida = true;
+    }
+
+    private void IrA(string url) => Navigation.NavigateTo(url);
+}

@@ -1,0 +1,19 @@
+<Router AppAssembly="typeof(Program).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)" />
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <PageTitle>Página no encontrada - Bunki</PageTitle>
+        <LayoutView Layout="typeof(MainLayout)">
+            <div class="section">
+                <div class="container text-center">
+                    <h1 style="font-size: 80px; color: var(--primary); margin-bottom: 20px;">404</h1>
+                    <h2 style="margin-bottom: 16px;">Página no encontrada</h2>
+                    <p class="card-text mb-30">Lo sentimos, la página que buscas no existe.</p>
+                    <a href="/" class="btn btn-primary">Volver al inicio</a>
+                </div>
+            </div>
+        </LayoutView>
+    </NotFound>
+</Router>

@@ -1,0 +1,345 @@
+@implements IDisposable
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+@inject BunkiApp.Models.AppState AppState
+
+<header style="position: relative; z-index: 502;">
+    <div class="navbar container">
+
+        <a href="/" class="logo">
+            <i class="fas fa-home"></i> Bunki
+        </a>
+
+        <nav>
+            <a href="/explorar" class="@NavClass("/explorar")">Explorar</a>
+            @if (AppState.EstaAutenticado)
+            {
+                <a href="/mis-reservas" class="@NavClass("/mis-reservas")">Mis Reservas</a>
+                <a href="/mensajes" class="@NavClass("/mensajes")">Mensajes</a>
+                <a href="/notificaciones" class="@NavClass("/notificaciones")">
+                    <i class="fas fa-bell"></i>
+                </a>
+                @if (AppState.EsAdmin() )
+                {
+                    <a href="/admin" class="@NavClass("/admin")" style="color:var(--gold);">
+                        <i class="fas fa-shield-alt"></i> Admin
+                    </a>
+                }
+            }
+        </nav>
+
+        <div class="nav-buttons" style="position:relative;">
+
+            @if (!AppState.EstaAutenticado)
+            {
+                <button class="nav-avatar-jp" @onclick="ToggleVisitante">
+                    JP
+                </button>
+
+                @if (_menuVisitante)
+                {
+                    <div class="nav-dropdown">
+                        <a href="/login" class="nav-dropdown-item" @onclick="CerrarMenus">
+                            <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                        </a>
+                        <a href="/registro" class="nav-dropdown-item" @onclick="CerrarMenus">
+                            <i class="fas fa-user-plus"></i> Registrarse
+                        </a>
+                    </div>
+                }
+            }
+            else
+            {
+                <button class="nav-user-pill" @onclick="ToggleUsuario">
+                    <span class="nav-user-name">@AppState.UsuarioActual?.NombreCompleto</span>
+                    <span class="nav-avatar-sm">@AppState.UsuarioActual?.Iniciales</span>
+                    <i class="fas fa-chevron-down nav-chevron @(_menuUsuario ? "rotated" : "")"></i>
+                </button>
+
+                @if (_menuUsuario)
+                {
+                    <div class="nav-dropdown">
+                        <div class="nav-dropdown-header">
+                            <span class="nav-avatar-sm">@AppState.UsuarioActual?.Iniciales</span>
+                            <div>
+                                <div class="nav-dd-name">@AppState.UsuarioActual?.NombreCompleto</div>
+                                <div class="nav-dd-email">@AppState.UsuarioActual?.Email</div>
+                            </div>
+                        </div>
+                        <div class="nav-dd-divider"></div>
+
+                        <span class="nav-dd-section">Como huésped</span>
+                        <a href="/perfil" class="nav-dropdown-item" @onclick="CerrarMenus"><i class="fas fa-user"></i> Mi Perfil</a>
+                        <a href="/mis-reservas" class="nav-dropdown-item" @onclick="CerrarMenus"><i class="fas fa-calendar-check"></i> Mis Reservas</a>
+                        <div class="nav-dd-divider"></div>
+
+                        <span class="nav-dd-section">Como anfitrión</span>
+                        <a href="/panel-anfitrion" class="nav-dropdown-item @NavClass("/panel-anfitrion")" @onclick="CerrarMenus">
+                            <i class="fas fa-chart-line"></i> Panel</a>
+                        <a href="/mis-alojamientos" class="nav-dropdown-item" @onclick="CerrarMenus"><i class="fas fa-home"></i> Mis Alojamientos</a>
+                        <a href="/crear-alojamiento" class="nav-dropdown-item" @onclick="CerrarMenus"><i class="fas fa-plus-circle"></i> Crear Alojamiento</a>
+                        <a href="/reservas-recibidas" class="nav-dropdown-item" @onclick="CerrarMenus"><i class="fas fa-inbox"></i> Reservas Recibidas</a>
+                        <div class="nav-dd-divider"></div>
+
+                        <a href="/perfil" class="nav-dropdown-item" @onclick="CerrarMenus"><i class="fas fa-cog"></i> Configuración</a>
+
+                        @if (AppState.EsAdmin())
+                        {
+                            <a href="/admin" class="nav-dropdown-item nav-dd-admin" @onclick="CerrarMenus">
+                                <i class="fas fa-shield-alt"></i> Panel Admin
+                            </a>
+                        }
+                        <div class="nav-dd-divider"></div>
+
+                        <button class="nav-dropdown-item nav-dd-logout" @onclick="CerrarSesion">
+                            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                        </button>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</header>
+
+@if (_menuVisitante || _menuUsuario)
+{
+    <div class="nav-overlay" @onclick="CerrarMenus"></div>
+}
+
+<style>
+    .nav-avatar-jp {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: rgba(212,175,55,.2);
+        border: 2px solid rgba(212,175,55,.4);
+        color: var(--gold);
+        font-weight: 700;
+        font-size: 14px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all .2s;
+        font-family: inherit;
+    }
+
+        .nav-avatar-jp:hover {
+            background: rgba(212,175,55,.35);
+            border-color: var(--gold);
+        }
+
+    .nav-user-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 14px 6px 6px;
+        border-radius: 50px;
+        border: 1px solid rgba(212,175,55,.3);
+        background: rgba(212,175,55,.06);
+        cursor: pointer;
+        font-family: inherit;
+        transition: all .2s;
+    }
+
+        .nav-user-pill:hover {
+            border-color: var(--gold);
+            background: rgba(212,175,55,.14);
+        }
+
+    .nav-user-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--light-text);
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .nav-avatar-sm {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: rgba(212,175,55,.25);
+        border: 1px solid rgba(212,175,55,.4);
+        color: var(--gold);
+        font-weight: 700;
+        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .nav-chevron {
+        font-size: 11px;
+        color: var(--muted);
+        transition: transform .2s;
+    }
+
+        .nav-chevron.rotated {
+            transform: rotate(180deg);
+        }
+
+    .nav-dropdown {
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        background: var(--card-bg);
+        border: 1px solid rgba(212,175,55,.2);
+        border-radius: 16px;
+        min-width: 250px;
+        box-shadow: 0 20px 50px rgba(0,0,0,.55);
+        z-index: 505; /* Modificado para posicionarse por encima de todo */
+        overflow: hidden;
+        animation: ddFade .15s ease;
+    }
+
+    @@keyframes ddFade {
+        from {
+            opacity: 0;
+            transform: translateY(-6px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .nav-dropdown-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 18px;
+        background: rgba(212,175,55,.07);
+    }
+
+    .nav-dd-name {
+        font-weight: 700;
+        color: var(--light-text);
+        font-size: 14px;
+    }
+
+    .nav-dd-email {
+        font-size: 12px;
+        color: var(--muted);
+    }
+
+    .nav-dd-divider {
+        height: 1px;
+        background: rgba(212,175,55,.1);
+        margin: 3px 0;
+    }
+
+    .nav-dd-section {
+        display: block;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .7px;
+        color: var(--muted);
+        padding: 8px 18px 4px;
+    }
+
+    .nav-dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 18px;
+        color: var(--light-text);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        transition: background .15s;
+        cursor: pointer;
+        width: 100%;
+        background: none;
+        border: none;
+        text-align: left;
+        font-family: inherit;
+    }
+
+        .nav-dropdown-item:hover {
+            background: rgba(212,175,55,.08);
+            color: var(--gold);
+        }
+
+        .nav-dropdown-item i {
+            width: 16px;
+            text-align: center;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .nav-dropdown-item:hover i {
+            color: var(--gold);
+        }
+
+    .nav-dd-admin {
+        color: var(--gold) !important;
+    }
+
+        .nav-dd-admin i {
+            color: var(--gold) !important;
+        }
+
+    .nav-dd-logout {
+        color: var(--danger) !important;
+    }
+
+        .nav-dd-logout:hover {
+            background: rgba(230,57,70,.08) !important;
+            color: var(--danger) !important;
+        }
+
+        .nav-dd-logout i {
+            color: var(--danger) !important;
+        }
+
+    .nav-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 499; /* Se mantiene por debajo del header y del dropdown */
+        background: transparent;
+    }
+</style>
+
+@code {
+    private bool _menuVisitante = false;
+    private bool _menuUsuario = false;
+
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        CerrarMenus();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private string NavClass(string href)
+    {
+        var uri = Navigation.ToBaseRelativePath(Navigation.Uri);
+        return uri.StartsWith(href.TrimStart('/')) ? "active" : "";
+    }
+
+    private void ToggleVisitante() { _menuVisitante = !_menuVisitante; _menuUsuario = false; StateHasChanged(); }
+    private void ToggleUsuario() { _menuUsuario = !_menuUsuario; _menuVisitante = false; StateHasChanged(); }
+    private void CerrarMenus() { _menuVisitante = false; _menuUsuario = false; StateHasChanged(); }
+
+    private void CerrarSesion()
+    {
+        AppState.Logout();
+        CerrarMenus();
+        Navigation.NavigateTo("/");
+    }
+}

@@ -1,0 +1,313 @@
+@page "/crear-alojamiento"
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+@inject BunkiApp.Models.AppState AppState
+
+<PageTitle>Bunki - Crear Alojamiento</PageTitle>
+
+<div class="hero-small">
+    <div class="container">
+        <h1>Publica tu alojamiento</h1>
+        <p>Comparte tu espacio y comienza a generar ingresos</p>
+    </div>
+</div>
+
+<div class="section">
+    <div class="container" style="max-width: 800px;">
+
+        @if (!string.IsNullOrEmpty(MensajeExito))
+        {
+            <AlertMessage Tipo="success" Mensaje="@MensajeExito" />
+        }
+
+        <EditForm Model="Formulario" OnValidSubmit="Publicar">
+            <DataAnnotationsValidator />
+
+            <!-- INFORMACIÓN BÁSICA -->
+            <div class="form-section">
+                <h2 class="section-title" style="text-align: left; font-size: 20px;">
+                    <i class="fas fa-building" style="margin-right: 10px; color: var(--primary);"></i>
+                    Información Básica
+                </h2>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombre del alojamiento</label>
+                        <InputText @bind-Value="Formulario.Nombre" placeholder="Ej: Departamento en Miraflores" />
+                        <ValidationMessage For="() => Formulario.Nombre" class="validation-message" />
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de alojamiento</label>
+                        <InputSelect @bind-Value="Formulario.Tipo">
+                            <option value="">Selecciona un tipo</option>
+                            <option>Departamento</option>
+                            <option>Casa</option>
+                            <option>Habitación</option>
+                            <option>Loft</option>
+                            <option>Cabaña</option>
+                        </InputSelect>
+                        <ValidationMessage For="() => Formulario.Tipo" class="validation-message" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <InputTextArea @bind-Value="Formulario.Descripcion" placeholder="Describe tu alojamiento..." rows="4" />
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Huéspedes</label>
+                        <InputNumber @bind-Value="Formulario.MaxHuespedes" placeholder="4" min="1" max="20" />
+                        <ValidationMessage For="() => Formulario.MaxHuespedes" class="validation-message" />
+                    </div>
+                    <div class="form-group">
+                        <label>Habitaciones</label>
+                        <InputNumber @bind-Value="Formulario.Habitaciones" placeholder="2" min="1" max="20" />
+                        <ValidationMessage For="() => Formulario.Habitaciones" class="validation-message" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- UBICACIÓN -->
+            <div class="form-section">
+                <h2 class="section-title" style="text-align: left; font-size: 20px;">
+                    <i class="fas fa-map-marker-alt" style="margin-right: 10px; color: var(--primary);"></i>
+                    Ubicación
+                </h2>
+
+                <div class="form-group">
+                    <label>Dirección</label>
+                    <InputText @bind-Value="Formulario.Direccion" placeholder="Av. Larco 123" />
+                    <ValidationMessage For="() => Formulario.Direccion" class="validation-message" />
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Distrito</label>
+                        <InputSelect @bind-Value="Formulario.Distrito">
+                            <option value="">Selecciona...</option>
+                            <option>Miraflores</option>
+                            <option>Barranco</option>
+                            <option>San Isidro</option>
+                            <option>La Molina</option>
+                            <option>Pueblo Libre</option>
+                            <option>Chaclacayo</option>
+                            <option>San Borja</option>
+                            <option>Surco</option>
+                        </InputSelect>
+                        <ValidationMessage For="() => Formulario.Distrito" class="validation-message" />
+                    </div>
+                    <div class="form-group">
+                        <label>Provincia</label>
+                        <InputText @bind-Value="Formulario.Provincia" readonly />
+                    </div>
+                </div>
+            </div>
+
+            <!-- FOTOS -->
+            <!-- FOTOS -->
+            <div class="form-section">
+                <h2 class="section-title" style="text-align: left; font-size: 20px;">
+                    <i class="fas fa-images" style="margin-right: 10px; color: var(--primary);"></i> Fotos
+                </h2>
+
+                <!-- CAMBIO: Ahora el label actúa como el disparador del explorador de archivos -->
+                <label class="image-upload" style="cursor: pointer; display: block;">
+                    <input type="file" accept="image/jpeg,image/png" style="display: none;" multiple @onchange="ArchivoSeleccionado" />
+
+                    <i class="fas fa-cloud-upload-alt" style="display: block; font-size: 40px; margin-bottom: 10px;"></i>
+                    <p class="upload-text">Arrastra fotos aquí o haz clic para subir</p>
+                    <p class="upload-hint">Máximo 10 imágenes • JPG, PNG</p>
+                </label>
+
+                <!-- ZONA DE PREVISUALIZACIÓN -->
+                @if (ImagenesPreview.Any())
+                {
+                    <div class="image-preview" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; margin-top: 20px;">
+                        @for (int i = 0; i < ImagenesPreview.Count; i++)
+                        {
+                            int idx = i;
+                            <div class="image-item" style="position: relative;">
+                                <!-- Aquí usamos un div con color de fondo solo si no tenemos la URL real de la imagen -->
+                                <div style="width: 100%; height: 120px; background: @ImagenesPreview[idx]; border-radius: 8px; border: 1px solid var(--border);"></div>
+
+                                <button type="button" class="delete-btn" style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 4px; padding: 5px 8px; cursor: pointer;" @onclick="() => EliminarImagen(idx)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- SERVICIOS / AMENIDADES -->
+            <div class="form-section">
+                <h2 class="section-title" style="text-align: left; font-size: 20px;">
+                    <i class="fas fa-star" style="margin-right: 10px; color: var(--primary);"></i>
+                    Servicios
+                </h2>
+
+                <div class="amenities-grid">
+                    @foreach (var servicio in Servicios)
+                    {
+                        bool activo = ServiciosSeleccionados.Contains(servicio.Key);
+                        <div class="amenity-checkbox @(activo ? "selected" : "")"
+                             @onclick="() => ToggleServicio(servicio.Key)"
+                             style="cursor: pointer;">
+                            <span>
+                                <i class="fas @servicio.Icono"></i>
+                                @servicio.Nombre
+                            </span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- PRECIOS -->
+            <div class="form-section">
+                <h2 class="section-title" style="text-align: left; font-size: 20px;">
+                    <i class="fas fa-dollar-sign" style="margin-right: 10px; color: var(--primary);"></i>
+                    Precios (S/)
+                </h2>
+
+                <div class="price-grid">
+                    <div class="form-group">
+                        <label>Precio por noche</label>
+                        <InputNumber @bind-Value="Formulario.PrecioNoche" placeholder="150" min="1" />
+                        <ValidationMessage For="() => Formulario.PrecioNoche" class="validation-message" />
+                    </div>
+                    <div class="form-group">
+                        <label>Tarifa de limpieza</label>
+                        <InputNumber @bind-Value="Formulario.TarifaLimpieza" placeholder="50" min="0" />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Descuento semanal (%)</label>
+                        <div style="position: relative;">
+                            <InputSelect @bind-Value="Formulario.DescuentoSemanal" style="width: 100%; appearance: none; padding: 10px; border-radius: 6px; border: 1px solid var(--border);">
+                                <option value="0">Sin descuento</option>
+                                @for (int i = 5; i <= 50; i += 5)
+                                {
+                                    <option value="@i">@i% de descuento</option>
+                                }
+                            </InputSelect>
+                            <i class="fas fa-chevron-down" style="position: absolute; right: 15px; top: 12px; pointer-events: none; color: var(--text-light);"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOTONES -->
+            <div class="button-group">
+                <button type="submit" class="btn btn-primary" disabled="@Publicando">
+                    @if (Publicando)
+                    {
+                        <i class="fas fa-spinner fa-spin"></i>
+                    }
+                    else
+                    {
+                        <i class="fas fa-check-circle"></i>
+                    }
+                    Publicar alojamiento
+                </button>
+
+                <button type="button" class="btn btn-secondary" @onclick="GuardarBorrador">
+                    <i class="fas fa-save"></i> Guardar borrador
+                </button>
+
+                <button type="button" class="btn btn-outline" @onclick='() => Navigation.NavigateTo("/panel-anfitrion")'>
+                    <i class="fas fa-arrow-left"></i> Cancelar
+                </button>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
+    }
+
+    private CrearAlojamientoForm Formulario = new();
+    private bool Publicando = false;
+    private string MensajeExito = "";
+    private HashSet<string> ServiciosSeleccionados = new();
+    private List<string> ImagenesPreview = new();
+
+    private record ServicioInfo(string Key, string Nombre, string Icono);
+
+    private static readonly ServicioInfo[] Servicios =
+    {
+        new("wifi", "WiFi", "fa-wifi"),
+        new("estacionamiento", "Estacionamiento", "fa-car"),
+        new("tv", "TV", "fa-tv"),
+        new("piscina", "Piscina", "fa-water"),
+        new("aire", "Aire Acondicionado", "fa-snowflake"),
+        new("cocina", "Cocina Equipada", "fa-utensils"),
+        new("lavanderia", "Lavandería", "fa-tshirt"),
+        new("bbq", "Barbacoa", "fa-fire")
+    };
+
+    private static readonly string[] ColoresPreview =
+    {
+        "linear-gradient(135deg, #FF6B6B, #FFB3B3)",
+        "linear-gradient(135deg, #4ECDC4, #8FE7E0)",
+        "linear-gradient(135deg, #FFD43B, #FFE680)"
+    };
+
+    private void ToggleServicio(string key)
+    {
+        if (!ServiciosSeleccionados.Remove(key))
+            ServiciosSeleccionados.Add(key);
+    }
+
+    private void ArchivoSeleccionado(ChangeEventArgs e)
+    {
+        // Esto es lo que se activa al elegir archivos desde la PC
+        if (ImagenesPreview.Count < 10)
+        {
+            // Aquí agregamos un color "dummy" para la preview,
+            // pero visualmente ya se ve como una tarjeta de foto cargada.
+            ImagenesPreview.Add(ColoresPreview[ImagenesPreview.Count % ColoresPreview.Length]);
+        }
+    }
+
+    private void EliminarImagen(int idx)
+    {
+        if (idx >= 0 && idx < ImagenesPreview.Count)
+            ImagenesPreview.RemoveAt(idx);
+    }
+
+    private async Task Publicar()
+    {
+        // 1. Validar si el formulario está completo (esto evita envíos vacíos)
+        if (string.IsNullOrEmpty(Formulario.Nombre) || string.IsNullOrEmpty(Formulario.Direccion))
+        {
+            MensajeExito = "Por favor, completa los campos obligatorios antes de publicar.";
+            return;
+        }
+
+        Publicando = true;
+
+        // 2. Simulamos la conexión al servidor
+        await Task.Delay(1500);
+
+        // 3. Activamos el mensaje de éxito
+        MensajeExito = "¡Tu alojamiento ha sido enviado a revisión! El equipo de Bunki te contactará pronto.";
+
+        // 4. Esperamos un segundo para que el usuario lea el mensaje antes de irse
+        await Task.Delay(2000);
+
+        Publicando = false;
+
+        // 5. Redirección final al panel del anfitrión
+        Navigation.NavigateTo("/panel-anfitrion");
+    }
+
+    private void GuardarBorrador()
+    {
+        MensajeExito = "Borrador guardado correctamente.";
+    }
+}

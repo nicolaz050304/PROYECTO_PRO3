@@ -1,0 +1,294 @@
+@page "/alojamiento/{Id:int}"
+@rendermode InteractiveServer
+@inject DataService Data
+@inject NavigationManager Navigation
+@inject BunkiApp.Models.AppState AppState
+
+<PageTitle>Bunki - @(Alojamiento?.Nombre ?? "Detalle Alojamiento")</PageTitle>
+
+@if (Alojamiento is null)
+{
+    <div class="section">
+        <div class="container text-center">
+            <h2>Alojamiento no encontrado</h2>
+            <a href="/explorar" class="btn btn-primary" style="margin-top: 20px;">Volver al explorar</a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="section">
+        <div class="container">
+            <!-- BREADCRUMB -->
+            <div class="breadcrumb">
+                <a href="/explorar">Explorar</a>
+                <span>/</span>
+                <a href="/explorar">@Alojamiento.Distrito</a>
+                <span>/</span>
+                <span>@Alojamiento.Nombre</span>
+            </div>
+
+            <div class="two-column">
+                <!-- CONTENIDO PRINCIPAL -->
+                <div>
+                    <!-- GALERÍA -->
+                    <div class="gallery">
+                        @if (!string.IsNullOrWhiteSpace(Alojamiento.ImagenUrl))
+                        {
+                            <img src="@Alojamiento.ImagenUrl" alt="@Alojamiento.Nombre" style="width: 100%; height: 400px; object-fit: cover; border-radius: 12px;" />
+                        }
+                        else
+                        {
+                            <div class="gallery-image" style="background: @Alojamiento.GradienteColor; display: flex; align-items: center; justify-content: center; height: 400px; border-radius: 12px;">
+                                <i class="fas fa-image" style="font-size: 60px; color: rgba(255,255,255,0.5);"></i>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- TÍTULO Y RATING -->
+                    <div class="mt-40">
+                        <h2 style="margin-bottom: 12px;">@Alojamiento.Nombre</h2>
+                        <StarRating Valor="Alojamiento.Rating" TotalResenas="Alojamiento.TotalResenas" />
+
+                        <p style="margin-top: 20px; margin-bottom: 20px; color: var(--text-light); line-height: 1.8;">
+                            @Alojamiento.Descripcion
+                        </p>
+
+                        <div class="grid grid-3" style="margin-bottom: 20px;">
+                            <div class="stat-box">
+                                <div class="stat-number">@Alojamiento.MaxHuespedes</div>
+                                <div class="stat-label">Huéspedes</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-number">@Alojamiento.Habitaciones</div>
+                                <div class="stat-label">Habitaciones</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-number">@Alojamiento.TotalResenas</div>
+                                <div class="stat-label">Reseñas</div>
+                            </div>
+                        </div>
+
+                        <!-- CARACTERÍSTICAS / SERVICIOS -->
+                        <h3 style="margin-top: 30px; margin-bottom: 15px;">Características</h3>
+                        <div class="grid grid-2" style="margin-bottom: 30px;">
+                            @foreach (var servicio in Alojamiento.Servicios)
+                            {
+                                <p>
+                                    <i class="fas fa-check" style="color: var(--success); margin-right: 10px;"></i>
+                                    @servicio
+                                </p>
+                            }
+                        </div>
+
+                        <!-- SOBRE EL ANFITRIÓN -->
+                        <h3 style="margin-top: 30px; margin-bottom: 15px;">Sobre el Anfitrión</h3>
+                        <div class="flex flex-between" style="padding: 20px; background: var(--light); border-radius: 8px; align-items: center;">
+                            <div class="flex gap-15 items-center">
+                                <div class="avatar avatar-large">@Alojamiento.AnfitrionInicial</div>
+                                <div>
+                                    <h4>@Alojamiento.AnfitrionNombre</h4>
+                                    <p class="card-text">Anfitrión desde @Alojamiento.AnfitrionDesde</p>
+                                    <p style="margin-top: 8px;">
+                                        <span class="badge badge-success">Anfitrión Verificado</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <button class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/mensajes")'>
+                                Contactar
+                            </button>
+                        </div>
+
+                        <!-- RESEÑAS -->
+                        <h3 style="margin-top: 30px; margin-bottom: 15px;">Reseñas (@Alojamiento.TotalResenas)</h3>
+                        <div style="border-top: 1px solid var(--border); padding-top: 20px;">
+                            @if (Alojamiento.Resenas.Any())
+                            {
+                                @foreach (var resena in Alojamiento.Resenas)
+                                {
+                                    <div style="padding: 15px 0; border-bottom: 1px solid var(--border);">
+                                        <div class="flex flex-between">
+                                            <div>
+                                                <strong>@resena.AutorNombre</strong>
+                                                <div class="rating" style="margin-top: 5px;">
+                                                    <span class="star">@GenerarEstrellas(resena.Estrellas)</span>
+                                                </div>
+                                            </div>
+                                            <span class="card-text">@resena.FechaTexto</span>
+                                        </div>
+                                        <p class="card-text" style="margin-top: 10px;">@resena.Comentario</p>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <p class="card-text">Aún no hay reseñas para este alojamiento.</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SIDEBAR RESERVA -->
+                <div class="sidebar">
+                    <div style="padding: 24px; background: var(--light); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg);">
+                        <h3 style="margin-bottom: 20px;">
+                            S/ @Alojamiento.PrecioNoche
+                            <span style="font-size: 14px; color: var(--text-light); font-weight: 400;"> por noche</span>
+                        </h3>
+
+                        <div class="form-group">
+                            <label>Fecha de Entrada</label>
+                            <InputDate @bind-Value="FechaEntrada" min="@FechaMinima" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Fecha de Salida</label>
+                            <InputDate @bind-Value="FechaSalida" min="@FechaMinima" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Número de Huéspedes</label>
+                            <InputSelect @bind-Value="NumHuespedes">
+                                @for (int i = 1; i <= Alojamiento.MaxHuespedes; i++)
+                                {
+                                    int n = i;
+                                    <option value="@n">@n @(n == 1 ? "huésped" : "huéspedes")</option>
+                                }
+                            </InputSelect>
+                        </div>
+
+                        <!-- RESUMEN DE PRECIOS -->
+                        @if (Noches > 0)
+                        {
+                            <div style="padding: 18px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 20px;">
+
+                                <div class="flex flex-between items-center" style="margin-bottom: 12px;">
+                                    <span style="color: var(--muted); font-size: 13.5px;">S/ @Alojamiento.PrecioNoche × @Noches noches</span>
+                                    <span style="color: var(--light-text); font-weight: 500; white-space: nowrap;">S/ @Subtotal.ToString("N0")</span>
+                                </div>
+
+                                <div class="flex flex-between items-center" style="margin-bottom: 12px;">
+                                    <span style="color: var(--muted); font-size: 13.5px;">Limpieza</span>
+                                    <span style="color: var(--light-text); font-weight: 500; white-space: nowrap;">S/ @Alojamiento.TarifaLimpieza.ToString("N0")</span>
+                                </div>
+
+                                <div class="flex flex-between items-center" style="margin-bottom: 16px; gap: 10px;">
+                                    <span style="color: var(--muted); font-size: 13px; line-height: 1.3;">Comisión de servicio</span>
+                                    <span style="color: var(--light-text); font-weight: 500; white-space: nowrap;">S/ @Comision.ToString("N0")</span>
+                                </div>
+
+                                <div class="flex flex-between items-center" style="border-top: 1px solid var(--border); padding-top: 14px; font-weight: bold;">
+                                    <span style="color: var(--light-text); font-size: 15px;">Total</span>
+                                    <span style="color: var(--gold); font-size: 18px; white-space: nowrap;">S/ @Total.ToString("N0")</span>
+                                </div>
+
+                            </div>
+                        }
+
+                        @if (!AppState.EstaAutenticado)
+                        {
+                            <div style="background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.2); border-radius: 12px; padding: 18px; text-align: center;">
+                                <i class="fas fa-lock" style="color: var(--gold); font-size: 22px; margin-bottom: 10px; display: block;"></i>
+                                <p style="font-size: 14px; color: var(--light-text); margin-bottom: 14px;">
+                                    Debes iniciar sesión o registrarte para continuar.
+                                </p>
+                                <div style="display: flex; gap: 10px; justify-content: center;">
+                                    <a href="/login" class="btn btn-primary btn-small">Iniciar Sesión</a>
+                                    <a href="/registro" class="btn btn-outline btn-small">Registrarse</a>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <button class="btn btn-primary btn-large" @onclick="Reservar" disabled="@(Noches == 0)">
+                                @if (Noches > 0)
+                                {
+                                    <span>Reservar Ahora</span>
+                                }
+                                else
+                                {
+                                    <span>Selecciona las fechas</span>
+                                }
+                            </button>
+                            <p style="margin-top: 12px; color: var(--text-light); font-size: 12px; text-align: center;">
+                                No se cobra nada por ahora
+                            </p>
+                        }
+
+                        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
+                            <button class="btn btn-outline" style="width: 100%;" @onclick="ToggleFavorito">
+                                <i class="fas fa-heart" style="color: @(EsFavorito ? "var(--danger)" : "inherit");"></i>
+                                @(EsFavorito ? "Guardado" : "Guardar")
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- INFORMACIÓN IMPORTANTE -->
+                    <div class="card" style="margin-top: 20px;">
+                        <div style="padding: 20px;">
+                            <h4 style="margin-bottom: 15px;">Información Importante</h4>
+                            <p class="card-text"><strong>Cancelación:</strong> @Alojamiento.PoliticaCancelacion</p>
+                            <p class="card-text" style="margin-top: 10px;"><strong>Entrada:</strong> Flexible</p>
+                            <p class="card-text" style="margin-top: 10px;"><strong>Reglas:</strong> @Alojamiento.Reglas</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Alojamiento? Alojamiento;
+    private DateTime? FechaEntrada;
+    private DateTime? FechaSalida;
+    private int NumHuespedes = 1;
+    private bool EsFavorito = false;
+    private int FotoActiva = 0;
+
+    private string FechaMinima => DateTime.Today.ToString("yyyy-MM-dd");
+    private int Noches => (FechaSalida.HasValue && FechaEntrada.HasValue && FechaSalida > FechaEntrada)
+        ? (FechaSalida.Value - FechaEntrada.Value).Days : 0;
+
+    private decimal Subtotal => Alojamiento is null ? 0 : Alojamiento.PrecioNoche * Noches;
+    private decimal Comision => Subtotal * 0.10m;
+    private decimal Total => Subtotal + (Alojamiento?.TarifaLimpieza ?? 0) + Comision;
+
+    protected override void OnParametersSet()
+    {
+        Alojamiento = Data.ObtenerAlojamiento(Id);
+    }
+
+    private string GenerarEstrellas(double rating)
+    {
+        int llenas = (int)Math.Round(rating);
+        return string.Concat(Enumerable.Range(0, 5).Select(i => i < llenas ? "★" : "☆"));
+    }
+
+    private void ToggleFavorito() => EsFavorito = !EsFavorito;
+
+    private void Reservar()
+    {
+        if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
+
+        if (Noches > 0 && Alojamiento != null)
+        {
+            AppState.ReservaAPagar = new Reserva
+            {
+                Id = new Random().Next(1000, 9999),
+                AlojamientoNombre = Alojamiento.Nombre,
+                Ubicacion = Alojamiento.Distrito,
+                // NO ASIGNAMOS FechasTexto AQUÍ, el modelo lo calcula solo
+                FechaEntrada = FechaEntrada.Value, // Pasamos las fechas reales
+                FechaSalida = FechaSalida.Value,
+                NumHuespedes = NumHuespedes,
+                Total = Total,
+                Estado = "Pendiente"
+            };
+
+            Navigation.NavigateTo("/pagos");
+        }
+    }
+}

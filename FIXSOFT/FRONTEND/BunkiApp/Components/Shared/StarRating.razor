@@ -1,0 +1,18 @@
+@* Components/Shared/StarRating.razor *@
+
+<div class="rating">
+    <span class="star">@Estrellas</span>
+    @if (MostrarConteo)
+    {
+        <span class="rating-text">(@TotalResenas reseñas)</span>
+    }
+</div>
+
+@code {
+    [Parameter] public double Valor { get; set; } = 5.0;
+    [Parameter] public int TotalResenas { get; set; } = 0;
+    [Parameter] public bool MostrarConteo { get; set; } = true;
+
+    private string Estrellas =>
+        string.Concat(Enumerable.Range(0, 5).Select(i => i < (int)Math.Round(Valor) ? "★" : "☆"));
+}

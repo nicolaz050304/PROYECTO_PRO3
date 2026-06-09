@@ -1,0 +1,647 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\pages\\explorar.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\pages\\explorar.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\wwwroot\\js\\mapa.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:wwwroot\\js\\mapa.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Estefano AC\\Downloads\\Explorar (3).razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\pages\\detallealojamiento.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\pages\\detallealojamiento.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\services\\mapinterop.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:services\\mapinterop.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\app.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\app.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\services\\dataservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:services\\dataservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\shared\\alojamientocard.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\shared\\alojamientocard.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\models\\models.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:models\\models.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\pages\\mensajes.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\pages\\mensajes.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\models\\appstate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:models\\appstate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\pages\\crearalojamiento.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\pages\\crearalojamiento.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\pages\\misreservas.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\pages\\misreservas.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\pages\\pagos.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\pages\\pagos.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\pages\\registro.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\pages\\registro.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\shared\\reservacard.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\shared\\reservacard.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\pages\\documentos.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\pages\\documentos.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\pages\\ayuda.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\pages\\ayuda.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\layout\\navmenu.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\layout\\navmenu.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\pages\\editarperfil.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\pages\\editarperfil.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\pages\\favoritos.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\pages\\favoritos.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\pages\\perfil.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\pages\\perfil.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\pages\\metodospago.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\pages\\metodospago.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\pages\\panelanfitrion.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\pages\\panelanfitrion.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\layout\\emptylayout.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\layout\\emptylayout.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\layout\\mainlayout.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\layout\\mainlayout.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\routes.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\routes.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\_imports.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\_imports.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\pages\\cambiarpassword.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\pages\\cambiarpassword.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\pages\\admin.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\pages\\admin.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\pages\\home.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\pages\\home.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\pages\\misalojamientos.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\pages\\misalojamientos.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\pages\\notificaciones.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\pages\\notificaciones.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\pages\\recuperarpassword.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\pages\\recuperarpassword.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\pages\\reservasrecibidas.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\pages\\reservasrecibidas.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\components\\pages\\login.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\pages\\login.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\estefano ac\\downloads\\bunkiapp final\\bunkiapp (1)\\bunkiapp\\wwwroot\\css\\styles.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:wwwroot\\css\\styles.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 18,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 22,
+              "Title": "Perfil.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\Perfil.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Perfil.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\Perfil.razor",
+              "RelativeToolTip": "Components\\Pages\\Perfil.razor",
+              "ViewState": "AgIAAE4AAAAAAAAAAAAAAFoAAAAWAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-01T17:13:04.245Z",
+              "IsPinned": true
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Explorar (3).razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\Explorar (3).razor",
+              "RelativeDocumentMoniker": "..\\..\\..\\Explorar (3).razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\Explorar (3).razor",
+              "RelativeToolTip": "..\\..\\..\\Explorar (3).razor",
+              "ViewState": "AgIAADADAAAAAAAAAAAowDkDAAA6AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-09T01:09:40.863Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "MapInterop.cs",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Services\\MapInterop.cs",
+              "RelativeDocumentMoniker": "Services\\MapInterop.cs",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Services\\MapInterop.cs",
+              "RelativeToolTip": "Services\\MapInterop.cs",
+              "ViewState": "AgIAAB0AAAAAAAAAAAAowDIAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-08T22:59:18.523Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "mapa.js",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\wwwroot\\js\\mapa.js",
+              "RelativeDocumentMoniker": "wwwroot\\js\\mapa.js",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\wwwroot\\js\\mapa.js",
+              "RelativeToolTip": "wwwroot\\js\\mapa.js",
+              "ViewState": "AgIAAHoAAAAAAAAAAAAswJQAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2026-06-08T22:58:05.782Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "MisReservas.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\MisReservas.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\MisReservas.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\MisReservas.razor",
+              "RelativeToolTip": "Components\\Pages\\MisReservas.razor",
+              "ViewState": "AgIAAKsAAAAAAAAAAAAiwMUAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-01T17:12:38.21Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "Models.cs",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Models\\Models.cs",
+              "RelativeDocumentMoniker": "Models\\Models.cs",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Models\\Models.cs",
+              "RelativeToolTip": "Models\\Models.cs",
+              "ViewState": "AgIAAA0AAAAAAAAAAAAwwAQAAAANAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-01T15:49:04.809Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "CrearAlojamiento.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\CrearAlojamiento.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\CrearAlojamiento.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\CrearAlojamiento.razor",
+              "RelativeToolTip": "Components\\Pages\\CrearAlojamiento.razor",
+              "ViewState": "AgIAAKcAAAAAAAAAAAApwL0AAABBAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-01T19:02:19.237Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "Mensajes.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\Mensajes.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Mensajes.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\Mensajes.razor",
+              "RelativeToolTip": "Components\\Pages\\Mensajes.razor",
+              "ViewState": "AgIAAKQAAAAAAAAAAADwv7EAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-01T17:12:33.299Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "DataService.cs",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Services\\DataService.cs",
+              "RelativeDocumentMoniker": "Services\\DataService.cs",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Services\\DataService.cs",
+              "RelativeToolTip": "Services\\DataService.cs",
+              "ViewState": "AgIAAJcCAAAAAAAAAAAkwKECAAA9AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-02T22:09:28.284Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "AppState.cs",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Models\\AppState.cs",
+              "RelativeDocumentMoniker": "Models\\AppState.cs",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Models\\AppState.cs",
+              "RelativeToolTip": "Models\\AppState.cs",
+              "ViewState": "AgIAACoAAAAAAAAAAAAowBUAAAA0AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-01T19:45:40.307Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "DetalleAlojamiento.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\DetalleAlojamiento.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\DetalleAlojamiento.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\DetalleAlojamiento.razor",
+              "RelativeToolTip": "Components\\Pages\\DetalleAlojamiento.razor",
+              "ViewState": "AgIAAO0AAAAAAAAAAAAYwPgAAAAQAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-01T17:11:44.02Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "Pagos.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\Pagos.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Pagos.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\Pagos.razor",
+              "RelativeToolTip": "Components\\Pages\\Pagos.razor",
+              "ViewState": "AgIAAAgAAAAAAAAAAAAQwBUAAAA8AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-01T17:12:49.83Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 21,
+              "Title": "Favoritos.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\Favoritos.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Favoritos.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\Favoritos.razor",
+              "RelativeToolTip": "Components\\Pages\\Favoritos.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAAGAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-03T06:15:25.701Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "Ayuda.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\Ayuda.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Ayuda.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\Ayuda.razor",
+              "RelativeToolTip": "Components\\Pages\\Ayuda.razor",
+              "ViewState": "AgIAABoAAAAAAAAAAAAiwD4AAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-03T06:16:20.535Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "Registro.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\Registro.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Registro.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\Registro.razor",
+              "RelativeToolTip": "Components\\Pages\\Registro.razor",
+              "ViewState": "AgIAADkAAAAAAAAAAAAAAEcAAAANAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-01T17:13:10.431Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "ReservaCard.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Shared\\ReservaCard.razor",
+              "RelativeDocumentMoniker": "Components\\Shared\\ReservaCard.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Shared\\ReservaCard.razor",
+              "RelativeToolTip": "Components\\Shared\\ReservaCard.razor",
+              "ViewState": "AgIAAEMAAAAAAAAAAAAiwFcAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-08T20:15:51.414Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Program.cs",
+              "RelativeDocumentMoniker": "Program.cs",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Program.cs",
+              "RelativeToolTip": "Program.cs",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAABIAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-01T16:32:23.66Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "Documentos.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\Documentos.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Documentos.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\Documentos.razor",
+              "RelativeToolTip": "Components\\Pages\\Documentos.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAFIAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-03T06:15:47.663Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Explorar.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\Explorar.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Explorar.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\Explorar.razor",
+              "RelativeToolTip": "Components\\Pages\\Explorar.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABMAAAAhAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-02T22:08:25.579Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 20,
+              "Title": "EditarPerfil.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\EditarPerfil.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\EditarPerfil.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\EditarPerfil.razor",
+              "RelativeToolTip": "Components\\Pages\\EditarPerfil.razor",
+              "ViewState": "AgIAADUAAAAAAAAAAAAiwGcAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-01T17:11:58.561Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 19,
+              "Title": "NavMenu.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Layout\\NavMenu.razor",
+              "RelativeDocumentMoniker": "Components\\Layout\\NavMenu.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Layout\\NavMenu.razor",
+              "RelativeToolTip": "Components\\Layout\\NavMenu.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAE0AAABHAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-01T15:01:35.244Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 23,
+              "Title": "MetodosPago.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\MetodosPago.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\MetodosPago.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\MetodosPago.razor",
+              "RelativeToolTip": "Components\\Pages\\MetodosPago.razor",
+              "ViewState": "AgIAAJkAAAAAAAAAAAAmwMsAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-03T05:40:49.317Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 24,
+              "Title": "PanelAnfitrion.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\PanelAnfitrion.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\PanelAnfitrion.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\PanelAnfitrion.razor",
+              "RelativeToolTip": "Components\\Pages\\PanelAnfitrion.razor",
+              "ViewState": "AgIAAEEAAAAAAAAAAAAAAFUAAAAeAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-01T17:12:58.501Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 25,
+              "Title": "EmptyLayout.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Layout\\EmptyLayout.razor",
+              "RelativeDocumentMoniker": "Components\\Layout\\EmptyLayout.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Layout\\EmptyLayout.razor",
+              "RelativeToolTip": "Components\\Layout\\EmptyLayout.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-02T23:09:10.29Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 26,
+              "Title": "MainLayout.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Layout\\MainLayout.razor",
+              "RelativeDocumentMoniker": "Components\\Layout\\MainLayout.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Layout\\MainLayout.razor",
+              "RelativeToolTip": "Components\\Layout\\MainLayout.razor",
+              "ViewState": "AgIAABUAAAAAAAAAAAAAABAAAAAQAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-01T16:56:38.097Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 29,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\appsettings.json",
+              "RelativeDocumentMoniker": "appsettings.json",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\appsettings.json",
+              "RelativeToolTip": "appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-06-03T01:13:23.407Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 28,
+              "Title": "_Imports.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\_Imports.razor",
+              "RelativeDocumentMoniker": "Components\\_Imports.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\_Imports.razor",
+              "RelativeToolTip": "Components\\_Imports.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-03T01:13:38.124Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 27,
+              "Title": "Routes.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Routes.razor",
+              "RelativeDocumentMoniker": "Components\\Routes.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Routes.razor",
+              "RelativeToolTip": "Components\\Routes.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-03T01:13:41.769Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 30,
+              "Title": "CambiarPassword.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\CambiarPassword.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\CambiarPassword.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\CambiarPassword.razor",
+              "RelativeToolTip": "Components\\Pages\\CambiarPassword.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAFIAAAAWAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-01T19:02:09.784Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 31,
+              "Title": "Admin.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\Admin.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Admin.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\Admin.razor",
+              "RelativeToolTip": "Components\\Pages\\Admin.razor",
+              "ViewState": "AgIAAKUBAAAAAAAAAAAAAKYBAAAeAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-01T18:55:41.835Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "App.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\App.razor",
+              "RelativeDocumentMoniker": "Components\\App.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\App.razor",
+              "RelativeToolTip": "Components\\App.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-01T16:40:56.229Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "AlojamientoCard.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Shared\\AlojamientoCard.razor",
+              "RelativeDocumentMoniker": "Components\\Shared\\AlojamientoCard.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Shared\\AlojamientoCard.razor",
+              "RelativeToolTip": "Components\\Shared\\AlojamientoCard.razor",
+              "ViewState": "AgIAABsAAAAAAAAAAAAAABcAAAANAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-02T22:47:04.192Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 33,
+              "Title": "MisAlojamientos.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\MisAlojamientos.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\MisAlojamientos.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\MisAlojamientos.razor",
+              "RelativeToolTip": "Components\\Pages\\MisAlojamientos.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAApAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-01T19:05:21.721Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 34,
+              "Title": "Notificaciones.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\Notificaciones.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Notificaciones.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\Notificaciones.razor",
+              "RelativeToolTip": "Components\\Pages\\Notificaciones.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAApAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-01T17:12:44.279Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 32,
+              "Title": "Home.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\Home.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Home.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\Home.razor",
+              "RelativeToolTip": "Components\\Pages\\Home.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-01T17:12:15.273Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 35,
+              "Title": "RecuperarPassword.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\RecuperarPassword.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\RecuperarPassword.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\RecuperarPassword.razor",
+              "RelativeToolTip": "Components\\Pages\\RecuperarPassword.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-02T23:07:35.888Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 37,
+              "Title": "Login.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\Login.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Login.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\Login.razor",
+              "RelativeToolTip": "Components\\Pages\\Login.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAApAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-01T17:12:25.816Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 36,
+              "Title": "ReservasRecibidas.razor",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\ReservasRecibidas.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\ReservasRecibidas.razor",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\Components\\Pages\\ReservasRecibidas.razor",
+              "RelativeToolTip": "Components\\Pages\\ReservasRecibidas.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAvAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-01T19:07:32.816Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 38,
+              "Title": "styles.css",
+              "DocumentMoniker": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\wwwroot\\css\\styles.css",
+              "RelativeDocumentMoniker": "wwwroot\\css\\styles.css",
+              "ToolTip": "C:\\Users\\Estefano AC\\Downloads\\BunkiApp Final\\BunkiApp (1)\\BunkiApp\\wwwroot\\css\\styles.css",
+              "RelativeToolTip": "wwwroot\\css\\styles.css",
+              "ViewState": "AgIAAOMEAAAAAAAAAAAYwAUFAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003000|",
+              "WhenOpened": "2026-06-02T22:24:38.159Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

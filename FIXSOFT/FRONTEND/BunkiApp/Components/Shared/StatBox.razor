@@ -1,0 +1,16 @@
+@* Components/Shared/StatBox.razor *@
+
+<div class="stat-box">
+    @if (!string.IsNullOrEmpty(Icono))
+    {
+        <div style="font-size: 32px; margin-bottom: 10px;">@Icono</div>
+    }
+    <div class="stat-number">@Valor</div>
+    <div class="stat-label">@Etiqueta</div>
+</div>
+
+@code {
+    [Parameter] public string Valor { get; set; } = "";
+    [Parameter] public string Etiqueta { get; set; } = "";
+    [Parameter] public string Icono { get; set; } = "";
+}

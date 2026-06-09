@@ -1,0 +1,112 @@
+@page "/reservas-recibidas"
+@rendermode InteractiveServer
+@inject DataService Data
+@inject NavigationManager Navigation
+@inject BunkiApp.Models.AppState AppState
+
+<PageTitle>Bunki - Reservas Recibidas</PageTitle>
+
+<div class="section">
+    <div class="container">
+        <div class="flex flex-between items-center mb-30">
+            <h2 style="font-size: 26px; font-weight: 700;">
+                <i class="fas fa-inbox" style="color: var(--gold); margin-right: 10px;"></i>
+                Reservas Recibidas
+            </h2>
+            <span class="badge badge-primary" style="font-size: 13px; padding: 8px 16px;">
+                @_reservasFiltradas.Count reservas
+            </span>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 28px; flex-wrap: wrap;">
+            @foreach (var estado in _estados)
+            {
+                <button class="filter-btn @(_estadoActivo == estado ? "active" : "")"
+                        @onclick="() => _estadoActivo = estado">
+                    @estado
+                </button>
+            }
+        </div>
+
+        @if (!_reservasFiltradas.Any())
+        {
+            <AlertMessage Tipo="warning" Mensaje="No hay reservas en esta categoría." Cerrable="false" />
+        }
+        else
+        {
+            <div class="card">
+                <div style="padding: 20px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Huésped</th><th>Alojamiento</th><th>Fechas</th>
+                                <th>Huésp.</th><th>Total</th><th>Estado</th><th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in _reservasFiltradas)
+                            {
+                                <tr>
+                                    <td>
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <div class="avatar" style="width: 30px; height: 30px; font-size: 11px;">
+                                                @(r.AnfitrionNombre.Length >= 2 ? r.AnfitrionNombre[..2].ToUpper() : "?")
+                                            </div>
+                                            @r.AnfitrionNombre
+                                        </div>
+                                    </td>
+                                    <td>@r.AlojamientoNombre</td>
+                                    <td class="card-text">@r.FechasTexto</td>
+                                    <td class="card-text">@r.NumHuespedes</td>
+                                    <td><strong style="color: var(--gold);">S/ @r.Total.ToString("N0")</strong></td>
+                                    <td><span class="badge @r.EstadoBadgeClass">@r.Estado</span></td>
+                                    <td>
+                                        <div style="display: flex; gap: 8px;">
+                                            @if (r.Estado == "Pendiente")
+                                            {
+                                                <button class="btn btn-small btn-success"
+                                                        @onclick='() => r.Estado = "Confirmada"'>
+                                                    Confirmar
+                                                </button>
+                                                <button class="btn btn-small btn-danger"
+                                                        @onclick='() => r.Estado = "Cancelada"'>
+                                                    Rechazar
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button class="btn btn-small btn-secondary"
+                                                        @onclick='() => Navigation.NavigateTo("/mensajes")'>
+                                                    Contactar
+                                                </button>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private static readonly string[] _estados = { "Todas", "Pendiente", "Confirmada", "Completada", "Cancelada" };
+    private string _estadoActivo = "Todas";
+    private List<Reserva> _todasReservas = new();
+
+    private List<Reserva> _reservasFiltradas =>
+        _estadoActivo == "Todas"
+            ? _todasReservas
+            : _todasReservas.Where(r => r.Estado == _estadoActivo).ToList();
+
+    protected override void OnInitialized()
+    {
+        if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
+        _todasReservas = Data.ObtenerReservasProximas()
+            .Concat(Data.ObtenerReservasPasadas())
+            .ToList();
+    }
+}

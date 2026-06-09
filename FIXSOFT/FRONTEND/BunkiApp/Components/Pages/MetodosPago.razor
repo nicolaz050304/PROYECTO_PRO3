@@ -1,0 +1,204 @@
+﻿@page "/perfil/metodos-pago"
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+@inject BunkiApp.Models.AppState AppState
+
+<PageTitle>Bunki - Métodos de Pago</PageTitle>
+
+<div class="section">
+    <div class="container" style="max-width: 700px;">
+        <div class="card">
+            <div style="padding: 35px;">
+                <div style="text-align: center; margin-bottom: 35px;">
+                    <div class="avatar avatar-large" style="margin: 0 auto 20px; background: var(--primary); display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-wallet" style="color: white; font-size: 32px;"></i>
+                    </div>
+                    <h2 style="color: var(--text); margin-bottom: 10px;">Métodos de Pago</h2>
+                    <p class="card-text">Gestiona tus tarjetas para reservar y tus cuentas para recibir ganancias.</p>
+                </div>
+
+                @if (!string.IsNullOrEmpty(MensajeExito))
+                {
+                    <div style="background: rgba(46, 204, 113, 0.1); color: #2ecc71; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; border: 1px solid #2ecc71; font-weight: bold;">
+                        <i class="fas fa-check-circle"></i> @MensajeExito
+                    </div>
+                }
+
+                <!-- ========================================== -->
+                <!-- SECCIÓN 1: MIS TARJETAS (INTERACTIVA)      -->
+                <!-- ========================================== -->
+                <h3 style="margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px; font-size: 18px;">
+                    <i class="fas fa-credit-card" style="color: var(--primary); margin-right: 10px;"></i> Mis Tarjetas
+                </h3>
+
+                @if (MostrarTarjetaVisa)
+                {
+                    <div style="background: var(--light); padding: 20px; border-radius: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); transition: all 0.3s ease;">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <i class="fab fa-cc-visa" style="font-size: 36px; color: #1a1f71;"></i>
+                            <div>
+                                <h4 style="margin: 0; font-size: 16px;">Visa terminada en 1234</h4>
+                                <p style="margin: 0; font-size: 13px; color: var(--text-light);">Expira 12/28</p>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline" style="padding: 8px 12px;" @onclick="() => MostrarTarjetaVisa = false">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                }
+
+                @if (!MostrarFormularioTarjeta)
+                {
+                    <button type="button" class="btn btn-outline" style="width: 100%; margin-bottom: 40px; padding: 12px;" @onclick="() => MostrarFormularioTarjeta = true">
+                        <i class="fas fa-plus"></i> Agregar Nueva Tarjeta
+                    </button>
+                }
+                else
+                {
+                    <div style="background: var(--light); padding: 20px; border-radius: 12px; margin-bottom: 40px; border: 1px solid var(--border);">
+                        <h4 style="margin-bottom: 15px; font-size: 16px;">Detalles de la nueva tarjeta</h4>
+                        <EditForm Model="FormTarjeta" OnValidSubmit="GuardarTarjeta">
+                            <DataAnnotationsValidator />
+
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: bold;">Número de Tarjeta</label>
+                                <InputText @bind-Value="FormTarjeta.Numero" placeholder="0000 0000 0000 0000" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);" />
+                            </div>
+
+                            <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                                <div class="form-group" style="flex: 1;">
+                                    <label style="display: block; margin-bottom: 8px; font-weight: bold;">Vencimiento</label>
+                                    <InputText @bind-Value="FormTarjeta.Vencimiento" placeholder="MM/YY" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);" />
+                                </div>
+                                <div class="form-group" style="flex: 1;">
+                                    <label style="display: block; margin-bottom: 8px; font-weight: bold;">CVV</label>
+                                    <InputText @bind-Value="FormTarjeta.CVV" placeholder="123" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);" />
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 15px;">
+                                <button type="button" class="btn btn-outline" style="flex: 1;" @onclick="() => MostrarFormularioTarjeta = false">Cancelar</button>
+                                <button type="submit" class="btn btn-primary" style="flex: 1;" disabled="@GuardandoTarjeta">
+                                    @(GuardandoTarjeta ? "Guardando..." : "Guardar Tarjeta")
+                                </button>
+                            </div>
+                        </EditForm>
+                    </div>
+                }
+
+                <!-- ========================================== -->
+                <!-- SECCIÓN 2: CUENTAS BANCARIAS (ANFITRIONES) -->
+                <!-- ========================================== -->
+                <h3 style="margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 10px; font-size: 18px;">
+                    <i class="fas fa-university" style="color: var(--primary); margin-right: 10px;"></i> Cuentas Bancarias (Para recibir cobros)
+                </h3>
+                <p style="font-size: 14px; margin-bottom: 25px; color: var(--text-light);">
+                    Si eres anfitrión, registra tu cuenta bancaria para recibir los depósitos de tus reservas.
+                </p>
+
+                <EditForm Model="FormCuenta" OnValidSubmit="GuardarCuenta">
+                    <DataAnnotationsValidator />
+
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        @foreach (var opcion in new[] { "Yape", "Plin", "Banco" })
+                        {
+                            <label style="flex: 1; text-align: center; padding: 15px; border: 2px solid @(FormCuenta.Banco == opcion ? "var(--primary)" : "var(--border)"); border-radius: 8px; cursor: pointer; transition: 0.2s; background: @(FormCuenta.Banco == opcion ? "rgba(255, 165, 0, 0.1)" : "transparent");">
+                                <input type="radio" checked="@(FormCuenta.Banco == opcion)" @onchange='() => FormCuenta.Banco = opcion' style="display: none;" />
+                                <div style="font-size: 24px; margin-bottom: 5px;">
+                                    <i class="fas @(opcion == "Yape" ? "fa-mobile-alt" : opcion == "Plin" ? "fa-bolt" : "fa-university")"></i>
+                                </div>
+                                <span style="font-weight: 600;">@opcion</span>
+                            </label>
+                        }
+                    </div>
+
+                    @if (FormCuenta.Banco == "Banco")
+                    {
+                        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                            <div class="form-group" style="flex: 1;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: bold;">Banco</label>
+                                <select @bind="FormCuenta.TipoCuenta" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+                                    <option value="">Selecciona...</option>
+                                    <option value="BCP">BCP</option>
+                                    <option value="Interbank">Interbank</option>
+                                    <option value="BBVA">BBVA</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: bold;">Número CCI</label>
+                                <InputText @bind-Value="FormCuenta.CCI" placeholder="000-000..." style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);" />
+                            </div>
+                        </div>
+                    }
+                    else if (!string.IsNullOrEmpty(FormCuenta.Banco))
+                    {
+                        <div class="form-group" style="margin-bottom: 25px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: bold;">Número de Celular para @FormCuenta.Banco</label>
+                            <InputText @bind-Value="FormCuenta.CCI" placeholder="999 999 999" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);" />
+                        </div>
+                    }
+
+                    <div style="display: flex; gap: 15px; margin-top: 30px;">
+                        <button type="button" class="btn btn-outline" style="flex: 1;" @onclick='() => Navigation.NavigateTo("/perfil")'>Volver</button>
+                        <button type="submit" class="btn btn-primary" style="flex: 1;" disabled="@Guardando">
+                            @(Guardando ? "Guardando..." : "Guardar " + FormCuenta.Banco)
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    // Variables para Cuentas Bancarias
+    private CuentaBancariaForm FormCuenta = new();
+    private string MensajeExito = "";
+    private bool Guardando = false;
+
+    // Variables para Tarjetas (UX visual)
+    private NuevaTarjetaForm FormTarjeta = new();
+    private bool MostrarTarjetaVisa = true;
+    private bool MostrarFormularioTarjeta = false;
+    private bool GuardandoTarjeta = false;
+
+    protected override void OnInitialized()
+    {
+        // if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
+    }
+
+    private async Task GuardarCuenta()
+    {
+        Guardando = true;
+        await Task.Delay(1000);
+        MensajeExito = "¡Cuenta bancaria registrada correctamente para recibir cobros!";
+        FormCuenta = new();
+        Guardando = false;
+    }
+
+    private async Task GuardarTarjeta()
+    {
+        GuardandoTarjeta = true;
+        await Task.Delay(800); // Simula la conexión con el banco
+        MensajeExito = "¡Nueva tarjeta agregada exitosamente!";
+        MostrarFormularioTarjeta = false;
+        GuardandoTarjeta = false;
+        // Restauramos la vista de la tarjeta y limpiamos el formulario visualmente
+        MostrarTarjetaVisa = true;
+        FormTarjeta = new();
+    }
+
+    public class CuentaBancariaForm
+    {
+        public string Banco { get; set; } = "";
+        public string TipoCuenta { get; set; } = "";
+        public string CCI { get; set; } = "";
+    }
+
+    public class NuevaTarjetaForm
+    {
+        public string Numero { get; set; } = "";
+        public string Vencimiento { get; set; } = "";
+        public string CVV { get; set; } = "";
+    }
+}

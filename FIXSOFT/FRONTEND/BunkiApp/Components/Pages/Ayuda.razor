@@ -1,0 +1,78 @@
+﻿@page "/perfil/ayuda"
+@inject NavigationManager Navigation
+
+<PageTitle>Bunki - Centro de Ayuda</PageTitle>
+
+<div class="section">
+    <div class="container" style="max-width: 700px;">
+        <div class="card" style="padding: 35px;">
+            <div style="text-align: center; margin-bottom: 35px;">
+                <div class="avatar avatar-large" style="margin: 0 auto 20px; background: var(--primary); display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-headset" style="color: white; font-size: 32px;"></i>
+                </div>
+                <h2 style="color: var(--text); margin-bottom: 10px;">Centro de Ayuda</h2>
+                <p class="card-text">¿En qué podemos ayudarte hoy? Encuentra respuestas rápidas a las dudas más comunes.</p>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 30px;">
+                @for (int i = 0; i < PreguntasFrecuentes.Count; i++)
+                {
+                    var index = i; // Guardamos el índice actual para el evento de clic
+                    bool estaAbierta = PreguntaActiva == index;
+
+                    <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: all 0.3s ease;">
+                        <div style="padding: 15px 20px; background: @(estaAbierta ? "rgba(255, 165, 0, 0.05)" : "transparent"); cursor: pointer; display: flex; justify-content: space-between; align-items: center;"
+                             @onclick="() => TogglePregunta(index)">
+                            <strong style="font-size: 16px; color: var(--text);">
+                                <i class="fas fa-question-circle" style="color: var(--primary); margin-right: 10px;"></i>
+                                @PreguntasFrecuentes[index].Pregunta
+                            </strong>
+                            <i class="fas @(estaAbierta ? "fa-chevron-up" : "fa-chevron-down")" style="color: var(--text-light); transition: 0.3s;"></i>
+                        </div>
+
+                        @if (estaAbierta)
+                        {
+                            <div style="padding: 0 20px 20px 46px; font-size: 14px; color: var(--text-light); line-height: 1.6;">
+                                @PreguntasFrecuentes[index].Respuesta
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <div style="display: flex; justify-content: center;">
+                <button class="btn btn-outline" style="width: 100%; max-width: 300px;" @onclick='() => Navigation.NavigateTo("/perfil")'>
+                    <i class="fas fa-arrow-left" style="margin-right: 8px;"></i> Volver al Perfil
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    // Variable para saber cuál pregunta está abierta. Inicia en 0 (la primera abierta) o en -1 (todas cerradas).
+    private int PreguntaActiva = 0;
+
+    private void TogglePregunta(int index)
+    {
+        // Si hace clic en la que ya está abierta, la cierra. Si no, abre la nueva.
+        if (PreguntaActiva == index)
+            PreguntaActiva = -1;
+        else
+            PreguntaActiva = index;
+    }
+
+    // Lista de preguntas y respuestas al estilo Airbnb
+    private List<(string Pregunta, string Respuesta)> PreguntasFrecuentes = new()
+    {
+        ("¿Cómo cancelo una reserva y qué reembolsos aplican?", "Ve a 'Mis Reservas', selecciona tu próximo viaje y haz clic en 'Cancelar'. El reembolso dependerá de la política de cancelación elegida por el anfitrión (Flexible, Moderada o Estricta)."),
+
+("¿Cuándo se me cobrará la reserva?", "Te cobraremos el importe total en el momento en que el anfitrión confirme la reserva. Si envías una 'Solicitud de reserva', solo retendremos el dinero hasta que sea aceptada."),
+
+("¿Cómo me comunico con el anfitrión?", "Usa el botón 'Mensajes' en el menú principal o entra a los detalles de tu reserva para chatear directamente. Por tu seguridad, mantén siempre la comunicación dentro de la plataforma Bunki."),
+
+("¿Qué pasa si el anfitrión cancela mi reserva?", "Si tu anfitrión cancela, te ofreceremos un reembolso total de forma automática. También te contactaremos para ayudarte a encontrar un alojamiento similar si tu viaje está cerca."),
+
+("¿Cómo me convierto en anfitrión en Bunki?", "Ve a 'Mi Perfil' y entra a tus 'Métodos de Pago' para registrar tu cuenta bancaria (CCI). Luego ve al Panel de Anfitrión y publica tus espacios de forma gratuita.")
+    };
+}

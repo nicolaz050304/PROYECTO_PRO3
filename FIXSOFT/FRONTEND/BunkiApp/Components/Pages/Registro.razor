@@ -1,0 +1,112 @@
+@page "/registro"
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+@layout EmptyLayout
+@inject BunkiApp.Models.AppState AppState
+<PageTitle>Bunki - Crear Cuenta</PageTitle>
+
+<header>
+    <div class="navbar container">
+        <a href="/" class="logo"><i class="fas fa-home"></i> Bunki</a>
+    </div>
+</header>
+
+<div class="section">
+    <div class="container" style="max-width:520px;">
+        <h2 class="section-title">Crea tu Cuenta</h2>
+
+        <p class="card-text text-center" style="margin-bottom:28px;">
+            Con una sola cuenta puedes buscar alojamientos <strong>y</strong> publicar los tuyos.
+        </p>
+
+        @if (_exito)
+        {
+            <AlertMessage Tipo="success" Mensaje="¡Cuenta creada! Redirigiendo..." Cerrable="false" />
+        }
+
+        <EditForm Model="_form" OnValidSubmit="Registrar">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="validation-message" style="margin-bottom:16px;" />
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nombre</label>
+                    <InputText @bind-Value="_form.Nombre" placeholder="Juan" />
+                    <ValidationMessage For="() => _form.Nombre" class="validation-message" />
+                </div>
+                <div class="form-group">
+                    <label>Apellido</label>
+                    <InputText @bind-Value="_form.Apellido" placeholder="Pérez" />
+                    <ValidationMessage For="() => _form.Apellido" class="validation-message" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Correo Electrónico</label>
+                <InputText @bind-Value="_form.Email" type="email" placeholder="tu@ejemplo.com" />
+                <ValidationMessage For="() => _form.Email" class="validation-message" />
+            </div>
+
+            <div class="form-group">
+                <label>Contraseña</label>
+                <InputText @bind-Value="_form.Password" type="password" placeholder="••••••••" />
+                <ValidationMessage For="() => _form.Password" class="validation-message" />
+            </div>
+
+            <div class="form-group">
+                <label>Confirmar Contraseña</label>
+                <InputText @bind-Value="_form.ConfirmarPassword" type="password" placeholder="••••••••" />
+                <ValidationMessage For="() => _form.ConfirmarPassword" class="validation-message" />
+            </div>
+
+            <div class="form-group" style="display:flex;align-items:center;gap:10px;">
+                <InputCheckbox @bind-Value="_form.AceptaTerminos" id="terms" />
+                <label for="terms" style="display:inline;margin:0;font-weight:normal;">
+                    Acepto los <a href="#" style="color:var(--gold);">términos y condiciones</a>
+                </label>
+            </div>
+
+            @if (!_form.AceptaTerminos && _intentoEnviar)
+            {
+                <p class="validation-message">Debes aceptar los términos y condiciones.</p>
+            }
+
+            <button type="submit" class="btn btn-primary btn-large"
+                    @onclick="() => _intentoEnviar = true" disabled="@_cargando">
+                @if (_cargando) { <i class="fas fa-spinner fa-spin"></i> }
+                Crear Cuenta
+            </button>
+        </EditForm>
+
+        <p style="text-align:center;margin-top:20px;color:var(--text-light);">
+            ¿Ya tienes cuenta?
+            <a href="/login" style="color:var(--gold);text-decoration:none;">Inicia sesión</a>
+        </p>
+    </div>
+</div>
+
+<footer><div class="container"><p>&copy; 2026 Bunki. Todos los derechos reservados.</p></div></footer>
+
+@code {
+    private readonly RegistroForm _form = new();
+    private bool _cargando    = false;
+    private bool _exito       = false;
+    private bool _intentoEnviar = false;
+
+    private async Task Registrar()
+    {
+        if (!_form.AceptaTerminos) return;
+
+        _cargando = true;
+        await Task.Delay(500);
+
+        // Guardar usuario en AppState — login automático
+        AppState.Login(_form.Nombre, _form.Apellido, _form.Email, "Usuario");
+
+        _exito    = true;
+        _cargando = false;
+        await Task.Delay(800);
+
+        Navigation.NavigateTo("/");   // AppState es estático, sesión persiste
+    }
+}

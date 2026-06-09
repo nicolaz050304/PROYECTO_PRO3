@@ -1,0 +1,11 @@
+package pe.edu.pe.pucp.proyecto.economy.bl;
+
+import pe.edu.pe.pucp.proyecto.bl.IBL;
+import pe.edu.pe.pucp.proyecto.economy.Pago;
+import pe.edu.pe.pucp.proyecto.reservation.Reserva;
+
+public interface PagoBL extends IBL<Pago, Integer> {
+    // Método de negocio extra que no está en el CRUD básico
+    int registrarPagoDeReserva(Reserva reserva);
+    void procesarEnvioAnfitrion(Pago pago, int idCuentaDestino);
+}

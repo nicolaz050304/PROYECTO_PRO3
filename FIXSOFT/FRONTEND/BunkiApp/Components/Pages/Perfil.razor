@@ -1,0 +1,136 @@
+@page "/perfil"
+@rendermode InteractiveServer
+@inject DataService Data
+@inject NavigationManager Navigation
+@inject BunkiApp.Models.AppState AppState
+<PageTitle>Bunki - Mi Perfil</PageTitle>
+
+<div class="section">
+    <div class="container">
+        <h2 class="section-title" style="text-align: left;">Mi Perfil</h2>
+
+        <div class="two-column">
+            <!-- PERFIL PRINCIPAL -->
+            <div>
+                <div class="card" style="margin-bottom: 30px;">
+                    <div style="padding: 40px; text-align: center;">
+                        <div class="avatar avatar-large" style="margin: 0 auto 20px;">
+                            @Usuario?.Iniciales
+                        </div>
+                        <h3 style="margin-bottom: 5px;">@Usuario?.NombreCompleto</h3>
+                        <p class="card-text">Miembro desde @Usuario?.MiembroDesde</p>
+                        @if (Usuario?.Verificado == true)
+                        {
+                            <p style="margin-top: 10px;">
+                                <span class="badge badge-success">Verificado</span>
+                            </p>
+                        }
+
+                        <div style="margin-top: 30px; padding-top: 30px; border-top: 1px solid var(--border);">
+                            <div class="grid grid-2" style="gap: 20px;">
+                                <StatBox Valor="@(Usuario?.TotalResenas.ToString())" Etiqueta="Reseñas" />
+                                <StatBox Valor="@(Usuario?.Rating.ToString("F1")!)" Etiqueta="Rating" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- INFORMACIÓN DE CONTACTO -->
+                <div class="card">
+                    <div style="padding: 20px;">
+                        <h3 style="margin-bottom: 20px;">Información de Contacto</h3>
+
+                        <div class="form-group">
+                            <label>Correo Electrónico</label>
+                            <p style="padding: 12px; background: var(--light); border-radius: 6px;">@Usuario?.Email</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Teléfono</label>
+                            <p style="padding: 12px; background: var(--light); border-radius: 6px;">@Usuario?.Telefono</p>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(Usuario?.Ciudad))
+                        {
+                            <div class="form-group">
+                                <label>Ciudad</label>
+                                <p style="padding: 12px; background: var(--light); border-radius: 6px;">@Usuario.Ciudad</p>
+                            </div>
+                        }
+
+                        <button class="btn btn-secondary" style="width: 100%; text-align: center;"
+                                @onclick='() => Navigation.NavigateTo("/perfil/editar")'>
+                            <i class="fas fa-edit"></i> Editar Perfil
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SIDEBAR CONFIGURACIÓN -->
+            <div class="sidebar">
+                <h3 style="margin-bottom: 20px;">Configuración</h3>
+
+                <div class="sidebar-item active">
+                    <i class="fas fa-cog"></i> Configuración General
+                </div>
+
+                <a href="/perfil/cambiar-password" class="sidebar-item">
+                    <i class="fas fa-lock"></i> Cambiar Contraseña
+                </a>
+
+                <a href="/notificaciones" class="sidebar-item">
+                    <i class="fas fa-bell"></i> Notificaciones
+                </a>
+
+                <div class="sidebar-item" @onclick='() => Navigation.NavigateTo("/perfil/metodos-pago")'>
+                    <i class="fas fa-credit-card"></i> Métodos de Pago
+                </div>
+
+                <div class="sidebar-item" @onclick='() => Navigation.NavigateTo("/perfil/favoritos")'>
+                    <i class="fas fa-heart"></i> Favoritos
+                </div>
+
+                <div class="sidebar-item" @onclick='() => Navigation.NavigateTo("/perfil/documentos")'>
+                    <i class="fas fa-file-alt"></i> Mis Documentos
+                </div>
+
+                <div class="sidebar-item" @onclick='() => Navigation.NavigateTo("/perfil/ayuda")'>
+                    <i class="fas fa-question-circle"></i> Centro de Ayuda
+                </div>
+
+                <div class="sidebar-item" style="color: var(--danger);" @onclick="CerrarSesion">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </div>
+
+                <!-- ESTADÍSTICAS -->
+                <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border);">
+                    <h4 style="margin-bottom: 15px;">Estadísticas</h4>
+                    <p class="card-text" style="margin-bottom: 8px;">
+                        <strong>Reservas:</strong> @Usuario?.TotalReservas
+                    </p>
+                    <p class="card-text" style="margin-bottom: 8px;">
+                        <strong>Noches:</strong> @Usuario?.TotalNoches
+                    </p>
+                    <p class="card-text">
+                        <strong>Gasto Total:</strong> S/ @Usuario?.GastoTotal.ToString("N0")
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private Usuario? Usuario;
+
+    protected override void OnInitialized()
+    {
+        Usuario = AppState.UsuarioActual;
+    }
+
+    private void CerrarSesion()
+    {
+        AppState.Logout();
+        Navigation.NavigateTo("/login");
+    }
+}
