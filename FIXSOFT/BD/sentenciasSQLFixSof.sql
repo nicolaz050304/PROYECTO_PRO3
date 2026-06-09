@@ -1,6 +1,11 @@
 -- ======================================================
 -- SEGURIDAD: Desactivamos checks para una limpieza total
 -- ======================================================
+
+-- si ya tienes el esquema ejecuta el use squema sino no ejecutes desde ahí ejecuta desde el segundo dolar
+delimiter $
+USE FIXSOFT
+$
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ======================================================
