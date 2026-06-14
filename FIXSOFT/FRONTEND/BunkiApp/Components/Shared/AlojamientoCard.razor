@@ -1,4 +1,6 @@
 @* Components/Shared/AlojamientoCard.razor *@
+@inject BunkiApp.Models.AppState AppState
+@implements IDisposable
 <div class="card">
     @if (!string.IsNullOrEmpty(Alojamiento.ImagenUrl))
     {
@@ -19,10 +21,10 @@
         </div>
         <p class="card-text">@Alojamiento.Descripcion.Substring(0, Math.Min(60, Alojamiento.Descripcion.Length))...</p>
         <div class="card-footer">
-            <span class="card-price">S/ @Alojamiento.PrecioNoche/noche</span>
+            <span class="card-price">@AppState.FormatearPrecio(Alojamiento.PrecioNoche)<small> /noche</small></span>
             @if (MostrarBoton)
             {
-                <a href="/alojamiento/@Alojamiento.Id" class="btn btn-small btn-primary">Ver</a>
+                <a href="@(UrlDetalle ?? $"/alojamiento/{Alojamiento.Id}")" class="btn btn-small btn-primary">Ver</a>
             }
         </div>
     </div>
@@ -31,6 +33,11 @@
 @code {
     [Parameter, EditorRequired] public Alojamiento Alojamiento { get; set; } = default!;
     [Parameter] public bool MostrarBoton { get; set; } = true;
+    [Parameter] public string? UrlDetalle { get; set; }
+
+    protected override void OnInitialized() => AppState.OnChange += OnMonedaChanged;
+    public void Dispose() => AppState.OnChange -= OnMonedaChanged;
+    private void OnMonedaChanged() => InvokeAsync(StateHasChanged);
 
     private string GenerarEstrellas(double rating)
     {

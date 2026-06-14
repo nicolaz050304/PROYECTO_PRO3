@@ -30,6 +30,33 @@
 
         <div class="nav-buttons" style="position:relative;">
 
+            <div class="currency-switch">
+                <button class="currency-trigger" @onclick="ToggleMoneda" title="Cambiar moneda (referencial)">
+                    <span class="currency-code">@AppState.SimboloMoneda @AppState.MonedaSeleccionada</span>
+                    <i class="fas fa-chevron-down currency-chevron @(_menuMoneda ? "rotated" : "")"></i>
+                </button>
+
+                @if (_menuMoneda)
+                {
+                    <div class="currency-menu">
+                        @foreach (var m in BunkiApp.Models.AppState.Monedas)
+                        {
+                            <button type="button"
+                                    class="currency-item @(m.Codigo == AppState.MonedaSeleccionada ? "active" : "")"
+                                    @onclick="() => SeleccionarMoneda(m.Codigo)">
+                                <span class="currency-item-sym">@m.Simbolo</span>
+                                <span class="currency-item-code">@m.Codigo</span>
+                                @if (m.Codigo == AppState.MonedaSeleccionada)
+                                {
+                                    <i class="fas fa-check"></i>
+                                }
+                            </button>
+                        }
+                        <div class="currency-note">Conversión referencial. El cobro se realiza en S/ (PEN).</div>
+                    </div>
+                }
+            </div>
+
             @if (!AppState.EstaAutenticado)
             {
                 <button class="nav-avatar-jp" @onclick="ToggleVisitante">
@@ -101,7 +128,7 @@
     </div>
 </header>
 
-@if (_menuVisitante || _menuUsuario)
+@if (_menuVisitante || _menuUsuario || _menuMoneda)
 {
     <div class="nav-overlay" @onclick="CerrarMenus"></div>
 }
@@ -304,21 +331,134 @@
         z-index: 499; /* Se mantiene por debajo del header y del dropdown */
         background: transparent;
     }
+
+    /* ===== SELECTOR DE MONEDA (frontend mock) ===== */
+    .currency-switch {
+        position: relative;
+    }
+
+    .currency-trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 12px;
+        border-radius: 50px;
+        border: 1px solid var(--hairline-strong);
+        background: var(--surface-2);
+        color: var(--ink);
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        cursor: pointer;
+        font-variant-numeric: tabular-nums;
+        transition: border-color var(--t), background var(--t), transform var(--t-fast);
+    }
+
+        .currency-trigger:hover {
+            border-color: var(--gold);
+            background: var(--gold-tint);
+            color: var(--champagne);
+        }
+
+    .currency-chevron {
+        font-size: 9px;
+        color: var(--ink-muted);
+        transition: transform var(--t);
+    }
+
+        .currency-chevron.rotated {
+            transform: rotate(180deg);
+        }
+
+    .currency-menu {
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        min-width: 200px;
+        background: var(--surface);
+        border: 1px solid var(--hairline-strong);
+        border-radius: 14px;
+        box-shadow: var(--shadow-lg);
+        z-index: 505;
+        overflow: hidden;
+        padding: 6px;
+        animation: ddFade .15s ease;
+    }
+
+    .currency-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 10px 12px;
+        border: none;
+        border-radius: 10px;
+        background: none;
+        color: var(--ink-muted);
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        text-align: left;
+        cursor: pointer;
+        transition: background var(--t), color var(--t);
+    }
+
+        .currency-item:hover {
+            background: rgba(168, 162, 158, 0.07);
+            color: var(--ink);
+        }
+
+        .currency-item.active {
+            background: var(--gold-tint);
+            color: var(--gold);
+        }
+
+    .currency-item-sym {
+        width: 22px;
+        text-align: center;
+        color: var(--champagne);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .currency-item-code {
+        flex: 1;
+    }
+
+    .currency-item .fa-check {
+        font-size: 11px;
+        color: var(--gold);
+    }
+
+    .currency-note {
+        padding: 8px 12px 4px;
+        margin-top: 4px;
+        border-top: 1px solid var(--hairline);
+        font-size: 11px;
+        line-height: 1.4;
+        color: var(--ink-faint);
+        font-weight: 500;
+    }
 </style>
 
 @code {
     private bool _menuVisitante = false;
     private bool _menuUsuario = false;
+    private bool _menuMoneda = false;
 
     protected override void OnInitialized()
     {
         Navigation.LocationChanged += OnLocationChanged;
+        AppState.OnChange += OnAppStateChanged;
     }
 
     public void Dispose()
     {
         Navigation.LocationChanged -= OnLocationChanged;
+        AppState.OnChange -= OnAppStateChanged;
     }
+
+    private void OnAppStateChanged() => InvokeAsync(StateHasChanged);
 
     private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
     {
@@ -332,9 +472,11 @@
         return uri.StartsWith(href.TrimStart('/')) ? "active" : "";
     }
 
-    private void ToggleVisitante() { _menuVisitante = !_menuVisitante; _menuUsuario = false; StateHasChanged(); }
-    private void ToggleUsuario() { _menuUsuario = !_menuUsuario; _menuVisitante = false; StateHasChanged(); }
-    private void CerrarMenus() { _menuVisitante = false; _menuUsuario = false; StateHasChanged(); }
+    private void ToggleVisitante() { _menuVisitante = !_menuVisitante; _menuUsuario = false; _menuMoneda = false; StateHasChanged(); }
+    private void ToggleUsuario() { _menuUsuario = !_menuUsuario; _menuVisitante = false; _menuMoneda = false; StateHasChanged(); }
+    private void ToggleMoneda() { _menuMoneda = !_menuMoneda; _menuUsuario = false; _menuVisitante = false; StateHasChanged(); }
+    private void SeleccionarMoneda(string codigo) { AppState.SetMoneda(codigo); _menuMoneda = false; StateHasChanged(); }
+    private void CerrarMenus() { _menuVisitante = false; _menuUsuario = false; _menuMoneda = false; StateHasChanged(); }
 
     private void CerrarSesion()
     {

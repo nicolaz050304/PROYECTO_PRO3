@@ -7,7 +7,11 @@
 
 <div class="section">
     <div class="container">
-        <h2 class="section-title" style="text-align: left;">Mis Reservas</h2>
+        <header class="page-head">
+            <span class="eyebrow">Tu actividad</span>
+            <h1 class="page-head-title">Mis Reservas</h1>
+            <p class="page-head-sub">Gestiona tus próximas estadías, revisa tu historial y mantén todo bajo control.</p>
+        </header>
 
         @if (!string.IsNullOrEmpty(MensajeAccion))
         {
@@ -21,10 +25,7 @@
                 <button class="tab-btn @(TabActiva == tab ? "active" : "")"
                         @onclick="() => CambiarTab(tab)">
                     @tab
-                    <span class="badge @(tab == "Próximas" ? "badge-primary" : "badge-success")"
-                          style="margin-left: 8px; font-size: 11px;">
-                        @ContarReservasPorTab(tab)
-                    </span>
+                    <span class="tab-count">@ContarReservasPorTab(tab)</span>
                 </button>
             }
         </div>
@@ -34,7 +35,14 @@
         {
             @if (!Proximas.Any())
             {
-                <AlertMessage Tipo="warning" Mensaje="No tienes reservas próximas." Cerrable="false" />
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="fas fa-calendar-day"></i></div>
+                    <h3>No tienes reservas próximas</h3>
+                    <p>Cuando reserves un alojamiento, aparecerá aquí con sus fechas y detalles.</p>
+                    <div class="empty-state-actions">
+                        <button class="btn btn-primary" @onclick='() => Navigation.NavigateTo("/explorar")'>Explorar alojamientos</button>
+                    </div>
+                </div>
             }
             else
             {
@@ -50,7 +58,11 @@
         {
             @if (!Pasadas.Any())
             {
-                <AlertMessage Tipo="warning" Mensaje="No tienes reservas pasadas." Cerrable="false" />
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="fas fa-clock-rotate-left"></i></div>
+                    <h3>Aún no tienes reservas pasadas</h3>
+                    <p>Tu historial de estancias completadas se mostrará aquí.</p>
+                </div>
             }
             else
             {
@@ -66,7 +78,11 @@
         {
             @if (!Canceladas.Any())
             {
-                <AlertMessage Tipo="warning" Mensaje="No tienes reservas canceladas." Cerrable="false" />
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="fas fa-circle-check"></i></div>
+                    <h3>No tienes reservas canceladas</h3>
+                    <p>Las reservas que canceles quedarán registradas aquí.</p>
+                </div>
             }
             else
             {

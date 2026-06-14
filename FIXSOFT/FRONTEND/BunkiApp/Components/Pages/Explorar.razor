@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @inject DataService Data
 @inject IJSRuntime JS
+@using System.Globalization
 
 <PageTitle>Bunki - Explorar Alojamientos</PageTitle>
 
@@ -60,8 +61,21 @@
                 <div class="filter-group">
                     <label class="filter-group-label">Fechas</label>
                     <div class="filter-dates">
-                        <input class="flatpickr-date" type="text" placeholder="Entrada" aria-label="Fecha de entrada" />
-                        <input class="flatpickr-date" type="text" placeholder="Salida" aria-label="Fecha de salida" />
+                        <input class="flatpickr-date"
+                               type="text"
+                               placeholder="Entrada"
+                               aria-label="Fecha de entrada"
+                               value="@FormatPickerDate(Filtros.FechaEntrada)"
+                               @onchange="OnFechaEntradaChanged"
+                               autocomplete="off" />
+
+                        <input class="flatpickr-date"
+                               type="text"
+                               placeholder="Salida"
+                               aria-label="Fecha de salida"
+                               value="@FormatPickerDate(Filtros.FechaSalida)"
+                               @onchange="OnFechaSalidaChanged"
+                               autocomplete="off" />
                     </div>
                 </div>
 
@@ -154,7 +168,7 @@
                     <div class="grid grid-3">
                         @foreach (var item in AlojamientosPaginados)
                         {
-                            <AlojamientoCard Alojamiento="item" />
+                            <AlojamientoCard Alojamiento="item" UrlDetalle="@ConstruirUrlDetalle(item.Id)" />
                         }
                     </div>
 
@@ -269,5 +283,57 @@
     private void CambiarPagina(int pagina)
     {
         PaginaActual = pagina;
+    }
+    private string ConstruirUrlDetalle(int id)
+    {
+        var query = new List<string>();
+
+        if (Filtros.FechaEntrada.HasValue)
+            query.Add($"entrada={Filtros.FechaEntrada.Value:yyyy-MM-dd}");
+
+        if (Filtros.FechaSalida.HasValue)
+            query.Add($"salida={Filtros.FechaSalida.Value:yyyy-MM-dd}");
+
+        if (Filtros.Huespedes > 0)
+            query.Add($"huespedes={Filtros.Huespedes}");
+
+        return query.Any()
+            ? $"/alojamiento/{id}?{string.Join("&", query)}"
+            : $"/alojamiento/{id}";
+    }
+
+    private string FormatPickerDate(DateTime? fecha)
+    {
+        return fecha?.ToString("yyyy-MM-dd") ?? "";
+    }
+
+    private void OnFechaEntradaChanged(ChangeEventArgs e)
+    {
+        Filtros.FechaEntrada = ParsePickerDate(e.Value?.ToString());
+
+        if (Filtros.FechaEntrada.HasValue &&
+            Filtros.FechaSalida.HasValue &&
+            Filtros.FechaSalida <= Filtros.FechaEntrada)
+        {
+            Filtros.FechaSalida = null;
+        }
+    }
+
+    private void OnFechaSalidaChanged(ChangeEventArgs e)
+    {
+        Filtros.FechaSalida = ParsePickerDate(e.Value?.ToString());
+    }
+
+    private DateTime? ParsePickerDate(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+
+        if (DateTime.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var fecha))
+            return fecha;
+
+        if (DateTime.TryParse(value, out fecha))
+            return fecha;
+
+        return null;
     }
 }

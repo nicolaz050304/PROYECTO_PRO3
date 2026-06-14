@@ -4,6 +4,7 @@
 @inject NavigationManager Navigation
 @inject BunkiApp.Models.AppState AppState
 @inject IJSRuntime JS
+@using System.Globalization
 
 <PageTitle>Bunki - Encuentra estadías extraordinarias en Perú</PageTitle>
 
@@ -25,11 +26,21 @@
             </div>
             <div class="search-field">
                 <label>Entrada</label>
-                <input class="flatpickr-date" type="text" placeholder="dd/mm/aaaa" />
+                <input class="flatpickr-date"
+                       type="text"
+                       placeholder="dd/mm/aaaa"
+                       value="@FormatPickerDate(FechaEntrada)"
+                       @onchange="OnFechaEntradaChanged"
+                       autocomplete="off" />
             </div>
             <div class="search-field">
                 <label>Salida</label>
-                <input class="flatpickr-date" type="text" placeholder="dd/mm/aaaa" />
+                <input class="flatpickr-date"
+                       type="text"
+                       placeholder="dd/mm/aaaa"
+                       value="@FormatPickerDate(FechaSalida)"
+                       @onchange="OnFechaSalidaChanged"
+                       autocomplete="off" />
             </div>
             <div class="search-field search-field-guests">
                 <label>Huéspedes</label>
@@ -146,17 +157,24 @@
     private void Buscar()
     {
         var query = new List<string>();
+
         if (!string.IsNullOrWhiteSpace(Ubicacion))
             query.Add($"ubicacion={Uri.EscapeDataString(Ubicacion)}");
+
         if (FechaEntrada.HasValue)
-            query.Add($"entrada={FechaEntrada:yyyy-MM-dd}");
+            query.Add($"entrada={FechaEntrada.Value:yyyy-MM-dd}");
+
         if (FechaSalida.HasValue)
-            query.Add($"salida={FechaSalida:yyyy-MM-dd}");
-        if (Huespedes > 1)
+            query.Add($"salida={FechaSalida.Value:yyyy-MM-dd}");
+
+        if (Huespedes > 0)
             query.Add($"huespedes={Huespedes}");
 
-        var qs = query.Count > 0 ? "?" + string.Join("&", query) : "";
-        Navigation.NavigateTo($"/explorar{qs}");
+        var url = query.Any()
+            ? $"/explorar?{string.Join("&", query)}"
+            : "/explorar";
+
+        Navigation.NavigateTo(url);
     }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -164,5 +182,39 @@
         {
             await JS.InvokeVoidAsync("bunkiDatePicker.init", ".flatpickr-date");
         }
+    }
+    private string FormatPickerDate(DateTime? fecha)
+    {
+        return fecha?.ToString("yyyy-MM-dd") ?? "";
+    }
+
+    private void OnFechaEntradaChanged(ChangeEventArgs e)
+    {
+        FechaEntrada = ParsePickerDate(e.Value?.ToString());
+
+        if (FechaEntrada.HasValue &&
+            FechaSalida.HasValue &&
+            FechaSalida <= FechaEntrada)
+        {
+            FechaSalida = null;
+        }
+    }
+
+    private void OnFechaSalidaChanged(ChangeEventArgs e)
+    {
+        FechaSalida = ParsePickerDate(e.Value?.ToString());
+    }
+
+    private DateTime? ParsePickerDate(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+
+        if (DateTime.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var fecha))
+            return fecha;
+
+        if (DateTime.TryParse(value, out fecha))
+            return fecha;
+
+        return null;
     }
 }

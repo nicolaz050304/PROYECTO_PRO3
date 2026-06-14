@@ -445,6 +445,7 @@ public class DataService
         new Reserva
         {
             Id = 1,
+            AlojamientoId = 1,
             AlojamientoNombre = "Departamento en Miraflores",
             Ubicacion = "Miraflores, Lima",
             FechaEntrada = new DateTime(2026, 5, 15),
@@ -457,6 +458,7 @@ public class DataService
         new Reserva
         {
             Id = 2,
+            AlojamientoId = 2,
             AlojamientoNombre = "Casa en La Molina",
             Ubicacion = "La Molina, Lima",
             FechaEntrada = new DateTime(2026, 5, 28),
@@ -473,6 +475,7 @@ public class DataService
         new Reserva
         {
             Id = 3,
+            AlojamientoId = 3,
             AlojamientoNombre = "Habitación en Barranco",
             Ubicacion = "Barranco, Lima",
             FechaEntrada = new DateTime(2026, 5, 1),

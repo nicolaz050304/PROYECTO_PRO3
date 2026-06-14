@@ -1,8 +1,10 @@
 @page "/pagos"
 @rendermode InteractiveServer
+@using System.Globalization
 @inject NavigationManager Navigation
 @inject BunkiApp.Models.AppState AppState
-<PageTitle>Bunki - Pagos</PageTitle>
+@inject DataService Data
+@implements IDisposable
 
 <div class="section">
     <div class="container two-column" style="max-width: 1000px;">
@@ -14,23 +16,46 @@
             <div class="card" style="margin-bottom: 30px;">
                 <div style="padding: 20px;">
                     <h3 style="margin-bottom: 20px;">Detalles de la Reserva</h3>
-                    <div style="background: var(--light); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                        <p style="margin-bottom: 8px;"><strong>Alojamiento:</strong> Casa en La Molina</p>
-                        <p style="margin-bottom: 8px;"><strong>Fechas:</strong> 28 Mayo - 3 Junio (6 noches)</p>
-                        <p style="margin-bottom: 8px;"><strong>Huéspedes:</strong> 4</p>
-                        <p><strong>Anfitrión:</strong> Carlos Rodríguez</p>
+                    <div class="info-panel" style="margin-bottom: 20px;">
+                        @if (ReservaValida)
+                        {
+                            <p style="margin-bottom: 8px;"><strong>Alojamiento:</strong> @Alojamiento!.Nombre</p>
+                            <p style="margin-bottom: 8px;"><strong>Fechas:</strong> @RangoFechasTexto (@Noches @(Noches == 1 ? "noche" : "noches"))</p>
+                            <p style="margin-bottom: 8px;"><strong>Huéspedes:</strong> @Huespedes</p>
+                            <p><strong>Anfitrión:</strong> @Alojamiento.AnfitrionNombre</p>
+                        }
+                        else
+                        {
+                            <p class="card-text">No se encontró información válida de la reserva. Vuelve a seleccionar un alojamiento.</p>
+                            <a href="/explorar" class="btn btn-primary btn-small" style="margin-top: 12px;">Volver a explorar</a>
+                        }
                     </div>
 
-                    <table>
-                        <tr><td>Precio por noche</td><td style="text-align: right;">S/ 200</td></tr>
-                        <tr><td>6 noches</td><td style="text-align: right;">S/ 1,200</td></tr>
-                        <tr><td>Limpieza</td><td style="text-align: right;">S/ 100</td></tr>
-                        <tr><td>Comisión de servicio</td><td style="text-align: right;">S/ 130</td></tr>
-                        <tr style="font-weight: bold; border-top: 2px solid var(--primary);">
-                            <td>Total</td>
-                            <td style="text-align: right; color: var(--primary);">S/ 1,430</td>
-                        </tr>
-                    </table>
+                    @if (ReservaValida)
+                    {
+                        <table>
+                            <tr>
+                                <td>Precio por noche</td>
+                                <td style="text-align: right;">@Money(Alojamiento!.PrecioNoche)</td>
+                            </tr>
+                            <tr>
+                                <td>@Noches @(Noches == 1 ? "noche" : "noches")</td>
+                                <td style="text-align: right;">@Money(Subtotal)</td>
+                            </tr>
+                            <tr>
+                                <td>Limpieza</td>
+                                <td style="text-align: right;">@Money(Limpieza)</td>
+                            </tr>
+                            <tr>
+                                <td>Comisión de servicio</td>
+                                <td style="text-align: right;">@Money(Comision)</td>
+                            </tr>
+                            <tr style="font-weight: bold;">
+                                <td>Total</td>
+                                <td style="text-align: right;"><span class="price">@Money(Total)</span></td>
+                            </tr>
+                        </table>
+                    }
                 </div>
             </div>
 
@@ -42,12 +67,12 @@
                     <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
                         @foreach (var metodo in MetodosPago)
                         {
-                            <label style="display: flex; align-items: center; gap: 12px; padding: 14px; border: 2px solid @(Formulario.MetodoPago == metodo.Key ? "var(--primary)" : "var(--border)"); border-radius: var(--radius); cursor: pointer; transition: all 0.2s;">
+                            <label class="radio-card @(Formulario.MetodoPago == metodo.Key ? "selected" : "")">
                                 <input type="radio" name="payment" value="@metodo.Key"
                                        checked="@(Formulario.MetodoPago == metodo.Key)"
                                        @onchange="() => Formulario.MetodoPago = metodo.Key" />
-                                <i class="fas @metodo.Icono" style="color: var(--primary); font-size: 18px;"></i>
-                                <span style="font-weight: 600;">@metodo.Nombre</span>
+                                <i class="fas @metodo.Icono"></i>
+                                <span>@metodo.Nombre</span>
                             </label>
                         }
                     </div>
@@ -85,7 +110,7 @@
                                 <ValidationMessage For="() => Formulario.NombreTarjeta" class="validation-message" />
                             </div>
 
-                            <button type="submit" class="btn btn-primary btn-large" disabled="@Procesando">
+                            <button type="submit" class="btn btn-primary btn-large" disabled="@(Procesando || !ReservaValida)">
                                 @if (Procesando)
                                 {
                                     <i class="fas fa-spinner fa-spin"></i>
@@ -94,22 +119,22 @@
                                 else
                                 {
                                     <i class="fas fa-lock"></i>
-                                    <span>Completar Pago - S/ 1,430</span>
+                                    <span>Completar Pago - @Money(Total)</span>
                                 }
                             </button>
                         </EditForm>
                     }
                     else
                     {
-                        <div style="padding: 20px; background: var(--light); border-radius: var(--radius); text-align: center;">
+                        <div class="info-panel" style="text-align: center;">
                             <i class="fas fa-@(Formulario.MetodoPago == "billetera" ? "mobile-alt" : "university")"
-                               style="font-size: 40px; color: var(--primary); margin-bottom: 16px; display: block;"></i>
+                               style="font-size: 40px; color: var(--gold); margin-bottom: 16px; display: block;"></i>
                             <p class="card-text" style="margin-bottom: 20px;">
                                 @(Formulario.MetodoPago == "billetera"
                                     ? "Serás redirigido a Yape/Plin para completar el pago."
                                     : "Se mostrarán los datos de cuenta bancaria para realizar la transferencia.")
                             </p>
-                            <button class="btn btn-primary btn-large" @onclick="PagarOtroMetodo" disabled="@Procesando">
+                            <button class="btn btn-primary btn-large" @onclick="PagarOtroMetodo" disabled="@(Procesando || !ReservaValida)">
                                 @if (Procesando)
                                 {
                                     <i class="fas fa-spinner fa-spin"></i>
@@ -126,17 +151,21 @@
         <div class="sidebar">
             <h3 style="margin-bottom: 20px;">Resumen</h3>
 
-            <div style="background: var(--light); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                <div class="flex flex-between" style="margin-bottom: 10px;">
-                    <span>Subtotal</span><strong>S/ 1,300</strong>
+            <div class="info-panel" style="margin-bottom: 20px;">
+                <div class="summary-row">
+                    <span>Subtotal</span><strong>@Money(Subtotal + Limpieza)</strong>
                 </div>
-                <div class="flex flex-between" style="margin-bottom: 10px;">
-                    <span>Comisión</span><strong>S/ 130</strong>
+                <div class="summary-row">
+                    <span>Comisión</span><strong>@Money(Comision)</strong>
                 </div>
-                <div class="flex flex-between" style="padding-top: 10px; border-top: 1px solid var(--border);">
-                    <span style="font-weight: bold;">Total</span>
-                    <span style="font-size: 24px; font-weight: bold; color: var(--primary);">S/ 1,430</span>
+                <div class="summary-row summary-row--total">
+                    <span>Total</span>
+                    <span class="price price-lg">@Money(Total)</span>
                 </div>
+                @if (AppState.MonedaEsReferencial)
+                {
+                    <p class="summary-note">Conversión referencial. El cobro se realiza en S/ (PEN).</p>
+                }
             </div>
 
             <AlertMessage Tipo="success" Mensaje="Los pagos son 100% seguros y protegidos." Cerrable="false" />
@@ -160,10 +189,12 @@
 
 @if (PagoCompletado)
 {
-    <div style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 999;">
-        <div style="background: white; padding: 50px; border-radius: var(--radius-xl); text-align: center; max-width: 440px; box-shadow: var(--shadow-lg);">
-            <div style="font-size: 60px; margin-bottom: 20px;">✅</div>
-            <h2 style="margin-bottom: 12px; color: var(--success);">¡Pago Completado!</h2>
+    <div class="modal-overlay">
+        <div class="modal-panel">
+            <div class="empty-state-icon" style="background: var(--success-tint); color: var(--success); margin-bottom: 18px;">
+                <i class="fas fa-check"></i>
+            </div>
+            <h2 style="margin-bottom: 12px;">¡Pago Completado!</h2>
             <p class="card-text" style="margin-bottom: 24px;">
                 Tu reserva ha sido confirmada. Recibirás un correo de confirmación en breve.
             </p>
@@ -175,14 +206,56 @@
 }
 
 @code {
-    protected override void OnInitialized()
-    {
-        if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
-    }
+    [Parameter, SupplyParameterFromQuery(Name = "alojamientoId")]
+    public int? AlojamientoIdQuery { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "entrada")]
+    public DateTime? EntradaQuery { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "salida")]
+    public DateTime? SalidaQuery { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "huespedes")]
+    public int? HuespedesQuery { get; set; }
 
     private PagoForm Formulario = new();
     private bool Procesando = false;
     private bool PagoCompletado = false;
+
+    private Alojamiento? Alojamiento;
+    private DateTime? FechaEntrada;
+    private DateTime? FechaSalida;
+    private int Huespedes = 1;
+
+    private bool ReservaValida =>
+        Alojamiento is not null &&
+        FechaEntrada.HasValue &&
+        FechaSalida.HasValue &&
+        FechaSalida > FechaEntrada &&
+        Huespedes > 0;
+
+    private int Noches => ReservaValida
+        ? (FechaSalida!.Value - FechaEntrada!.Value).Days
+        : 0;
+
+    private decimal Subtotal => ReservaValida
+        ? Alojamiento!.PrecioNoche * Noches
+        : 0;
+
+    private decimal Limpieza => ReservaValida
+        ? Alojamiento!.TarifaLimpieza
+        : 0;
+
+    private decimal Comision => ReservaValida
+        ? Subtotal * 0.10m
+        : 0;
+
+    private decimal Total => Subtotal + Limpieza + Comision;
+
+    private string RangoFechasTexto =>
+        FechaEntrada.HasValue && FechaSalida.HasValue
+            ? $"{FechaEntrada.Value.ToString("dd MMM", new CultureInfo("es-PE"))} - {FechaSalida.Value.ToString("dd MMM yyyy", new CultureInfo("es-PE"))}"
+            : "Fechas no seleccionadas";
 
     private static readonly (string Key, string Nombre, string Icono)[] MetodosPago =
     {
@@ -191,16 +264,52 @@
         ("billetera", "Billetera Digital (Yape/Plin)", "fa-mobile-alt")
     };
 
+    protected override void OnInitialized()
+    {
+        if (!AppState.EstaAutenticado)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        AppState.OnChange += OnMonedaChanged;
+
+        if (AlojamientoIdQuery.HasValue)
+        {
+            Alojamiento = Data.ObtenerAlojamiento(AlojamientoIdQuery.Value);
+        }
+
+        FechaEntrada = EntradaQuery;
+        FechaSalida = SalidaQuery;
+
+        if (HuespedesQuery.HasValue)
+        {
+            Huespedes = Alojamiento is not null
+                ? Math.Clamp(HuespedesQuery.Value, 1, Alojamiento.MaxHuespedes)
+                : Math.Max(1, HuespedesQuery.Value);
+        }
+    }
+
+    public void Dispose() => AppState.OnChange -= OnMonedaChanged;
+    private void OnMonedaChanged() => InvokeAsync(StateHasChanged);
+
+    // Formateo centralizado (respeta la moneda seleccionada en AppState).
+    private string Money(decimal monto) => AppState.FormatearPrecio(monto);
+
     private async Task Pagar()
     {
+        if (!ReservaValida) return;
+
         Procesando = true;
-        await Task.Delay(2000); // Simula procesamiento
+        await Task.Delay(2000);
         Procesando = false;
         PagoCompletado = true;
     }
 
     private async Task PagarOtroMetodo()
     {
+        if (!ReservaValida) return;
+
         Procesando = true;
         await Task.Delay(1500);
         Procesando = false;
