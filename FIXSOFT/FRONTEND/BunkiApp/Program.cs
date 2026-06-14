@@ -8,12 +8,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-
 // Registro de servicios de la aplicación
 builder.Services.AddSingleton<DataService>();
 builder.Services.AddScoped<AppState>(); // <-- ¡Perfecto! Ahora es un servicio Scoped por usuario
-
-builder.Services.AddScoped<MapInterop>();
 
 var app = builder.Build();
 
@@ -31,4 +28,3 @@ app.MapRazorComponents<App>()
    .AddInteractiveServerRenderMode();
 
 app.Run();
-

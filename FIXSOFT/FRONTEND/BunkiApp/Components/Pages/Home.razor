@@ -3,32 +3,92 @@
 @inject DataService Data
 @inject NavigationManager Navigation
 @inject BunkiApp.Models.AppState AppState
+@inject IJSRuntime JS
 
-<PageTitle>Bunki - Encuentra tu próximo hogar</PageTitle>
+<PageTitle>Bunki - Encuentra estadías extraordinarias en Perú</PageTitle>
 
-<!-- HERO -->
-<div class="hero">
-    <div class="container">
-        <h1>Encuentra tu próximo hogar</h1>
-        <p>Explora miles de alojamientos únicos en Perú</p>
-        <button class="btn btn-secondary" style="display: inline-block;"
-                @onclick='() => Navigation.NavigateTo("/explorar")'>
-            Comienza a explorar
-        </button>
-        @if (!AppState.EstaAutenticado)
-        {
-            <a href="/registro" class="btn btn-outline"
-               style="display: inline-block; margin-left: 12px; border-color: rgba(255,255,255,0.6); color: white;">
-                Crear cuenta gratis
+<!-- ===== HERO CINEMATOGRÁFICO ===== -->
+<section class="hero-home" style="@HeroStyle">
+    <div class="hero-home-inner container">
+        <span class="hero-eyebrow">Alojamientos seleccionados en Perú</span>
+        <h1>Encuentra estadías extraordinarias</h1>
+        <p class="hero-sub">
+            Alojamientos elegidos para viajes, descanso y experiencias memorables —
+            reservados con la confianza de una plataforma profesional.
+        </p>
+
+        <!-- Buscador estilo Airbnb integrado -->
+        <div class="search-card">
+            <div class="search-field">
+                <label>Ubicación</label>
+                <input type="text" placeholder="¿A dónde vas?" @bind="Ubicacion" @bind:event="oninput" />
+            </div>
+            <div class="search-field">
+                <label>Entrada</label>
+                <input class="flatpickr-date" type="text" placeholder="dd/mm/aaaa" />
+            </div>
+            <div class="search-field">
+                <label>Salida</label>
+                <input class="flatpickr-date" type="text" placeholder="dd/mm/aaaa" />
+            </div>
+            <div class="search-field search-field-guests">
+                <label>Huéspedes</label>
+
+                <div class="guest-chip-group">
+                    <button type="button"
+                            class="guest-chip @(Huespedes == 1 ? "active" : "")"
+                            @onclick="() => Huespedes = 1">
+                        1
+                    </button>
+
+                    <button type="button"
+                            class="guest-chip @(Huespedes == 2 ? "active" : "")"
+                            @onclick="() => Huespedes = 2">
+                        2
+                    </button>
+
+                    <button type="button"
+                            class="guest-chip @(Huespedes == 3 ? "active" : "")"
+                            @onclick="() => Huespedes = 3">
+                        3
+                    </button>
+
+                    <button type="button"
+                            class="guest-chip @(Huespedes == 4 ? "active" : "")"
+                            @onclick="() => Huespedes = 4">
+                        4+
+                    </button>
+                </div>
+            </div>
+            <button class="btn btn-primary search-submit" @onclick="Buscar">
+                <i class="fas fa-search"></i> Buscar
+            </button>
+        </div>
+
+        <div class="hero-links">
+            <a href="/explorar" class="hero-link">
+                <i class="fas fa-compass"></i> Explorar todos los alojamientos
             </a>
-        }
+            @if (!AppState.EstaAutenticado)
+            {
+                <a href="/registro" class="hero-link hero-link--accent">Crear cuenta gratis</a>
+            }
+        </div>
     </div>
-</div>
+</section>
 
-<!-- ALOJAMIENTOS DESTACADOS -->
+<!-- ===== ALOJAMIENTOS DESTACADOS ===== -->
 <div class="section">
     <div class="container">
-        <h2 class="section-title">Alojamientos Destacados</h2>
+        <div class="section-head">
+            <div class="section-head-text">
+                <span class="eyebrow">Selección Bunki</span>
+                <h2 class="section-title editorial-title">Alojamientos destacados</h2>
+                <p class="section-subtitle">Una muestra de las estadías mejor valoradas por nuestros huéspedes.</p>
+            </div>
+            <a href="/explorar" class="section-link">Ver todos <i class="fas fa-arrow-right"></i></a>
+        </div>
+
         <div class="grid grid-3">
             @foreach (var alojamiento in AlojamientosDestacados)
             {
@@ -38,14 +98,19 @@
     </div>
 </div>
 
-<!-- POR QUÉ BUNKI -->
+<!-- ===== POR QUÉ BUNKI ===== -->
 <div class="section bg-light">
     <div class="container">
-        <h2 class="section-title">¿Por qué elegir Bunki?</h2>
+        <div class="section-head" style="justify-content: center; text-align: center;">
+            <div class="section-head-text" style="max-width: 100%;">
+                <span class="eyebrow">Por qué Bunki</span>
+                <h2 class="section-title editorial-title" style="text-align: center;">Reserva con tranquilidad</h2>
+            </div>
+        </div>
         <div class="grid grid-3">
-            <StatBox Icono="🏠" Valor="10,000+" Etiqueta="Alojamientos disponibles" />
-            <StatBox Icono="✓" Valor="100%" Etiqueta="Transacciones seguras" />
-            <StatBox Icono="⭐" Valor="4.8" Etiqueta="Rating promedio" />
+            <StatBox Tono="neutral" Icono="fa-house" Valor="10,000+" Etiqueta="Alojamientos disponibles" />
+            <StatBox Tono="exito" Icono="fa-shield-halved" Valor="100%" Etiqueta="Transacciones seguras" />
+            <StatBox Tono="rating" Icono="fa-star" Valor="4.8" Etiqueta="Rating promedio" />
         </div>
     </div>
 </div>
@@ -53,8 +118,51 @@
 @code {
     private List<Alojamiento> AlojamientosDestacados = new();
 
+    // Campos del buscador del hero (solo UI; no implementan búsqueda compleja).
+    private string Ubicacion = "";
+    private DateTime? FechaEntrada;
+    private DateTime? FechaSalida;
+    private int Huespedes = 1;
+
+    // Imagen del hero: tomada de un alojamiento real del catálogo (distinto a los destacados),
+    // con respaldo en gradiente si no hubiera imagen. No altera datos ni servicios.
+    private string HeroImagen = "";
+
+    // Solo define la variable si hay imagen; si no, el CSS usa su respaldo (none).
+    private string HeroStyle => "--hero-img: url('/images/premium/hero-bunki-premium.png')";
+
     protected override void OnInitialized()
     {
-        AlojamientosDestacados = Data.ObtenerAlojamientos().Take(3).ToList();
+        var todos = Data.ObtenerAlojamientos();
+        AlojamientosDestacados = todos.Take(3).ToList();
+
+        HeroImagen = todos.Skip(3).FirstOrDefault(a => !string.IsNullOrEmpty(a.ImagenUrl))?.ImagenUrl
+                     ?? todos.FirstOrDefault(a => !string.IsNullOrEmpty(a.ImagenUrl))?.ImagenUrl
+                     ?? "";
+    }
+
+    // Redirige a /explorar conservando la navegación existente.
+    // Pasa los valores como query string (forward-compatible) sin cambiar la lógica de Explorar.
+    private void Buscar()
+    {
+        var query = new List<string>();
+        if (!string.IsNullOrWhiteSpace(Ubicacion))
+            query.Add($"ubicacion={Uri.EscapeDataString(Ubicacion)}");
+        if (FechaEntrada.HasValue)
+            query.Add($"entrada={FechaEntrada:yyyy-MM-dd}");
+        if (FechaSalida.HasValue)
+            query.Add($"salida={FechaSalida:yyyy-MM-dd}");
+        if (Huespedes > 1)
+            query.Add($"huespedes={Huespedes}");
+
+        var qs = query.Count > 0 ? "?" + string.Join("&", query) : "";
+        Navigation.NavigateTo($"/explorar{qs}");
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("bunkiDatePicker.init", ".flatpickr-date");
+        }
     }
 }

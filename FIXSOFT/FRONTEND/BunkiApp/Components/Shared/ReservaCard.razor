@@ -22,7 +22,7 @@
 
             @if (Reserva.Estado == "Pendiente")
             {
-                <button class="btn btn-small btn-primary btn-block" @onclick="() => OnPagarReserva.InvokeAsync(Reserva)">
+                <button class="btn btn-small btn-primary btn-block" @onclick='() => Navigation.NavigateTo("/pagos")'>
                     Pagar Ahora
                 </button>
                 <button class="btn btn-small btn-outline btn-block" @onclick="OnCancelar">
@@ -78,7 +78,6 @@
 </style>
 
 @code {
-    [Parameter] public EventCallback<Reserva> OnPagarReserva { get; set; }
     [Parameter, EditorRequired] public Reserva Reserva { get; set; } = default!;
     [Parameter] public EventCallback<Reserva> OnCancelarReserva { get; set; }
     [Parameter] public EventCallback<Reserva> OnDejarResenaCallback { get; set; }

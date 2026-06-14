@@ -46,9 +46,6 @@ public class Reserva
     public int Id { get; set; }
     public string AlojamientoNombre { get; set; } = "";
     public string Ubicacion { get; set; } = "";
-
-    public string ImagenAlojamiento { get; set; } = "";
-
     public DateTime FechaEntrada { get; set; }
     public DateTime FechaSalida { get; set; }
     public int NumHuespedes { get; set; }
@@ -124,7 +121,6 @@ public class Conversacion
     public bool EstaEnLinea { get; set; } = false;
     public string Rol { get; set; } = "Usuario";
     public List<Mensaje> Mensajes { get; set; } = new();
-    public Reserva? ReservaAsociada { get; set; }
 }
 
 public class Notificacion

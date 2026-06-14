@@ -452,8 +452,7 @@ public class DataService
             NumHuespedes = 2,
             Total = 825,
             Estado = "Confirmada",
-            AnfitrionNombre = "María Andrades",
-            ImagenAlojamiento = "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&q=80&w=400"
+            AnfitrionNombre = "María Andrades"
         },
         new Reserva
         {
@@ -515,77 +514,51 @@ public class DataService
     // =============================================
 
     public List<Conversacion> ObtenerConversaciones() => new()
-{
-    // CASO 1: RESERVA ACTUAL (María)
-    new Conversacion
     {
-        Id = 1,
-        ContactoNombre = "María Andrades",
-        ContactoInicial = "MA",
-        UltimoMensaje = "Hola, ¿tienes preguntas del alojamiento?",
-        EstaEnLinea = true,
-        Rol = "Anfitrión",
-        ReservaAsociada = new Reserva
+        new Conversacion
         {
-            AlojamientoNombre = "Casa en La Molina",
-            AlojamientoId = 2,
-            ImagenAlojamiento = "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&q=80&w=400",
-            Total = 1200,
-            FechaEntrada = DateTime.Now,
-            FechaSalida = DateTime.Now.AddDays(7),
-            NumHuespedes = 4,
-            Estado = "Confirmada"
+            Id = 1,
+            ContactoNombre = "María Andrades",
+            ContactoInicial = "MA",
+            UltimoMensaje = "Hola, ¿tienes preguntas del alojamiento?",
+            MensajesNoLeidos = 2,
+            EstaEnLinea = true,
+            Rol = "Anfitrión",
+            Mensajes = new()
+            {
+                new() { Id = 1, AutorNombre = "María Andrades", AutorInicial = "MA", Texto = "¡Hola Juan! ¿Cómo estás? Espero que tengas todo lo que necesitas.", Hora = "10:30 AM", EsMio = false },
+                new() { Id = 2, AutorNombre = "Tú", AutorInicial = "JP", Texto = "¡Hola María! Excelente lugar, muchas gracias. Solo quería preguntar sobre las reglas de la casa.", Hora = "10:35 AM", EsMio = true },
+                new() { Id = 3, AutorNombre = "María Andrades", AutorInicial = "MA", Texto = "Claro, no hay problema. Las reglas principales son: sin mascotas, sin fiestas después de las 22:00, y por favor mantener la casa limpia. ¿Alguna otra pregunta?", Hora = "10:40 AM", EsMio = false },
+                new() { Id = 4, AutorNombre = "Tú", AutorInicial = "JP", Texto = "Perfecto, entendido. ¡Muchas gracias!", Hora = "10:45 AM", EsMio = true }
+            }
         },
-        MensajesNoLeidos = 2,
-        Mensajes = new() { new() { Texto = "¡Hola!", EsMio = false } }
-    },
-
-    // CASO 2: RESERVA FUTURA (Carlos)
-    new Conversacion
-    {
-        Id = 2,
-        ContactoNombre = "Carlos Ruiz",
-        ContactoInicial = "CR",
-        UltimoMensaje = "¿A qué hora puedo hacer el check-in?",
-        EstaEnLinea = false,
-        Rol = "Anfitrión",
-        ReservaAsociada = new Reserva
+        new Conversacion
         {
-            AlojamientoNombre = "Departamento Miraflores",
-            AlojamientoId = 1,
-            ImagenAlojamiento = "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&q=80&w=400",
-            Total = 850,
-            FechaEntrada = DateTime.Now.AddDays(10),
-            FechaSalida = DateTime.Now.AddDays(12),
-            NumHuespedes = 2,
-            Estado = "Pendiente"
+            Id = 2,
+            ContactoNombre = "Carlos Ruiz",
+            ContactoInicial = "CR",
+            UltimoMensaje = "¿A qué hora puedo hacer el check-in?",
+            EstaEnLinea = false,
+            Rol = "Anfitrión",
+            Mensajes = new()
+            {
+                new() { Id = 1, AutorNombre = "Carlos Ruiz", AutorInicial = "CR", Texto = "¿A qué hora puedo hacer el check-in?", Hora = "Ayer", EsMio = false }
+            }
         },
-        Mensajes = new() { new() { Texto = "¿A qué hora puedo hacer el check-in?", EsMio = false } }
-    },
-
-    // CASO 3: RESERVA PASADA (Laura)
-    new Conversacion
-    {
-        Id = 3,
-        ContactoNombre = "Laura Mendez",
-        ContactoInicial = "LM",
-        UltimoMensaje = "Muchas gracias, todo estuvo perfecto!",
-        EstaEnLinea = false,
-        Rol = "Anfitrión",
-        ReservaAsociada = new Reserva
+        new Conversacion
         {
-            AlojamientoNombre = "Habitación en Barranco",
-            AlojamientoId = 3,
-            ImagenAlojamiento = "https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&q=80&w=400",
-            Total = 500,
-            FechaEntrada = DateTime.Now.AddDays(-10),
-            FechaSalida = DateTime.Now.AddDays(-7),
-            NumHuespedes = 1,
-            Estado = "Completada"
-        },
-        Mensajes = new() { new() { Texto = "Muchas gracias, todo estuvo perfecto!", EsMio = false } }
-    }
-};
+            Id = 3,
+            ContactoNombre = "Laura Mendez",
+            ContactoInicial = "LM",
+            UltimoMensaje = "Muchas gracias, todo estuvo perfecto!",
+            EstaEnLinea = false,
+            Rol = "Anfitrión",
+            Mensajes = new()
+            {
+                new() { Id = 1, AutorNombre = "Laura Mendez", AutorInicial = "LM", Texto = "Muchas gracias, todo estuvo perfecto!", Hora = "Lunes", EsMio = false }
+            }
+        }
+    };
 
     // =============================================
     // NOTIFICACIONES

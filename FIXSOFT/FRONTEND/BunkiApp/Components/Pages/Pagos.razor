@@ -2,7 +2,6 @@
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
 @inject BunkiApp.Models.AppState AppState
-
 <PageTitle>Bunki - Pagos</PageTitle>
 
 <div class="section">
@@ -11,48 +10,25 @@
         <div>
             <h2 class="section-title" style="text-align: left;">Resumen de Pago</h2>
 
-            <!-- DETALLE RESERVA DINÁMICO -->
+            <!-- DETALLE RESERVA -->
             <div class="card" style="margin-bottom: 30px;">
                 <div style="padding: 20px;">
                     <h3 style="margin-bottom: 20px;">Detalles de la Reserva</h3>
                     <div style="background: var(--light); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                        <p style="margin-bottom: 8px;"><strong>Alojamiento:</strong> @(AppState.ReservaAPagar?.AlojamientoNombre ?? "Casa en La Molina")</p>
-                        <p style="margin-bottom: 8px;">
-                            <strong>Fechas:</strong>
-                            @(AppState.ReservaAPagar != null
-                                ? $"{AppState.ReservaAPagar.FechaEntrada:dd MMM} - {AppState.ReservaAPagar.FechaSalida:dd MMM yyyy}"
-                                : "28 Mayo - 3 Junio")
-                        </p>
-                        <p style="margin-bottom: 8px;"><strong>Huéspedes:</strong> @(AppState.ReservaAPagar?.NumHuespedes ?? 4)</p>
-                        <p><strong>Ubicación:</strong> @(AppState.ReservaAPagar?.Ubicacion ?? "Lima")</p>
+                        <p style="margin-bottom: 8px;"><strong>Alojamiento:</strong> Casa en La Molina</p>
+                        <p style="margin-bottom: 8px;"><strong>Fechas:</strong> 28 Mayo - 3 Junio (6 noches)</p>
+                        <p style="margin-bottom: 8px;"><strong>Huéspedes:</strong> 4</p>
+                        <p><strong>Anfitrión:</strong> Carlos Rodríguez</p>
                     </div>
 
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <tr style="border-bottom: 1px solid var(--border);">
-                            <td style="padding: 10px 0;">
-                                @ObtenerSimboloMoneda() @CalcularMonto(SubtotalNoches / 6) x 6 noches
-                            </td>
-                            <td style="text-align: right; padding: 10px 0;">
-                                @ObtenerSimboloMoneda() @CalcularMonto(SubtotalNoches)
-                            </td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid var(--border);">
-                            <td style="padding: 10px 0;">Limpieza</td>
-                            <td style="text-align: right; padding: 10px 0;">
-                                @ObtenerSimboloMoneda() @CalcularMonto(CostoLimpieza)
-                            </td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid var(--border);">
-                            <td style="padding: 10px 0;">Comisión de servicio</td>
-                            <td style="text-align: right; padding: 10px 0;">
-                                @ObtenerSimboloMoneda() @CalcularMonto(ComisionServicio)
-                            </td>
-                        </tr>
-                        <tr style="font-weight: bold; border-top: 2px solid var(--primary); font-size: 18px;">
-                            <td style="padding: 15px 0 0 0;">Total (PEN)</td>
-                            <td style="text-align: right; color: var(--primary); padding: 15px 0 0 0;">
-                                @ObtenerSimboloMoneda() @CalcularMonto(TotalReserva)
-                            </td>
+                    <table>
+                        <tr><td>Precio por noche</td><td style="text-align: right;">S/ 200</td></tr>
+                        <tr><td>6 noches</td><td style="text-align: right;">S/ 1,200</td></tr>
+                        <tr><td>Limpieza</td><td style="text-align: right;">S/ 100</td></tr>
+                        <tr><td>Comisión de servicio</td><td style="text-align: right;">S/ 130</td></tr>
+                        <tr style="font-weight: bold; border-top: 2px solid var(--primary);">
+                            <td>Total</td>
+                            <td style="text-align: right; color: var(--primary);">S/ 1,430</td>
                         </tr>
                     </table>
                 </div>
@@ -118,7 +94,7 @@
                                 else
                                 {
                                     <i class="fas fa-lock"></i>
-                                    <span>Completar Pago - @ObtenerSimboloMoneda() @CalcularMonto(TotalReserva)</span>
+                                    <span>Completar Pago - S/ 1,430</span>
                                 }
                             </button>
                         </EditForm>
@@ -146,31 +122,20 @@
             </div>
         </div>
 
-        <!-- SIDEBAR RESUMEN DINÁMICO -->
+        <!-- SIDEBAR RESUMEN -->
         <div class="sidebar">
             <h3 style="margin-bottom: 20px;">Resumen</h3>
 
-            <div style="background: var(--light); padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--primary);">
-                <label style="font-weight: bold; display: block; margin-bottom: 8px;">
-                    <i class="fas fa-globe"></i> Moneda de Pago:
-                </label>
-                <select @bind="MonedaSeleccionada" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 16px;">
-                    <option value="PEN">Soles (PEN)</option>
-                    <option value="USD">Dólares (USD)</option>
-                    <option value="EUR">Euros (EUR)</option>
-                </select>
-            </div>
-
             <div style="background: var(--light); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                 <div class="flex flex-between" style="margin-bottom: 10px;">
-                    <span>Subtotal</span><strong>@ObtenerSimboloMoneda() @CalcularMonto(SubtotalGeneral)</strong>
+                    <span>Subtotal</span><strong>S/ 1,300</strong>
                 </div>
                 <div class="flex flex-between" style="margin-bottom: 10px;">
-                    <span>Comisión</span><strong>@ObtenerSimboloMoneda() @CalcularMonto(ComisionServicio)</strong>
+                    <span>Comisión</span><strong>S/ 130</strong>
                 </div>
                 <div class="flex flex-between" style="padding-top: 10px; border-top: 1px solid var(--border);">
                     <span style="font-weight: bold;">Total</span>
-                    <span style="font-size: 24px; font-weight: bold; color: var(--primary);">@ObtenerSimboloMoneda() @CalcularMonto(TotalReserva)</span>
+                    <span style="font-size: 24px; font-weight: bold; color: var(--primary);">S/ 1,430</span>
                 </div>
             </div>
 
@@ -219,48 +184,6 @@
     private bool Procesando = false;
     private bool PagoCompletado = false;
 
-    // ✨ LÓGICA MATEMÁTICA DINÁMICA ✨
-    // Toma el Total exacto de la reserva (si es nulo, usa 1430 por defecto)
-    private decimal TotalReserva => AppState.ReservaAPagar?.Total ?? 1430m;
-
-    // Calcula la comisión al 10%
-    private decimal ComisionServicio => Math.Round(TotalReserva * 0.10m, 2);
-
-    // Costo de limpieza fijo
-    private decimal CostoLimpieza => 100m;
-
-    // Calcula cuánto es la tarifa por noches para que la suma cuadre perfecto
-    private decimal SubtotalNoches => TotalReserva - ComisionServicio - CostoLimpieza;
-
-    // Subtotal general (sin la comisión) para la barra lateral
-    private decimal SubtotalGeneral => TotalReserva - ComisionServicio;
-
-
-    // VARIABLES Y LÓGICA PARA MULTIMONEDA
-    private string MonedaSeleccionada { get; set; } = "PEN";
-
-    private string ObtenerSimboloMoneda() => MonedaSeleccionada switch
-    {
-        "USD" => "$",
-        "EUR" => "€",
-        _ => "S/"
-    };
-
-    private string CalcularMonto(decimal montoBaseSoles)
-    {
-        decimal tipoCambioUsd = 3.80m;
-        decimal tipoCambioEur = 4.10m;
-
-        decimal resultado = MonedaSeleccionada switch
-        {
-            "USD" => montoBaseSoles / tipoCambioUsd,
-            "EUR" => montoBaseSoles / tipoCambioEur,
-            _ => montoBaseSoles
-        };
-
-        return resultado.ToString("N2");
-    }
-
     private static readonly (string Key, string Nombre, string Icono)[] MetodosPago =
     {
         ("tarjeta", "Tarjeta de Crédito/Débito", "fa-credit-card"),
@@ -271,7 +194,7 @@
     private async Task Pagar()
     {
         Procesando = true;
-        await Task.Delay(2000);
+        await Task.Delay(2000); // Simula procesamiento
         Procesando = false;
         PagoCompletado = true;
     }

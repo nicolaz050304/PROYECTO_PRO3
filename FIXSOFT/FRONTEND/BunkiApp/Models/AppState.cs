@@ -3,20 +3,16 @@ namespace BunkiApp.Models;
 /// <summary>
 /// Estado global de la aplicación (POR USUARIO).
 /// </summary>
-public class AppState
+public class AppState // <-- LE QUITAMOS EL STATIC AQUÍ
 {
-    // Propiedades del usuario autenticado
+    // Cambiamos las propiedades para que pertenezcan a la instancia de la clase
     public Usuario? UsuarioActual { get; private set; } = null;
 
     public bool EstaAutenticado => UsuarioActual != null;
 
-    // 👇 AQUÍ ESTÁ EL PUENTE: Esta variable guardará la reserva temporalmente 👇
-    public Reserva? ReservaAPagar { get; set; }
-
     public bool EsAdmin()
     {
-        // (Pequeña mejora: le agregué un '?' después de UsuarioActual para evitar errores si está nulo)
-        return UsuarioActual?.Email?.EndsWith("@bunki.pe", StringComparison.OrdinalIgnoreCase) ?? false;
+        return UsuarioActual.Email?.EndsWith("@bunki.pe", StringComparison.OrdinalIgnoreCase) ?? false;
     }
 
     public bool Login(string nombre, string apellido, string email, string tipoUsuario = "Usuario")
@@ -44,6 +40,5 @@ public class AppState
     public void Logout()
     {
         UsuarioActual = null;
-        ReservaAPagar = null; // También limpiamos la reserva al cerrar sesión por seguridad
     }
 }

@@ -106,33 +106,27 @@
             </div>
 
             <!-- FOTOS -->
-            <!-- FOTOS -->
             <div class="form-section">
                 <h2 class="section-title" style="text-align: left; font-size: 20px;">
-                    <i class="fas fa-images" style="margin-right: 10px; color: var(--primary);"></i> Fotos
+                    <i class="fas fa-images" style="margin-right: 10px; color: var(--primary);"></i>
+                    Fotos
                 </h2>
 
-                <!-- CAMBIO: Ahora el label actúa como el disparador del explorador de archivos -->
-                <label class="image-upload" style="cursor: pointer; display: block;">
-                    <input type="file" accept="image/jpeg,image/png" style="display: none;" multiple @onchange="ArchivoSeleccionado" />
-
-                    <i class="fas fa-cloud-upload-alt" style="display: block; font-size: 40px; margin-bottom: 10px;"></i>
-                    <p class="upload-text">Arrastra fotos aquí o haz clic para subir</p>
+                <div class="image-upload" @onclick="SimularSubida">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p class="upload-text">Arrastra fotos aquí o haz clic</p>
                     <p class="upload-hint">Máximo 10 imágenes • JPG, PNG</p>
-                </label>
+                </div>
 
-                <!-- ZONA DE PREVISUALIZACIÓN -->
                 @if (ImagenesPreview.Any())
                 {
-                    <div class="image-preview" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; margin-top: 20px;">
+                    <div class="image-preview">
                         @for (int i = 0; i < ImagenesPreview.Count; i++)
                         {
                             int idx = i;
-                            <div class="image-item" style="position: relative;">
-                                <!-- Aquí usamos un div con color de fondo solo si no tenemos la URL real de la imagen -->
-                                <div style="width: 100%; height: 120px; background: @ImagenesPreview[idx]; border-radius: 8px; border: 1px solid var(--border);"></div>
-
-                                <button type="button" class="delete-btn" style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 4px; padding: 5px 8px; cursor: pointer;" @onclick="() => EliminarImagen(idx)">
+                            <div class="image-item">
+                                <div style="width: 100%; height: 120px; background: @ImagenesPreview[idx]; border-radius: 8px;"></div>
+                                <button type="button" class="delete-btn" @onclick="() => EliminarImagen(idx)">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
@@ -152,14 +146,14 @@
                     @foreach (var servicio in Servicios)
                     {
                         bool activo = ServiciosSeleccionados.Contains(servicio.Key);
-                        <div class="amenity-checkbox @(activo ? "selected" : "")"
-                             @onclick="() => ToggleServicio(servicio.Key)"
-                             style="cursor: pointer;">
+                        <label class="amenity-checkbox @(activo ? "selected" : "")"
+                               @onclick="() => ToggleServicio(servicio.Key)">
+                            <input type="checkbox" checked="@activo" style="display: none;" />
                             <span>
                                 <i class="fas @servicio.Icono"></i>
                                 @servicio.Nombre
                             </span>
-                        </div>
+                        </label>
                     }
                 </div>
             </div>
@@ -181,19 +175,13 @@
                         <label>Tarifa de limpieza</label>
                         <InputNumber @bind-Value="Formulario.TarifaLimpieza" placeholder="50" min="0" />
                     </div>
-                    
+                    <div class="form-group">
+                        <label>Tarifa de servicio</label>
+                        <InputNumber @bind-Value="Formulario.TarifaServicio" placeholder="20" min="0" />
+                    </div>
                     <div class="form-group">
                         <label>Descuento semanal (%)</label>
-                        <div style="position: relative;">
-                            <InputSelect @bind-Value="Formulario.DescuentoSemanal" style="width: 100%; appearance: none; padding: 10px; border-radius: 6px; border: 1px solid var(--border);">
-                                <option value="0">Sin descuento</option>
-                                @for (int i = 5; i <= 50; i += 5)
-                                {
-                                    <option value="@i">@i% de descuento</option>
-                                }
-                            </InputSelect>
-                            <i class="fas fa-chevron-down" style="position: absolute; right: 15px; top: 12px; pointer-events: none; color: var(--text-light);"></i>
-                        </div>
+                        <InputNumber @bind-Value="Formulario.DescuentoSemanal" placeholder="10" min="0" max="50" />
                     </div>
                 </div>
             </div>
@@ -263,13 +251,10 @@
             ServiciosSeleccionados.Add(key);
     }
 
-    private void ArchivoSeleccionado(ChangeEventArgs e)
+    private void SimularSubida()
     {
-        // Esto es lo que se activa al elegir archivos desde la PC
         if (ImagenesPreview.Count < 10)
         {
-            // Aquí agregamos un color "dummy" para la preview,
-            // pero visualmente ya se ve como una tarjeta de foto cargada.
             ImagenesPreview.Add(ColoresPreview[ImagenesPreview.Count % ColoresPreview.Length]);
         }
     }
@@ -282,27 +267,12 @@
 
     private async Task Publicar()
     {
-        // 1. Validar si el formulario está completo (esto evita envíos vacíos)
-        if (string.IsNullOrEmpty(Formulario.Nombre) || string.IsNullOrEmpty(Formulario.Direccion))
-        {
-            MensajeExito = "Por favor, completa los campos obligatorios antes de publicar.";
-            return;
-        }
-
         Publicando = true;
-
-        // 2. Simulamos la conexión al servidor
-        await Task.Delay(1500);
-
-        // 3. Activamos el mensaje de éxito
-        MensajeExito = "¡Tu alojamiento ha sido enviado a revisión! El equipo de Bunki te contactará pronto.";
-
-        // 4. Esperamos un segundo para que el usuario lea el mensaje antes de irse
-        await Task.Delay(2000);
-
+        await Task.Delay(1000);
         Publicando = false;
+        MensajeExito = "¡Alojamiento publicado exitosamente! Está en revisión.";
 
-        // 5. Redirección final al panel del anfitrión
+        await Task.Delay(2000);
         Navigation.NavigateTo("/panel-anfitrion");
     }
 

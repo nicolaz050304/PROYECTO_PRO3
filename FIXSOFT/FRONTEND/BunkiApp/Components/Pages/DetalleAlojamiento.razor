@@ -272,23 +272,7 @@ else
     private void Reservar()
     {
         if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
-
-        if (Noches > 0 && Alojamiento != null)
-        {
-            AppState.ReservaAPagar = new Reserva
-            {
-                Id = new Random().Next(1000, 9999),
-                AlojamientoNombre = Alojamiento.Nombre,
-                Ubicacion = Alojamiento.Distrito,
-                // NO ASIGNAMOS FechasTexto AQUÍ, el modelo lo calcula solo
-                FechaEntrada = FechaEntrada.Value, // Pasamos las fechas reales
-                FechaSalida = FechaSalida.Value,
-                NumHuespedes = NumHuespedes,
-                Total = Total,
-                Estado = "Pendiente"
-            };
-
+        if (Noches > 0)
             Navigation.NavigateTo("/pagos");
-        }
     }
 }

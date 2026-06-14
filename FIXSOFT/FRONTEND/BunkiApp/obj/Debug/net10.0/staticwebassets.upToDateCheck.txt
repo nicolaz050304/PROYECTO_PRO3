@@ -1,8 +1,0 @@
-wwwroot\css\styles.css
-wwwroot\js\mapa.js
-C:\Users\Estefano AC\.nuget\packages\microsoft.aspnetcore.app.internal.assets\10.0.8\build\..\_framework\blazor.web.js
-C:\Users\Estefano AC\.nuget\packages\microsoft.aspnetcore.app.internal.assets\10.0.8\build\..\_framework\blazor.server.js
-C:\Users\Estefano AC\.nuget\packages\microsoft.aspnetcore.app.internal.assets\10.0.8\_framework\blazor.server.js
-C:\Users\Estefano AC\.nuget\packages\microsoft.aspnetcore.app.internal.assets\10.0.8\_framework\blazor.web.js
-C:\Users\Estefano AC\Downloads\BunkiApp Final\BunkiApp (1)\BunkiApp\wwwroot\css\styles.css
-C:\Users\Estefano AC\Downloads\BunkiApp Final\BunkiApp (1)\BunkiApp\wwwroot\js\mapa.js

@@ -3,14 +3,84 @@
 <div class="stat-box">
     @if (!string.IsNullOrEmpty(Icono))
     {
-        <div style="font-size: 32px; margin-bottom: 10px;">@Icono</div>
+        <div class="stat-icon @ChipClase">
+            @if (EsIconoFa)
+            {
+                <i class="fas @Icono"></i>
+            }
+            else
+            {
+                @Icono
+            }
+        </div>
     }
-    <div class="stat-number">@Valor</div>
+
+    <div class="stat-number @NumeroClase">@Valor</div>
     <div class="stat-label">@Etiqueta</div>
+
+    @if (!string.IsNullOrWhiteSpace(Tendencia))
+    {
+        <div class="stat-trend @TendenciaClase">
+            @if (!string.IsNullOrEmpty(TendenciaIcono))
+            {
+                <i class="fas @TendenciaIcono"></i>
+            }
+            @Tendencia
+        </div>
+    }
 </div>
 
 @code {
     [Parameter] public string Valor { get; set; } = "";
     [Parameter] public string Etiqueta { get; set; } = "";
+
+    // Acepta emoji ("⭐") o clase FontAwesome ("fa-wallet"). Retrocompatible.
     [Parameter] public string Icono { get; set; } = "";
+
+    // Tipo de métrica → color del número + chip. Por defecto neutra (blanco cálido).
+    // Valores: neutral | dinero | rating | exito | info | pendiente | alerta
+    [Parameter] public string Tono { get; set; } = "neutral";
+
+    // Línea opcional de tendencia (ej: "+12% vs. mes anterior")
+    [Parameter] public string Tendencia { get; set; } = "";
+    // "up" | "down" | "" → color e ícono de la tendencia
+    [Parameter] public string TendenciaTono { get; set; } = "";
+
+    private bool EsIconoFa => Icono.StartsWith("fa-", StringComparison.OrdinalIgnoreCase);
+
+    private string NumeroClase => Tono.ToLowerInvariant() switch
+    {
+        "dinero" or "money" or "premium"             => "stat-number--champagne",
+        "rating"                                     => "stat-number--gold",
+        "exito" or "éxito" or "success" or "crecimiento" => "stat-number--success",
+        "alerta" or "perdida" or "pérdida" or "error" or "danger" => "stat-number--danger",
+        "info"                                       => "stat-number--blue",
+        "pendiente" or "advertencia" or "warning"    => "stat-number--warning",
+        _                                            => ""   // neutral → blanco cálido
+    };
+
+    private string ChipClase => Tono.ToLowerInvariant() switch
+    {
+        "dinero" or "money" or "premium"             => "stat-icon--champagne",
+        "rating"                                     => "",   // chip dorado (por defecto)
+        "exito" or "éxito" or "success" or "crecimiento" => "stat-icon--success",
+        "alerta" or "perdida" or "pérdida" or "error" or "danger" => "stat-icon--danger",
+        "info"                                       => "stat-icon--blue",
+        "pendiente" or "advertencia" or "warning"    => "stat-icon--warning",
+        _                                            => "stat-icon--neutral"
+    };
+
+    private string TendenciaClase => TendenciaTono.ToLowerInvariant() switch
+    {
+        "up"   => "stat-trend--up",
+        "down" => "stat-trend--down",
+        _      => ""
+    };
+
+    private string TendenciaIcono => TendenciaTono.ToLowerInvariant() switch
+    {
+        "up"   => "fa-arrow-trend-up",
+        "down" => "fa-arrow-trend-down",
+        _      => ""
+    };
 }
