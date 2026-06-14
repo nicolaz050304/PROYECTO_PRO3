@@ -3,99 +3,117 @@
 @inject DataService Data
 @inject NavigationManager Navigation
 @inject BunkiApp.Models.AppState AppState
+@implements IDisposable
 
 <PageTitle>Bunki - Reservas Recibidas</PageTitle>
 
-<div class="section">
+<div class="section host-page">
     <div class="container">
-        <div class="flex flex-between items-center mb-30">
-            <h2 style="font-size: 26px; font-weight: 700;">
-                <i class="fas fa-inbox" style="color: var(--gold); margin-right: 10px;"></i>
-                Reservas Recibidas
-            </h2>
-            <span class="badge badge-primary" style="font-size: 13px; padding: 8px 16px;">
-                @_reservasFiltradas.Count reservas
-            </span>
-        </div>
 
-        <div style="display: flex; gap: 10px; margin-bottom: 28px; flex-wrap: wrap;">
+        <!-- CABECERA -->
+        <header class="host-head">
+            <div>
+                <span class="host-head-eyebrow">Bandeja de reservas</span>
+                <h1 class="host-head-title">Reservas recibidas</h1>
+                <p class="host-head-sub">Revisa, confirma o gestiona las solicitudes de tus huéspedes.</p>
+            </div>
+        </header>
+
+        <!-- TABS DE FILTRO -->
+        <div class="tabs">
             @foreach (var estado in _estados)
             {
-                <button class="filter-btn @(_estadoActivo == estado ? "active" : "")"
+                <button class="tab-btn @(_estadoActivo == estado ? "active" : "")"
                         @onclick="() => _estadoActivo = estado">
                     @estado
+                    <span class="tab-count">@ContarPorEstado(estado)</span>
                 </button>
             }
         </div>
 
         @if (!_reservasFiltradas.Any())
         {
-            <AlertMessage Tipo="warning" Mensaje="No hay reservas en esta categoría." Cerrable="false" />
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+                <h3>Sin reservas en esta categoría</h3>
+                <p>Cuando recibas solicitudes en este estado, aparecerán aquí.</p>
+            </div>
         }
         else
         {
-            <div class="card">
-                <div style="padding: 20px;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Huésped</th><th>Alojamiento</th><th>Fechas</th>
-                                <th>Huésp.</th><th>Total</th><th>Estado</th><th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var r in _reservasFiltradas)
-                            {
-                                <tr>
-                                    <td>
-                                        <div style="display: flex; align-items: center; gap: 8px;">
-                                            <div class="avatar" style="width: 30px; height: 30px; font-size: 11px;">
-                                                @(r.AnfitrionNombre.Length >= 2 ? r.AnfitrionNombre[..2].ToUpper() : "?")
-                                            </div>
-                                            @r.AnfitrionNombre
-                                        </div>
-                                    </td>
-                                    <td>@r.AlojamientoNombre</td>
-                                    <td class="card-text">@r.FechasTexto</td>
-                                    <td class="card-text">@r.NumHuespedes</td>
-                                    <td><strong style="color: var(--gold);">S/ @r.Total.ToString("N0")</strong></td>
-                                    <td><span class="badge @r.EstadoBadgeClass">@r.Estado</span></td>
-                                    <td>
-                                        <div style="display: flex; gap: 8px;">
-                                            @if (r.Estado == "Pendiente")
-                                            {
-                                                <button class="btn btn-small btn-success"
-                                                        @onclick='() => r.Estado = "Confirmada"'>
-                                                    Confirmar
-                                                </button>
-                                                <button class="btn btn-small btn-danger"
-                                                        @onclick='() => r.Estado = "Cancelada"'>
-                                                    Rechazar
-                                                </button>
-                                            }
-                                            else
-                                            {
-                                                <button class="btn btn-small btn-secondary"
-                                                        @onclick='() => Navigation.NavigateTo("/mensajes")'>
-                                                    Contactar
-                                                </button>
-                                            }
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
+            <div class="rr-list">
+                @foreach (var r in _reservasFiltradas)
+                {
+                    <article class="rr-card">
+
+                        <!-- Huésped + alojamiento -->
+                        <div class="rr-guest">
+                            <div class="avatar" style="width: 44px; height: 44px;">@Iniciales(r.AnfitrionNombre)</div>
+                            <div>
+                                <div class="rr-guest-name">@r.AnfitrionNombre</div>
+                                <div class="rr-guest-sub"><i class="fas fa-house"></i> @r.AlojamientoNombre</div>
+                            </div>
+                        </div>
+
+                        <!-- Meta: fechas · noches · huéspedes -->
+                        <div class="rr-meta">
+                            <div class="rr-meta-item">
+                                <span class="rr-meta-label">Fechas</span>
+                                <span class="rr-meta-value"><i class="fas fa-calendar-day"></i> @r.FechasTexto</span>
+                            </div>
+                            <div class="rr-meta-item">
+                                <span class="rr-meta-label">Noches</span>
+                                <span class="rr-meta-value"><i class="fas fa-moon"></i> @r.Noches</span>
+                            </div>
+                            <div class="rr-meta-item">
+                                <span class="rr-meta-label">Huéspedes</span>
+                                <span class="rr-meta-value"><i class="fas fa-user-group"></i> @r.NumHuespedes</span>
+                            </div>
+                        </div>
+
+                        <!-- Total + estado + acciones -->
+                        <div class="rr-aside">
+                            <div class="rr-aside-top">
+                                <span class="state @EstadoState(r.Estado)"><span class="state-dot"></span>@r.Estado</span>
+                                <span class="price price-lg">@AppState.FormatearPrecio(r.Total)</span>
+                            </div>
+                            <div class="rr-actions">
+                                @if (r.Estado == "Pendiente")
+                                {
+                                    <button class="btn btn-small btn-success" @onclick="() => Confirmar(r)">
+                                        <i class="fas fa-check"></i> Aceptar
+                                    </button>
+                                    <button class="btn btn-small btn-soft-danger" @onclick="() => Rechazar(r)">
+                                        Rechazar
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-small btn-outline" @onclick='() => Navigation.NavigateTo("/mensajes")'>
+                                        <i class="fas fa-comment"></i> Contactar
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </article>
+                }
             </div>
         }
     </div>
 </div>
 
+@if (!string.IsNullOrEmpty(_mensajeAccion))
+{
+    <div style="position: fixed; bottom: 24px; right: 24px; z-index: var(--z-toast);">
+        <AlertMessage Tipo="success" Mensaje="@_mensajeAccion" />
+    </div>
+}
+
 @code {
     private static readonly string[] _estados = { "Todas", "Pendiente", "Confirmada", "Completada", "Cancelada" };
     private string _estadoActivo = "Todas";
     private List<Reserva> _todasReservas = new();
+    private string _mensajeAccion = "";
 
     private List<Reserva> _reservasFiltradas =>
         _estadoActivo == "Todas"
@@ -105,8 +123,39 @@
     protected override void OnInitialized()
     {
         if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
+        AppState.OnChange += OnMonedaChanged;
         _todasReservas = Data.ObtenerReservasProximas()
             .Concat(Data.ObtenerReservasPasadas())
             .ToList();
+    }
+
+    public void Dispose() => AppState.OnChange -= OnMonedaChanged;
+    private void OnMonedaChanged() => InvokeAsync(StateHasChanged);
+
+    private int ContarPorEstado(string estado) =>
+        estado == "Todas" ? _todasReservas.Count : _todasReservas.Count(r => r.Estado == estado);
+
+    private string EstadoState(string estado) => estado switch
+    {
+        "Pendiente"  => "state--pendiente",
+        "Confirmada" => "state--confirmada",
+        "Completada" => "state--completada",
+        "Cancelada"  => "state--cancelada",
+        _            => "state--completada"
+    };
+
+    private string Iniciales(string nombre) =>
+        string.IsNullOrWhiteSpace(nombre) ? "?" : nombre.Trim()[..Math.Min(2, nombre.Trim().Length)].ToUpper();
+
+    private void Confirmar(Reserva r)
+    {
+        r.Estado = "Confirmada";
+        _mensajeAccion = $"Reserva de {r.AnfitrionNombre} confirmada.";
+    }
+
+    private void Rechazar(Reserva r)
+    {
+        r.Estado = "Cancelada";
+        _mensajeAccion = $"Reserva de {r.AnfitrionNombre} rechazada.";
     }
 }

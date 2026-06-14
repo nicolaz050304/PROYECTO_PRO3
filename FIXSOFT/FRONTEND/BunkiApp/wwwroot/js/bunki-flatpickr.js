@@ -41,5 +41,23 @@ window.bunkiDatePicker = {
             allowInput: false,
             position: "below"
         });
+    },
+
+    // Usado por páginas de anfitrión (filtros / rangos de reporte): mismo calendario
+    // dark, formato d/m/Y, input real visible y SIN minDate (permite fechas pasadas).
+    initHostDate: function (selector) {
+        if (typeof flatpickr === "undefined") {
+            console.error("flatpickr no está cargado.");
+            return;
+        }
+
+        flatpickr(selector, {
+            locale: "es",
+            dateFormat: "d/m/Y",
+            altInput: false,
+            disableMobile: true,
+            allowInput: false,
+            position: "below"
+        });
     }
 };

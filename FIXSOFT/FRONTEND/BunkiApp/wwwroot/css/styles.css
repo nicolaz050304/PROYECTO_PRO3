@@ -3105,3 +3105,1465 @@ footer {
     outline: 2px solid rgba(214, 168, 79, 0.65);
     outline-offset: 3px;
 }
+
+/* =====================================================================
+   BUNKI HOST CENTER — dashboard SaaS / hospitality (dark luxury)
+   Usado por: PanelAnfitrion, MisAlojamientos, ReservasRecibidas, CrearAlojamiento
+   ===================================================================== */
+
+/* Entrada suave (respeta prefers-reduced-motion vía media global) */
+@keyframes host-rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: none; }
+}
+
+.host-page .host-panel,
+.host-page .host-metrics > *,
+.host-page .prop-card {
+    animation: host-rise var(--t-slow) both;
+}
+
+/* ----- Cabecera ----- */
+.host-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+}
+
+.host-head-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--champagne);
+    margin-bottom: 12px;
+}
+
+    .host-head-eyebrow::before {
+        content: '';
+        width: 22px;
+        height: 1px;
+        background: var(--gold);
+    }
+
+.host-head-title {
+    font-family: var(--font-display);
+    font-size: clamp(26px, 4vw, 34px);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+    line-height: 1.1;
+}
+
+.host-head-sub {
+    color: var(--ink-muted);
+    font-size: 15px;
+    margin-top: 8px;
+    max-width: 580px;
+    line-height: 1.6;
+}
+
+/* ----- Grid de métricas ----- */
+.host-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 30px;
+}
+
+@media (max-width: 980px) {
+    .host-metrics { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 540px) {
+    .host-metrics { grid-template-columns: 1fr; }
+}
+
+/* ----- Layout dashboard (principal + lateral) ----- */
+.host-grid {
+    display: grid;
+    grid-template-columns: 1.7fr 1fr;
+    gap: 24px;
+    align-items: start;
+    margin-bottom: 30px;
+}
+
+@media (max-width: 980px) {
+    .host-grid { grid-template-columns: 1fr; }
+}
+
+/* ----- Panel genérico ----- */
+.host-panel {
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+}
+
+.host-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.host-panel-title {
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+    .host-panel-title i { color: var(--gold); font-size: 15px; }
+
+.host-panel-link {
+    color: var(--ink-muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: color var(--t), gap var(--t);
+}
+
+    .host-panel-link:hover { color: var(--gold); gap: 9px; }
+
+/* ----- Ganancias ----- */
+.host-earnings {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+@media (max-width: 680px) {
+    .host-earnings { grid-template-columns: 1fr; }
+}
+
+.earn-card {
+    background: var(--surface-2);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    padding: 18px;
+}
+
+.earn-card--fee { background: var(--danger-tint); border-color: rgba(220, 38, 38, 0.22); }
+.earn-card--net { background: var(--gold-tint);   border-color: rgba(214, 168, 79, 0.30); }
+
+.earn-label {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 8px;
+}
+
+.earn-value {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+}
+
+.earn-card--fee .earn-value { color: var(--danger); }
+.earn-card--net .earn-value { color: var(--champagne); }
+
+/* ----- Acciones rápidas ----- */
+.host-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+@media (max-width: 480px) {
+    .host-actions { grid-template-columns: 1fr; }
+}
+
+.host-action {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 16px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    background: var(--surface-2);
+    color: var(--ink);
+    text-decoration: none;
+    text-align: left;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color var(--t), background var(--t), transform var(--t-fast);
+}
+
+    .host-action:hover {
+        border-color: var(--gold);
+        background: var(--surface-3);
+        transform: translateY(-2px);
+    }
+
+.host-action-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: var(--gold-tint);
+    color: var(--gold);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    flex-shrink: 0;
+}
+
+.host-action-text { flex: 1; min-width: 0; }
+
+    .host-action-text strong {
+        display: block;
+        font-size: 14.5px;
+        font-weight: 700;
+        color: var(--ink);
+    }
+
+    .host-action-text span {
+        font-size: 12.5px;
+        color: var(--ink-muted);
+    }
+
+.host-action-arrow {
+    color: var(--ink-faint);
+    font-size: 13px;
+    transition: transform var(--t), color var(--t);
+}
+
+.host-action:hover .host-action-arrow {
+    color: var(--gold);
+    transform: translateX(3px);
+}
+
+/* ----- Feed de actividad ----- */
+.host-feed { display: flex; flex-direction: column; }
+
+.host-feed-item {
+    display: flex;
+    gap: 13px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--hairline);
+}
+
+    .host-feed-item:first-child { padding-top: 0; }
+    .host-feed-item:last-child { border-bottom: none; padding-bottom: 0; }
+
+.host-feed-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 14px;
+    background: var(--gold-tint);
+    color: var(--gold);
+}
+
+.host-feed-icon--success { background: var(--success-tint); color: var(--success); }
+.host-feed-icon--info    { background: var(--blue-tint);    color: var(--blue-strong); }
+.host-feed-icon--warning { background: var(--warning-tint); color: var(--warning); }
+
+.host-feed-body { flex: 1; min-width: 0; }
+
+    .host-feed-body p { font-size: 13.5px; color: var(--ink); line-height: 1.45; }
+    .host-feed-body p strong { color: var(--ink); font-weight: 700; }
+
+.host-feed-time { font-size: 11.5px; color: var(--ink-faint); margin-top: 3px; }
+
+/* ----- Tarjeta de propiedad (MisAlojamientos) ----- */
+.prop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 22px;
+}
+
+.prop-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: transform var(--t), border-color var(--t), box-shadow var(--t);
+}
+
+    .prop-card:hover {
+        transform: translateY(-4px);
+        border-color: var(--hairline-strong);
+        box-shadow: var(--shadow);
+    }
+
+.prop-media {
+    position: relative;
+    height: 172px;
+    overflow: hidden;
+}
+
+    .prop-media img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform var(--t-slow);
+    }
+
+.prop-card:hover .prop-media img { transform: scale(1.05); }
+
+.prop-media-fallback { width: 100%; height: 100%; }
+
+.prop-media::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(15, 17, 21, 0.5), transparent 45%);
+    pointer-events: none;
+}
+
+.prop-status {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 2;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+/* Sobre la foto: vidrio oscuro para contraste garantizado;
+   el color semántico se mantiene en el punto (.state-dot). */
+.prop-status.state {
+    background: rgba(15, 17, 21, 0.74);
+    border-color: var(--hairline-strong);
+    color: var(--ink);
+}
+
+.prop-body {
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.prop-title {
+    font-family: var(--font-display);
+    font-size: 16.5px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+}
+
+.prop-loc {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--ink-muted);
+    font-size: 13px;
+    margin: 4px 0 10px;
+}
+
+    .prop-loc i { color: var(--ink-faint); font-size: 12px; }
+
+.prop-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-top: 14px;
+    margin-top: auto;
+    border-top: 1px solid var(--hairline);
+}
+
+.prop-actions { display: flex; gap: 6px; }
+
+/* ----- Badges de estado semánticos del host ----- */
+.badge-host-activo   { background: var(--success-tint); color: var(--success); }
+.badge-host-pausado  { background: rgba(168, 162, 158, 0.16); color: var(--ink-muted); }
+.badge-host-revision { background: var(--warning-tint); color: var(--warning); }
+
+/* ----- Tabla densa premium → cards en móvil (ReservasRecibidas) ----- */
+.host-table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.host-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+
+    .host-table th {
+        text-align: left;
+        padding: 14px 18px;
+        font-size: 11.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--ink-muted);
+        background: rgba(168, 162, 158, 0.04);
+        border-bottom: 1px solid var(--hairline);
+        white-space: nowrap;
+    }
+
+    .host-table td {
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--hairline);
+        color: var(--ink);
+        vertical-align: middle;
+    }
+
+    .host-table tr:last-child td { border-bottom: none; }
+    .host-table tbody tr { transition: background var(--t); }
+    .host-table tbody tr:hover td { background: rgba(168, 162, 158, 0.03); }
+
+.host-guest {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.host-row-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+
+@media (max-width: 768px) {
+    .host-table thead { display: none; }
+
+    .host-table,
+    .host-table tbody,
+    .host-table tr,
+    .host-table td { display: block; width: 100%; }
+
+    .host-table tr {
+        border: 1px solid var(--hairline);
+        border-radius: var(--radius);
+        background: var(--surface-2);
+        padding: 6px 16px;
+        margin: 14px;
+    }
+
+    .host-table td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 11px 0;
+        text-align: right;
+    }
+
+        .host-table td:last-child { border-bottom: none; }
+
+        .host-table td::before {
+            content: attr(data-label);
+            font-size: 11.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--ink-muted);
+            text-align: left;
+        }
+
+    .host-row-actions { justify-content: flex-end; }
+}
+
+/* Botón "rechazar" — peligro suave (no neón) */
+.btn-soft-danger {
+    background: var(--danger-tint);
+    color: var(--danger);
+    border-color: transparent;
+}
+
+    .btn-soft-danger:hover {
+        background: rgba(220, 38, 38, 0.22);
+        transform: translateY(-2px);
+    }
+
+/* ----- CrearAlojamiento: layout con preview sticky ----- */
+.create-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 28px;
+    align-items: start;
+}
+
+@media (max-width: 980px) {
+    .create-layout { grid-template-columns: 1fr; }
+}
+
+.create-aside { position: sticky; top: 88px; }
+
+@media (max-width: 980px) {
+    .create-aside { position: static; }
+}
+
+.field-help {
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    margin-top: 6px;
+    line-height: 1.4;
+}
+
+/* Mini-preview de publicación */
+.pub-preview {
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.pub-preview-head {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--hairline);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+}
+
+.pub-preview-media {
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-faint);
+    font-size: 30px;
+    background:
+        radial-gradient(120% 120% at 30% 20%, rgba(214, 168, 79, 0.14), transparent 60%),
+        var(--surface-3);
+}
+
+.pub-preview-body { padding: 18px; }
+
+.pub-preview-title {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.pub-preview-loc {
+    color: var(--ink-muted);
+    font-size: 13px;
+    margin: 4px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pub-preview-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 12px;
+    border-top: 1px solid var(--hairline);
+}
+
+/* Indicador de pasos del wizard */
+.wizard-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 28px;
+}
+
+.wizard-step {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--hairline-strong);
+    background: var(--surface-2);
+    color: var(--ink-muted);
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+    .wizard-step span {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--gold-tint);
+        color: var(--gold);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+/* =====================================================================
+   HOST CENTER · ELEVACIÓN — bento overview, spotlight, gauge, estados a11y
+   ===================================================================== */
+
+/* Banda bento: jerarquía por tamaño (no por color) */
+.host-overview {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 30px;
+}
+
+@media (max-width: 1040px) {
+    .host-overview { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 640px) {
+    .host-overview { grid-template-columns: 1fr; }
+}
+
+/* Spotlight de ingresos (foco de alto valor) */
+.spotlight {
+    background:
+        radial-gradient(140% 130% at 10% 0%, rgba(214, 168, 79, 0.12), transparent 55%),
+        var(--surface);
+    border: 1px solid var(--hairline-strong);
+    border-radius: var(--radius-lg);
+    padding: 22px 24px;
+    display: flex;
+    flex-direction: column;
+}
+
+@media (max-width: 1040px) {
+    .spotlight { grid-column: 1 / -1; }
+}
+
+.spotlight-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+}
+
+    .spotlight-label i { color: var(--champagne); }
+
+.spotlight-value {
+    font-family: var(--font-display);
+    font-size: clamp(30px, 4.5vw, 42px);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    color: var(--champagne);
+    font-variant-numeric: tabular-nums;
+    margin: 8px 0 2px;
+}
+
+.spotlight-sub { font-size: 13px; color: var(--ink-muted); }
+
+    .spotlight-sub .up { color: var(--success); font-weight: 700; }
+
+/* Mini bar-chart (CSS puro) */
+.spark-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 20px;
+}
+
+.spark-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.spark-bar {
+    width: 100%;
+    min-height: 6px;
+    border-radius: 6px 6px 3px 3px;
+    background: linear-gradient(180deg, var(--champagne), var(--copper));
+    opacity: 0.78;
+    transition: height var(--t-slow);
+}
+
+.spark-col:last-child .spark-bar {
+    opacity: 1;
+    box-shadow: 0 0 0 1px rgba(214, 168, 79, 0.45);
+}
+
+.spark-cap { font-size: 10.5px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+
+/* Anillo de ocupación */
+.gauge-card {
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 10px;
+}
+
+.gauge {
+    --val: 0;
+    width: 116px;
+    height: 116px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: conic-gradient(var(--gold) calc(var(--val) * 1%), var(--surface-3) 0);
+    position: relative;
+}
+
+    .gauge::before {
+        content: '';
+        position: absolute;
+        inset: 10px;
+        border-radius: 50%;
+        background: var(--surface);
+        border: 1px solid var(--hairline);
+    }
+
+.gauge-num {
+    position: relative;
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+}
+
+.gauge-label { font-size: 12.5px; color: var(--ink-muted); font-weight: 600; }
+
+/* Stack de métricas compactas de apoyo */
+.metric-stack { display: flex; flex-direction: column; gap: 12px; }
+
+.metric-mini {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    transition: border-color var(--t), transform var(--t-fast);
+}
+
+    .metric-mini:hover { border-color: var(--hairline-strong); transform: translateY(-2px); }
+
+.metric-mini-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 15px;
+    background: var(--gold-tint);
+    color: var(--gold);
+}
+
+.metric-mini-icon--warning { background: var(--warning-tint); color: var(--warning); }
+.metric-mini-icon--info    { background: var(--blue-tint);    color: var(--blue-strong); }
+
+.metric-mini-value {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+}
+
+.metric-mini-label { font-size: 12px; color: var(--ink-muted); }
+
+/* Estado con punto + etiqueta (no solo color → accesible) */
+.state {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 11px;
+    border-radius: var(--radius-pill);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+
+.state-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+.state--pendiente  { background: var(--copper-tint);  color: var(--champagne); border-color: rgba(200, 117, 51, 0.30); }
+.state--pendiente .state-dot  { background: var(--copper); }
+.state--confirmada { background: var(--success-tint); color: var(--success); }
+.state--confirmada .state-dot { background: var(--success); }
+.state--cancelada  { background: var(--danger-tint);  color: var(--danger); }
+.state--cancelada .state-dot  { background: var(--danger); }
+.state--completada { background: rgba(168, 162, 158, 0.14); color: var(--ink-muted); }
+.state--completada .state-dot { background: var(--ink-muted); }
+
+/* Strip de mini-métricas por propiedad (MisAlojamientos) */
+.prop-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin: 12px 0 2px;
+    padding: 12px 0;
+    border-top: 1px solid var(--hairline);
+}
+
+.prop-metric { text-align: center; }
+
+.prop-metric-value {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+}
+
+    .prop-metric-value .champ { color: var(--champagne); }
+
+.prop-metric-label {
+    font-size: 10px;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: 2px;
+}
+
+/* Chips de reglas (CrearAlojamiento) */
+.rule-chips { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.rule-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 11px 16px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--hairline-strong);
+    background: var(--surface-2);
+    color: var(--ink-muted);
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color var(--t), background var(--t), color var(--t), transform var(--t-fast);
+}
+
+    .rule-chip i { font-size: 13px; color: var(--ink-faint); }
+    .rule-chip:hover { border-color: var(--ink-faint); color: var(--ink); transform: translateY(-1px); }
+    .rule-chip.selected { background: var(--gold-tint); border-color: var(--gold); color: var(--champagne); }
+    .rule-chip.selected i { color: var(--gold); }
+
+/* =====================================================================
+   HOST CENTER · 2ª PASADA — header de acciones, stepper, cards de reserva
+   ===================================================================== */
+
+/* Acciones en el header (CrearAlojamiento) */
+.host-head-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+@media (max-width: 560px) {
+    .host-head-actions { width: 100%; }
+    .host-head-actions .btn { flex: 1; }
+}
+
+/* ----- Stepper premium (CrearAlojamiento) ----- */
+.pub-stepper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 28px;
+}
+
+.pub-step {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 15px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--hairline);
+    background: var(--surface);
+    color: var(--ink-muted);
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.pub-step-num {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--surface-3);
+    border: 1px solid var(--hairline-strong);
+    color: var(--ink-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.pub-step.is-current {
+    border-color: var(--gold);
+    color: var(--ink);
+    background: var(--gold-tint);
+}
+
+    .pub-step.is-current .pub-step-num {
+        background: var(--warm-gradient);
+        border-color: transparent;
+        color: #1C140A;
+    }
+
+/* ----- Cards de gestión de reserva (ReservasRecibidas) ----- */
+.rr-list { display: flex; flex-direction: column; gap: 14px; }
+
+.rr-card {
+    display: grid;
+    grid-template-columns: 1.5fr 1.4fr auto;
+    gap: 26px;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    padding: 18px 22px;
+    transition: border-color var(--t), box-shadow var(--t), transform var(--t-fast);
+}
+
+    .rr-card:hover {
+        border-color: var(--hairline-strong);
+        box-shadow: var(--shadow-sm);
+        transform: translateY(-2px);
+    }
+
+.rr-guest { display: flex; align-items: center; gap: 13px; min-width: 0; }
+
+.rr-guest-name {
+    font-family: var(--font-display);
+    font-size: 15.5px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    line-height: 1.2;
+}
+
+.rr-guest-sub {
+    font-size: 13px;
+    color: var(--ink-muted);
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+    .rr-guest-sub i { color: var(--ink-faint); font-size: 11px; }
+
+.rr-meta { display: flex; gap: 26px; flex-wrap: wrap; }
+
+.rr-meta-item { display: flex; flex-direction: column; gap: 3px; }
+
+.rr-meta-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+}
+
+.rr-meta-value {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+    .rr-meta-value i { color: var(--gold); opacity: 0.85; font-size: 12px; }
+
+.rr-aside {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+    min-width: 170px;
+}
+
+.rr-aside-top { display: flex; align-items: center; gap: 12px; }
+
+.rr-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
+/* Responsive cards de reserva */
+@media (max-width: 860px) {
+    .rr-card { grid-template-columns: 1fr; gap: 16px; }
+
+    .rr-meta { gap: 18px 26px; }
+
+    .rr-aside {
+        align-items: stretch;
+        min-width: 0;
+        border-top: 1px solid var(--hairline);
+        padding-top: 14px;
+    }
+
+    .rr-aside-top { justify-content: space-between; }
+
+    .rr-actions .btn { flex: 1; }
+}
+
+@media (max-width: 420px) {
+    .rr-meta { flex-direction: column; gap: 12px; }
+}
+
+/* ----- Preview enriquecida (CrearAlojamiento) ----- */
+.pub-preview-media { position: relative; }
+
+.pub-preview-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(15, 17, 21, 0.74);
+    border: 1px solid var(--hairline-strong);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: var(--ink);
+}
+
+.pub-preview-cap {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin: 10px 0 14px;
+    color: var(--ink-muted);
+    font-size: 13px;
+}
+
+    .pub-preview-cap span { display: inline-flex; align-items: center; gap: 6px; }
+    .pub-preview-cap i { color: var(--ink-faint); font-size: 12px; }
+
+.pub-preview-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+
+.pub-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-2);
+    border: 1px solid var(--hairline);
+    color: var(--ink-muted);
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+    .pub-chip i { color: var(--gold); font-size: 11px; }
+
+.pub-preview-empty { color: var(--ink-faint); font-size: 12.5px; font-style: italic; }
+
+/* Microcopy bajo el título de cada sección del formulario */
+.section-sub {
+    color: var(--ink-muted);
+    font-size: 13px;
+    line-height: 1.5;
+    margin: -10px 0 22px;
+}
+
+/* =====================================================================
+   HOST CENTER · 3ª PASADA — respiración del form + preview de reservas
+   ===================================================================== */
+
+/* Columna del formulario: aire vertical consistente entre secciones */
+.create-form-col {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* ----- Servicios como toggle-cards (amenities premium) ----- */
+.svc-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.svc-count {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink-muted);
+}
+
+    .svc-count strong { color: var(--champagne); font-variant-numeric: tabular-nums; }
+
+.svc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(184px, 1fr));
+    gap: 12px;
+}
+
+.svc-toggle {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    background: var(--surface-2);
+    cursor: pointer;
+    transition: border-color var(--t), background var(--t), transform var(--t-fast);
+}
+
+    .svc-toggle:hover { border-color: var(--ink-faint); transform: translateY(-2px); }
+    .svc-toggle.selected { border-color: var(--gold); background: var(--gold-tint); }
+    .svc-toggle:focus-visible { outline: none; box-shadow: var(--ring); }
+
+.svc-toggle-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--surface-3);
+    color: var(--ink-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+    transition: background var(--t), color var(--t);
+}
+
+.svc-toggle.selected .svc-toggle-icon { background: var(--warm-gradient); color: #1C140A; }
+
+.svc-toggle-name { flex: 1; font-size: 14px; font-weight: 600; color: var(--ink); }
+
+.svc-toggle-check {
+    color: var(--gold);
+    font-size: 13px;
+    opacity: 0;
+    transform: scale(0.7);
+    transition: opacity var(--t), transform var(--t-fast);
+}
+
+.svc-toggle.selected .svc-toggle-check { opacity: 1; transform: scale(1); }
+
+/* ----- Fotos: badge de portada sobre la primera imagen ----- */
+.image-item { position: relative; }
+
+.cover-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    border-radius: var(--radius-sm);
+    background: rgba(15, 17, 21, 0.78);
+    border: 1px solid var(--hairline-strong);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: var(--champagne);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+    .cover-badge i { font-size: 10px; }
+
+/* ----- Preview compacto de reservas (PanelAnfitrion) ----- */
+.host-reservation-list { display: flex; flex-direction: column; gap: 10px; }
+
+.host-booking-card {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr auto;
+    gap: 18px;
+    align-items: center;
+    padding: 12px 14px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    background: var(--surface-2);
+    transition: border-color var(--t), background var(--t);
+}
+
+    .host-booking-card:hover { border-color: var(--hairline-strong); background: var(--surface-3); }
+
+.host-booking-guest { display: flex; align-items: center; gap: 11px; min-width: 0; }
+
+.host-booking-id { min-width: 0; }
+
+.host-booking-name {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--ink);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.host-booking-sub {
+    font-size: 12.5px;
+    color: var(--ink-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.host-booking-dates {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12.5px;
+    color: var(--ink-muted);
+    white-space: nowrap;
+}
+
+    .host-booking-dates i { color: var(--gold); opacity: 0.8; font-size: 11px; }
+
+.host-booking-aside { display: flex; align-items: center; gap: 12px; justify-content: flex-end; }
+
+@media (max-width: 560px) {
+    .host-booking-card { grid-template-columns: 1fr; gap: 10px; }
+
+    .host-booking-dates { white-space: normal; }
+
+    .host-booking-aside {
+        justify-content: space-between;
+        border-top: 1px solid var(--hairline);
+        padding-top: 10px;
+    }
+}
+/* Host Center — reservas recientes compactas */
+.host-recent-reservations {
+    display: grid;
+    gap: 12px;
+}
+
+.host-recent-booking {
+    display: grid;
+    grid-template-columns: minmax(240px, 1.45fr) minmax(190px, 1fr) minmax(120px, 0.55fr) minmax(130px, 0.65fr);
+    align-items: center;
+    gap: 20px;
+    padding: 16px 18px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    background: var(--surface-2);
+    transition: transform var(--t-fast), border-color var(--t), background var(--t);
+}
+
+    .host-recent-booking:hover {
+        transform: translateY(-1px);
+        border-color: var(--hairline-strong);
+        background: var(--surface-3);
+    }
+
+.host-recent-guest {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.host-recent-avatar {
+    width: 38px !important;
+    height: 38px !important;
+    flex: 0 0 38px;
+    font-size: 12px !important;
+}
+
+.host-recent-name {
+    font-weight: 800;
+    color: var(--ink);
+    line-height: 1.25;
+}
+
+.host-recent-sub {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    color: var(--ink-muted);
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+    .host-recent-sub i {
+        color: var(--gold);
+        font-size: 11px;
+    }
+
+.host-recent-date,
+.host-recent-total,
+.host-recent-state {
+    min-width: 0;
+}
+
+.host-recent-label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--ink-faint);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.055em;
+    text-transform: uppercase;
+}
+
+.host-recent-date strong {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--ink);
+    font-size: 14px;
+    line-height: 1.35;
+}
+
+.host-recent-date i {
+    color: var(--gold);
+    font-size: 12px;
+}
+
+.host-recent-total .price {
+    font-size: 18px;
+    white-space: nowrap;
+}
+
+.host-recent-state {
+    justify-self: end;
+}
+
+    .host-recent-state .state {
+        white-space: nowrap;
+    }
+@media (max-width: 900px) {
+    .host-recent-booking {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .host-recent-state {
+        justify-self: start;
+    }
+}
+
+@media (max-width: 560px) {
+    .host-recent-booking {
+        grid-template-columns: 1fr;
+        gap: 14px;
+        padding: 16px;
+    }
+
+    .host-recent-total .price {
+        font-size: 20px;
+    }
+}
+/* Host Center — mini lista de reservas en Mis Alojamientos */
+.mini-booking-list {
+    display: grid;
+    gap: 10px;
+}
+
+.mini-booking-head,
+.mini-booking-row {
+    display: grid;
+    grid-template-columns: minmax(180px, 1.25fr) minmax(220px, 1.55fr) minmax(190px, 1.2fr) minmax(100px, 0.65fr) minmax(130px, 0.75fr);
+    align-items: center;
+    column-gap: 22px;
+}
+
+.mini-booking-head {
+    padding: 13px 18px;
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.025);
+    color: var(--ink-muted);
+    font-size: 11.5px;
+    font-weight: 800;
+    letter-spacing: 0.055em;
+    text-transform: uppercase;
+}
+
+.mini-booking-row {
+    min-height: 70px;
+    padding: 15px 18px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    background: var(--surface-2);
+    transition: transform var(--t-fast), border-color var(--t), background var(--t);
+}
+
+    .mini-booking-row:hover {
+        transform: translateY(-1px);
+        border-color: var(--hairline-strong);
+        background: var(--surface-3);
+    }
+
+.mini-booking-guest,
+.mini-booking-property,
+.mini-booking-date {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+    .mini-booking-guest span:last-child,
+    .mini-booking-property span,
+    .mini-booking-date span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .mini-booking-property i,
+    .mini-booking-date i {
+        color: var(--gold);
+        font-size: 12px;
+        flex: 0 0 auto;
+    }
+
+.mini-booking-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border-radius: 999px;
+    background: rgba(214, 168, 79, 0.14);
+    border: 1px solid rgba(214, 168, 79, 0.32);
+    color: var(--gold);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.mini-booking-price {
+    white-space: nowrap;
+}
+
+.mini-booking-status {
+    width: fit-content;
+    justify-self: start;
+}

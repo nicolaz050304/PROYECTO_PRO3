@@ -3,138 +3,213 @@
 @inject DataService Data
 @inject NavigationManager Navigation
 @inject BunkiApp.Models.AppState AppState
-<PageTitle>Bunki - Panel del Anfitrión</PageTitle>
+@inject IJSRuntime JS
+@using System.Globalization
+@implements IDisposable
+<PageTitle>Bunki - Centro de Anfitrión</PageTitle>
 
-<div class="section">
+<div class="section host-page">
     <div class="container">
-        <div class="flex flex-between items-center mb-30">
-            <h2 style="font-size: 26px; font-weight: 700;">Panel del Anfitrión</h2>
-            <button class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/crear-alojamiento")'>
-                <i class="fas fa-plus-circle"></i> Crear Nuevo Alojamiento
+
+        <!-- CABECERA -->
+        <header class="host-head">
+            <div>
+                <span class="host-head-eyebrow">Bunki Host Center</span>
+                <h1 class="host-head-title">Hola, @NombreAnfitrion</h1>
+                <p class="host-head-sub">Gestiona tus alojamientos, reservas e ingresos desde un solo lugar.</p>
+            </div>
+            <button class="btn btn-primary" @onclick='() => Navigation.NavigateTo("/crear-alojamiento")'>
+                <i class="fas fa-plus-circle"></i> Crear alojamiento
             </button>
-        </div>
+        </header>
 
-        <!-- ESTADÍSTICAS -->
-        <div class="grid grid-4" style="margin-bottom: 40px;">
-            <StatBox Valor="@Stats.ReservasActivas.ToString()" Etiqueta="Reservas Activas" />
-            <StatBox Valor="@($"{Stats.TasaOcupacion}%")" Etiqueta="Tasa de Ocupación" />
-            <StatBox Valor="@($"S/ {Stats.IngresosEsteMes:N0}")" Etiqueta="Ingresos Este Mes" />
-            <StatBox Valor="@Stats.RatingPromedio.ToString("F1")" Etiqueta="Rating Promedio" />
-        </div>
+        <!-- OVERVIEW BENTO -->
+        <div class="host-overview">
 
-        <!-- RENTABILIDAD -->
-        <div class="card" style="margin-bottom: 40px; background: linear-gradient(145deg, rgba(26,31,46,0.5), rgba(15,20,25,0.8));">
-            <div style="padding: 24px;">
-                <div class="flex flex-between items-center mb-20" style="flex-wrap: wrap; gap: 15px;">
-                    <div>
-                        <h4 style="color: var(--gold); font-size: 18px; font-weight: 700;">
-                            <i class="fas fa-chart-pie" style="margin-right: 8px;"></i>
-                            Rentabilidad y Ganancias de Anfitrión
-                        </h4>
-                        <p class="card-text" style="font-size: 13px; margin-top: 2px;">Visualización de ingresos descontando el servicio de la plataforma.</p>
-                    </div>
+            <!-- Spotlight: ingresos + mini bar-chart -->
+            <div class="spotlight">
+                <span class="spotlight-label"><i class="fas fa-sack-dollar"></i> Ingresos estimados (mes)</span>
+                <div class="spotlight-value">@AppState.FormatearPrecio(Stats.IngresosEsteMes)</div>
+                <p class="spotlight-sub"><span class="up"><i class="fas fa-arrow-trend-up"></i> +12%</span> vs. mes anterior</p>
+                <div class="spark-bars" aria-hidden="true">
+                    @foreach (var m in Ingresos6m)
+                    {
+                        <div class="spark-col">
+                            <div class="spark-bar" style="height:@(BarH(m.Valor))px"></div>
+                            <div class="spark-cap">@m.Mes</div>
+                        </div>
+                    }
+                </div>
+            </div>
 
-                    <div class="flex items-center gap-10" style="flex-wrap: wrap;">
-                        <input type="date" @bind="FiltroInicio" style="padding: 8px 12px; font-size: 13px; max-width: 140px; height: 36px;" />
-                        <input type="date" @bind="FiltroFin" style="padding: 8px 12px; font-size: 13px; max-width: 140px; height: 36px;" />
-                        <button class="btn btn-primary btn-small" style="height: 36px; padding: 0 16px; border-radius: 8px;" @onclick="RecalcularGananciasAnfitrion">
-                            <i class="fas fa-filter"></i> Filtrar
-                        </button>
+            <!-- Anillo de ocupación -->
+            <div class="gauge-card">
+                <div class="gauge" style="--val:@(Stats.TasaOcupacion)" role="img"
+                     aria-label="Ocupación @(Stats.TasaOcupacion) por ciento">
+                    <span class="gauge-num">@(Stats.TasaOcupacion)%</span>
+                </div>
+                <span class="gauge-label">Ocupación · últimos 30 días</span>
+            </div>
+
+            <!-- Métricas de apoyo -->
+            <div class="metric-stack">
+                <div class="metric-mini">
+                    <span class="metric-mini-icon metric-mini-icon--warning"><i class="fas fa-clock"></i></span>
+                    <div class="metric-mini-body">
+                        <div class="metric-mini-value">@ReservasPendientes</div>
+                        <div class="metric-mini-label">Reservas pendientes</div>
                     </div>
                 </div>
-
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
-                    <div style="background: rgba(255,255,255,0.02); padding: 16px; border-radius: 10px; border: 1px solid var(--border);">
-                        <span style="color: var(--muted); font-size: 12.5px; display: block; margin-bottom: 6px;">Ingresos Brutos por Reservas</span>
-                        <span style="color: var(--light-text); font-size: 20px; font-weight: 700;">S/ @MontoBrutoAnfitrion.ToString("N2")</span>
+                <div class="metric-mini">
+                    <span class="metric-mini-icon metric-mini-icon--info"><i class="fas fa-house"></i></span>
+                    <div class="metric-mini-body">
+                        <div class="metric-mini-value">@AlojamientosActivos</div>
+                        <div class="metric-mini-label">Alojamientos activos</div>
                     </div>
-                    <div style="background: rgba(230, 57, 70, 0.03); padding: 16px; border-radius: 10px; border: 1px solid rgba(230, 57, 70, 0.15);">
-                        <span style="color: var(--danger); font-size: 12.5px; display: block; margin-bottom: 6px;">Comisión Bunki (10%)</span>
-                        <span style="color: var(--danger); font-size: 20px; font-weight: 700;">- S/ @MontoComisionBunki.ToString("N2")</span>
-                    </div>
-                    <div style="background: rgba(212, 175, 55, 0.05); padding: 16px; border-radius: 10px; border: 1px solid var(--gold);">
-                        <span style="color: var(--gold); font-size: 12.5px; font-weight: bold; display: block; margin-bottom: 6px;">Ganancia Neta Efectiva</span>
-                        <span style="color: var(--gold); font-size: 22px; font-weight: 800;">S/ @MontoNetoAnfitrion.ToString("N2")</span>
+                </div>
+                <div class="metric-mini">
+                    <span class="metric-mini-icon"><i class="fas fa-star"></i></span>
+                    <div class="metric-mini-body">
+                        <div class="metric-mini-value">@Stats.RatingPromedio.ToString("F1")</div>
+                        <div class="metric-mini-label">Calificación promedio</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- MIS ALOJAMIENTOS -->
-        <div class="flex flex-between items-center" style="margin-bottom: 20px;">
-            <h3 style="font-size: 20px; font-weight: 600;">Tus Alojamientos</h3>
-            <span class="card-text">@Alojamientos.Count publicaciones</span>
-        </div>
+        <!-- LAYOUT PRINCIPAL -->
+        <div class="host-grid">
 
-        <div class="grid grid-3" style="margin-bottom: 40px;">
-            @foreach (var aloj in Alojamientos)
-            {
-                <div class="card">
-                    <div class="card-image-placeholder" style="background: @aloj.GradienteColor;"></div>
-                    <div class="card-body">
-                        <h3 class="card-title">@aloj.Nombre</h3>
-                        <p class="card-text">@ObtenerTextoEstado(aloj)</p>
-                        <div class="card-footer">
-                            <span class="badge @ObtenerBadgeClass(aloj.EstadoPublicacion)">@aloj.EstadoPublicacion</span>
-                            <div class="flex gap-10">
-                                <button class="btn btn-small btn-secondary">Editar</button>
-                                @if (aloj.EstadoPublicacion == "Revisión")
-                                {
-                                    <button class="btn btn-small btn-danger">Ver</button>
-                                }
-                            </div>
+            <!-- COLUMNA PRINCIPAL -->
+            <div style="display: flex; flex-direction: column; gap: 24px;">
+
+                <!-- GANANCIAS -->
+                <div class="host-panel">
+                    <div class="host-panel-head">
+                        <h2 class="host-panel-title"><i class="fas fa-chart-pie"></i> Rentabilidad y ganancias</h2>
+                        <div class="flex items-center gap-10" style="flex-wrap: wrap;">
+                            <input type="text" id="host-filtro-inicio" class="host-flatpickr" placeholder="dd/mm/aaaa"
+                                   value="@Fmt(FiltroInicio)" @onchange="OnInicioChanged" autocomplete="off"
+                                   style="max-width: 140px; height: 38px; font-size: 13px;" />
+                            <input type="text" id="host-filtro-fin" class="host-flatpickr" placeholder="dd/mm/aaaa"
+                                   value="@Fmt(FiltroFin)" @onchange="OnFinChanged" autocomplete="off"
+                                   style="max-width: 140px; height: 38px; font-size: 13px;" />
+                            <button class="btn btn-small btn-secondary" @onclick="RecalcularGananciasAnfitrion">
+                                <i class="fas fa-filter"></i> Filtrar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="host-earnings">
+                        <div class="earn-card">
+                            <span class="earn-label">Ingresos brutos</span>
+                            <span class="earn-value">@AppState.FormatearPrecio(MontoBrutoAnfitrion)</span>
+                        </div>
+                        <div class="earn-card earn-card--fee">
+                            <span class="earn-label">Comisión Bunki (10%)</span>
+                            <span class="earn-value">- @AppState.FormatearPrecio(MontoComisionBunki)</span>
+                        </div>
+                        <div class="earn-card earn-card--net">
+                            <span class="earn-label">Ganancia neta</span>
+                            <span class="earn-value">@AppState.FormatearPrecio(MontoNetoAnfitrion)</span>
                         </div>
                     </div>
                 </div>
-            }
 
-            <!-- CARD AGREGAR NUEVO -->
-            <div class="card" style="border: 2px dashed var(--border); box-shadow: none; cursor: pointer;"
-                 @onclick='() => Navigation.NavigateTo("/crear-alojamiento")'>
-                <div style="padding: 40px; text-align: center; color: var(--text-light);">
-                    <i class="fas fa-plus-circle" style="font-size: 40px; color: var(--primary); margin-bottom: 16px; display: block;"></i>
-                    <h4>Agregar Alojamiento</h4>
-                    <p class="card-text" style="margin-top: 8px; font-size: 13px;">Publica un nuevo espacio</p>
+                <!-- RESERVAS RECIENTES -->
+                <div class="host-panel">
+                    <div class="host-panel-head">
+                        <h2 class="host-panel-title"><i class="fas fa-calendar-check"></i> Reservas recientes</h2>
+                        <a href="/reservas-recibidas" class="host-panel-link">Ver todas <i class="fas fa-arrow-right"></i></a>
+                    </div>
+
+                    <div class="host-recent-reservations">
+                        @foreach (var r in ReservasRecientes)
+                        {
+                            <div class="host-recent-booking">
+                                <div class="host-recent-guest">
+                                    <div class="avatar host-recent-avatar">@r.Iniciales</div>
+                                    <div>
+                                        <div class="host-recent-name">@r.Huesped</div>
+                                        <div class="host-recent-sub">
+                                            <i class="fas fa-house"></i>
+                                            @r.Alojamiento
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="host-recent-date">
+                                    <span class="host-recent-label">Fechas</span>
+                                    <strong><i class="fas fa-calendar-day"></i> @r.Fechas</strong>
+                                </div>
+
+                                <div class="host-recent-total">
+                                    <span class="host-recent-label">Total</span>
+                                    <strong class="price">@r.Total</strong>
+                                </div>
+
+                                <div class="host-recent-state">
+                                    <span class="state @EstadoState(r.Estado)">
+                                        <span class="state-dot"></span>
+                                        @r.Estado
+                                    </span>
+                                </div>
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- RESERVAS RECIENTES -->
-        <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 20px;">Reservas Recientes</h3>
-        <div class="card">
-            <div style="padding: 20px;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Huésped</th>
-                            <th>Alojamiento</th>
-                            <th>Fechas</th>
-                            <th>Total</th>
-                            <th>Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var reserva in ReservasRecientes)
+            <!-- COLUMNA LATERAL -->
+            <div style="display: flex; flex-direction: column; gap: 24px;">
+
+                <!-- ACCIONES RÁPIDAS -->
+                <div class="host-panel">
+                    <div class="host-panel-head">
+                        <h2 class="host-panel-title"><i class="fas fa-bolt"></i> Acciones rápidas</h2>
+                    </div>
+                    <div class="host-actions">
+                        <a href="/crear-alojamiento" class="host-action">
+                            <span class="host-action-icon"><i class="fas fa-plus"></i></span>
+                            <span class="host-action-text"><strong>Crear alojamiento</strong><span>Publica un espacio</span></span>
+                            <i class="fas fa-chevron-right host-action-arrow"></i>
+                        </a>
+                        <a href="/mis-alojamientos" class="host-action">
+                            <span class="host-action-icon"><i class="fas fa-home"></i></span>
+                            <span class="host-action-text"><strong>Mis alojamientos</strong><span>Gestiona tus propiedades</span></span>
+                            <i class="fas fa-chevron-right host-action-arrow"></i>
+                        </a>
+                        <a href="/reservas-recibidas" class="host-action">
+                            <span class="host-action-icon"><i class="fas fa-inbox"></i></span>
+                            <span class="host-action-text"><strong>Revisar reservas</strong><span>@ReservasPendientes pendientes</span></span>
+                            <i class="fas fa-chevron-right host-action-arrow"></i>
+                        </a>
+                        <a href="/mensajes" class="host-action">
+                            <span class="host-action-icon"><i class="fas fa-comments"></i></span>
+                            <span class="host-action-text"><strong>Mensajes</strong><span>Habla con tus huéspedes</span></span>
+                            <i class="fas fa-chevron-right host-action-arrow"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- ACTIVIDAD RECIENTE -->
+                <div class="host-panel">
+                    <div class="host-panel-head">
+                        <h2 class="host-panel-title"><i class="fas fa-list-check"></i> Tareas y actividad</h2>
+                    </div>
+                    <div class="host-feed">
+                        @foreach (var a in Actividad)
                         {
-                            <tr>
-                                <td>
-                                    <div class="flex gap-10 items-center">
-                                        <div class="avatar" style="width: 32px; height: 32px; font-size: 12px;">@reserva.Iniciales</div>
-                                        @reserva.Huesped
-                                    </div>
-                                </td>
-                                <td>@reserva.Alojamiento</td>
-                                <td class="card-text">@reserva.Fechas</td>
-                                <td><strong>S/ @reserva.Total</strong></td>
-                                <td>
-                                    <span class="badge @(reserva.Estado == "Confirmada" ? "badge-success" : "badge-warning")">
-                                        @reserva.Estado
-                                    </span>
-                                </td>
-                            </tr>
+                            <div class="host-feed-item">
+                                <div class="host-feed-icon host-feed-icon--@a.Tono"><i class="fas @a.Icono"></i></div>
+                                <div class="host-feed-body">
+                                    <p>@((MarkupString)a.Texto)</p>
+                                    <div class="host-feed-time">@a.Tiempo</div>
+                                </div>
+                            </div>
                         }
-                    </tbody>
-                </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -144,40 +219,88 @@
     private List<Alojamiento> Alojamientos = new();
     private (int ReservasActivas, decimal IngresosEsteMes, double RatingPromedio, int TasaOcupacion) Stats;
 
+    private string NombreAnfitrion => AppState.UsuarioActual?.Nombre ?? "anfitrión";
+    private int AlojamientosActivos => Alojamientos.Count(a => a.EstadoPublicacion == "Activo");
+    private int ReservasPendientes => ReservasRecientes.Count(r => r.Estado == "Pendiente");
+
     private record ReservaResumen(string Iniciales, string Huesped, string Alojamiento, string Fechas, string Total, string Estado);
+    private record Evento(string Icono, string Tono, string Texto, string Tiempo);
+    private record Punto(string Mes, decimal Valor);
+
+    // Serie mensual de ingresos (mock visual para el mini bar-chart).
+    private static readonly Punto[] Ingresos6m =
+    {
+        new("Ene", 5200m), new("Feb", 6100m), new("Mar", 5800m),
+        new("Abr", 7400m), new("May", 7000m), new("Jun", 8500m)
+    };
+
+    private static int BarH(decimal valor)
+    {
+        decimal max = Ingresos6m.Max(p => p.Valor);
+        return (int)(valor / max * 60m) + 8; // alto en px (8–68)
+    }
 
     private List<ReservaResumen> ReservasRecientes = new()
     {
-        new("JP", "Juan Pérez", "Depto en Miraflores", "15-20 Mayo", "825", "Confirmada"),
-        new("LM", "Laura M.", "Casa en La Molina", "28 Mayo - 3 Jun", "1,200", "Pendiente"),
-        new("CR", "Carlos R.", "Habitación en Barranco", "1-5 Mayo", "400", "Confirmada")
+        new("JP", "Juan Pérez", "Depto en Miraflores", "15-20 Mayo", "S/ 825", "Confirmada"),
+        new("LM", "Laura M.", "Casa en La Molina", "28 Mayo - 3 Jun", "S/ 1,200", "Pendiente"),
+        new("CR", "Carlos R.", "Habitación en Barranco", "1-5 Mayo", "S/ 400", "Confirmada")
+    };
+
+    // Feed de actividad (mock visual de frontend).
+    private List<Evento> Actividad = new()
+    {
+        new("fa-calendar-plus", "success", "Nueva reserva en <strong>Depto en Miraflores</strong>", "Hace 2 horas"),
+        new("fa-clock", "warning", "Reserva pendiente de confirmar en <strong>Casa en La Molina</strong>", "Hace 5 horas"),
+        new("fa-star", "info", "Nueva reseña de 5★ de <strong>Carlos R.</strong>", "Ayer"),
+        new("fa-triangle-exclamation", "warning", "<strong>Habitación en Barranco</strong> está en revisión", "Hace 2 días")
     };
 
     protected override void OnInitialized()
     {
         if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
 
+        AppState.OnChange += OnMonedaChanged;
         Alojamientos = Data.ObtenerAlojamientosAnfitrion();
         Stats = Data.ObtenerEstadisticasAnfitrion();
     }
 
-    private string ObtenerTextoEstado(Alojamiento aloj) => aloj.EstadoPublicacion switch
+    public void Dispose() => AppState.OnChange -= OnMonedaChanged;
+    private void OnMonedaChanged() => InvokeAsync(StateHasChanged);
+
+    private string EstadoState(string estado) => estado switch
     {
-        "Activo" => "2 reservas pendientes",
-        "Revisión" => "Rechazada - Revisar",
-        _ => "Sin actividad"
+        "Pendiente"  => "state--pendiente",
+        "Confirmada" => "state--confirmada",
+        "Completada" => "state--completada",
+        "Cancelada"  => "state--cancelada",
+        _            => "state--completada"
     };
 
-    private string ObtenerBadgeClass(string estado) => estado switch
+    // Calendario dark unificado (mismo Flatpickr que el resto de Bunki).
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        "Activo" => "badge-success",
-        "Revisión" => "badge-danger",
-        _ => "badge-warning"
-    };
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("bunkiDatePicker.initHostDate", "#host-filtro-inicio");
+            await JS.InvokeVoidAsync("bunkiDatePicker.initHostDate", "#host-filtro-fin");
+        }
+    }
 
-    // Reportes
+    private string Fmt(DateTime fecha) => fecha.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
 
-    // Reporte Financiero para el Anfitrión
+    private DateTime ParseFecha(string? value, DateTime fallback)
+    {
+        if (!string.IsNullOrWhiteSpace(value) &&
+            DateTime.TryParseExact(value, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var f))
+            return f;
+        return fallback;
+    }
+
+    private void OnInicioChanged(ChangeEventArgs e) => FiltroInicio = ParseFecha(e.Value?.ToString(), FiltroInicio);
+    private void OnFinChanged(ChangeEventArgs e) => FiltroFin = ParseFecha(e.Value?.ToString(), FiltroFin);
+
+    // Reporte financiero del anfitrión (mock; se recalcula al filtrar).
     private DateTime FiltroInicio = DateTime.Today.AddDays(-30);
     private DateTime FiltroFin = DateTime.Today;
 
@@ -185,9 +308,5 @@
     private decimal MontoComisionBunki => MontoBrutoAnfitrion * 0.10m;
     private decimal MontoNetoAnfitrion => MontoBrutoAnfitrion - MontoComisionBunki;
 
-    private void RecalcularGananciasAnfitrion()
-    {
-        MontoBrutoAnfitrion = 11400;
-    }
-
+    private void RecalcularGananciasAnfitrion() => MontoBrutoAnfitrion = 11400;
 }

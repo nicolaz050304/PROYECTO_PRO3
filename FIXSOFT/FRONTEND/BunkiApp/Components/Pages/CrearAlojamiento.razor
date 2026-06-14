@@ -5,208 +5,336 @@
 
 <PageTitle>Bunki - Crear Alojamiento</PageTitle>
 
-<div class="hero-small">
+<div class="section host-page">
     <div class="container">
-        <h1>Publica tu alojamiento</h1>
-        <p>Comparte tu espacio y comienza a generar ingresos</p>
-    </div>
-</div>
-
-<div class="section">
-    <div class="container" style="max-width: 800px;">
-
-        @if (!string.IsNullOrEmpty(MensajeExito))
-        {
-            <AlertMessage Tipo="success" Mensaje="@MensajeExito" />
-        }
 
         <EditForm Model="Formulario" OnValidSubmit="Publicar">
             <DataAnnotationsValidator />
 
-            <!-- INFORMACIÓN BÁSICA -->
-            <div class="form-section">
-                <h2 class="section-title" style="text-align: left; font-size: 20px;">
-                    <i class="fas fa-building" style="margin-right: 10px; color: var(--primary);"></i>
-                    Información Básica
-                </h2>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Nombre del alojamiento</label>
-                        <InputText @bind-Value="Formulario.Nombre" placeholder="Ej: Departamento en Miraflores" />
-                        <ValidationMessage For="() => Formulario.Nombre" class="validation-message" />
-                    </div>
-                    <div class="form-group">
-                        <label>Tipo de alojamiento</label>
-                        <InputSelect @bind-Value="Formulario.Tipo">
-                            <option value="">Selecciona un tipo</option>
-                            <option>Departamento</option>
-                            <option>Casa</option>
-                            <option>Habitación</option>
-                            <option>Loft</option>
-                            <option>Cabaña</option>
-                        </InputSelect>
-                        <ValidationMessage For="() => Formulario.Tipo" class="validation-message" />
-                    </div>
+            <!-- HEADER DE PRODUCTO -->
+            <header class="host-head">
+                <div>
+                    <span class="host-head-eyebrow">Bunki Host Center</span>
+                    <h1 class="host-head-title">Publica un alojamiento</h1>
+                    <p class="host-head-sub">Completa los detalles clave para que los huéspedes descubran tu espacio.</p>
                 </div>
-
-                <div class="form-group">
-                    <label>Descripción</label>
-                    <InputTextArea @bind-Value="Formulario.Descripcion" placeholder="Describe tu alojamiento..." rows="4" />
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Huéspedes</label>
-                        <InputNumber @bind-Value="Formulario.MaxHuespedes" placeholder="4" min="1" max="20" />
-                        <ValidationMessage For="() => Formulario.MaxHuespedes" class="validation-message" />
-                    </div>
-                    <div class="form-group">
-                        <label>Habitaciones</label>
-                        <InputNumber @bind-Value="Formulario.Habitaciones" placeholder="2" min="1" max="20" />
-                        <ValidationMessage For="() => Formulario.Habitaciones" class="validation-message" />
-                    </div>
-                </div>
-            </div>
-
-            <!-- UBICACIÓN -->
-            <div class="form-section">
-                <h2 class="section-title" style="text-align: left; font-size: 20px;">
-                    <i class="fas fa-map-marker-alt" style="margin-right: 10px; color: var(--primary);"></i>
-                    Ubicación
-                </h2>
-
-                <div class="form-group">
-                    <label>Dirección</label>
-                    <InputText @bind-Value="Formulario.Direccion" placeholder="Av. Larco 123" />
-                    <ValidationMessage For="() => Formulario.Direccion" class="validation-message" />
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Distrito</label>
-                        <InputSelect @bind-Value="Formulario.Distrito">
-                            <option value="">Selecciona...</option>
-                            <option>Miraflores</option>
-                            <option>Barranco</option>
-                            <option>San Isidro</option>
-                            <option>La Molina</option>
-                            <option>Pueblo Libre</option>
-                            <option>Chaclacayo</option>
-                            <option>San Borja</option>
-                            <option>Surco</option>
-                        </InputSelect>
-                        <ValidationMessage For="() => Formulario.Distrito" class="validation-message" />
-                    </div>
-                    <div class="form-group">
-                        <label>Provincia</label>
-                        <InputText @bind-Value="Formulario.Provincia" readonly />
-                    </div>
-                </div>
-            </div>
-
-            <!-- FOTOS -->
-            <div class="form-section">
-                <h2 class="section-title" style="text-align: left; font-size: 20px;">
-                    <i class="fas fa-images" style="margin-right: 10px; color: var(--primary);"></i>
-                    Fotos
-                </h2>
-
-                <div class="image-upload" @onclick="SimularSubida">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <p class="upload-text">Arrastra fotos aquí o haz clic</p>
-                    <p class="upload-hint">Máximo 10 imágenes • JPG, PNG</p>
-                </div>
-
-                @if (ImagenesPreview.Any())
-                {
-                    <div class="image-preview">
-                        @for (int i = 0; i < ImagenesPreview.Count; i++)
+                <div class="host-head-actions">
+                    <button type="button" class="btn btn-secondary" @onclick="GuardarBorrador">
+                        <i class="fas fa-save"></i> Guardar borrador
+                    </button>
+                    <button type="submit" class="btn btn-primary" disabled="@Publicando">
+                        @if (Publicando)
                         {
-                            int idx = i;
-                            <div class="image-item">
-                                <div style="width: 100%; height: 120px; background: @ImagenesPreview[idx]; border-radius: 8px;"></div>
-                                <button type="button" class="delete-btn" @onclick="() => EliminarImagen(idx)">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                            <i class="fas fa-spinner fa-spin"></i>
+                        }
+                        else
+                        {
+                            <i class="fas fa-check-circle"></i>
+                        }
+                        Publicar alojamiento
+                    </button>
+                </div>
+            </header>
+
+            @if (!string.IsNullOrEmpty(MensajeExito))
+            {
+                <AlertMessage Tipo="success" Mensaje="@MensajeExito" />
+            }
+
+            <!-- STEPPER PREMIUM -->
+            <div class="pub-stepper">
+                <span class="pub-step is-current"><span class="pub-step-num">1</span> Información</span>
+                <span class="pub-step"><span class="pub-step-num">2</span> Ubicación</span>
+                <span class="pub-step"><span class="pub-step-num">3</span> Capacidad</span>
+                <span class="pub-step"><span class="pub-step-num">4</span> Servicios</span>
+                <span class="pub-step"><span class="pub-step-num">5</span> Reglas</span>
+                <span class="pub-step"><span class="pub-step-num">6</span> Precios</span>
+            </div>
+
+            <div class="create-layout">
+
+                <!-- COLUMNA FORM -->
+                <div class="create-form-col">
+                    <!-- INFORMACIÓN BÁSICA -->
+                    <div class="form-section">
+                        <h2 class="section-title" style="text-align: left; font-size: 20px;">
+                            <i class="fas fa-building" style="margin-right: 10px; color: var(--gold);"></i>
+                            Información básica
+                        </h2>
+                        <p class="section-sub">Lo esencial que verán primero los huéspedes.</p>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Nombre del alojamiento</label>
+                                <InputText @bind-Value="Formulario.Nombre" @bind-Value:event="oninput" placeholder="Ej: Departamento en Miraflores" />
+                                <ValidationMessage For="() => Formulario.Nombre" class="validation-message" />
+                                <p class="field-help">Un buen título describe el lugar y su mayor atractivo (vista, ubicación, estilo).</p>
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo de alojamiento</label>
+                                <InputSelect @bind-Value="Formulario.Tipo">
+                                    <option value="">Selecciona un tipo</option>
+                                    <option>Departamento</option>
+                                    <option>Casa</option>
+                                    <option>Habitación</option>
+                                    <option>Loft</option>
+                                    <option>Cabaña</option>
+                                </InputSelect>
+                                <ValidationMessage For="() => Formulario.Tipo" class="validation-message" />
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Descripción</label>
+                            <InputTextArea @bind-Value="Formulario.Descripcion" placeholder="Describe tu alojamiento..." rows="4" />
+                            <p class="field-help">Cuenta qué hace único a tu espacio: ambiente, cercanías y para quién es ideal.</p>
+                        </div>
+                    </div>
+
+                    <!-- UBICACIÓN -->
+                    <div class="form-section">
+                        <h2 class="section-title" style="text-align: left; font-size: 20px;">
+                            <i class="fas fa-map-marker-alt" style="margin-right: 10px; color: var(--gold);"></i>
+                            Ubicación
+                        </h2>
+                        <p class="section-sub">Ayuda a los huéspedes a ubicar tu espacio en la ciudad.</p>
+
+                        <div class="form-group">
+                            <label>Dirección</label>
+                            <InputText @bind-Value="Formulario.Direccion" placeholder="Av. Larco 123" />
+                            <ValidationMessage For="() => Formulario.Direccion" class="validation-message" />
+                            <p class="field-help">Solo se comparte la dirección exacta con huéspedes que ya reservaron.</p>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Distrito</label>
+                                <InputSelect @bind-Value="Formulario.Distrito">
+                                    <option value="">Selecciona...</option>
+                                    <option>Miraflores</option>
+                                    <option>Barranco</option>
+                                    <option>San Isidro</option>
+                                    <option>La Molina</option>
+                                    <option>Pueblo Libre</option>
+                                    <option>Chaclacayo</option>
+                                    <option>San Borja</option>
+                                    <option>Surco</option>
+                                </InputSelect>
+                                <ValidationMessage For="() => Formulario.Distrito" class="validation-message" />
+                            </div>
+                            <div class="form-group">
+                                <label>Provincia</label>
+                                <InputText @bind-Value="Formulario.Provincia" readonly />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CAPACIDAD -->
+                    <div class="form-section">
+                        <h2 class="section-title" style="text-align: left; font-size: 20px;">
+                            <i class="fas fa-users" style="margin-right: 10px; color: var(--gold);"></i>
+                            Capacidad
+                        </h2>
+                        <p class="section-sub">Cuántas personas y habitaciones ofrece tu alojamiento.</p>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Huéspedes</label>
+                                <InputNumber @bind-Value="Formulario.MaxHuespedes" placeholder="4" min="1" max="20" />
+                                <ValidationMessage For="() => Formulario.MaxHuespedes" class="validation-message" />
+                                <p class="field-help">Número máximo de personas que pueden hospedarse.</p>
+                            </div>
+                            <div class="form-group">
+                                <label>Habitaciones</label>
+                                <InputNumber @bind-Value="Formulario.Habitaciones" placeholder="2" min="1" max="20" />
+                                <ValidationMessage For="() => Formulario.Habitaciones" class="validation-message" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FOTOS -->
+                    <div class="form-section">
+                        <h2 class="section-title" style="text-align: left; font-size: 20px;">
+                            <i class="fas fa-images" style="margin-right: 10px; color: var(--gold);"></i>
+                            Fotos
+                        </h2>
+                        <p class="section-sub">Sube imágenes atractivas; la primera será la portada.</p>
+
+                        <div class="image-upload" @onclick="SimularSubida">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p class="upload-text">Arrastra fotos aquí o haz clic</p>
+                            <p class="upload-hint">Máximo 10 imágenes • JPG, PNG</p>
+                        </div>
+
+                        @if (ImagenesPreview.Any())
+                        {
+                            <div class="image-preview">
+                                @for (int i = 0; i < ImagenesPreview.Count; i++)
+                                {
+                                    int idx = i;
+                                    <div class="image-item">
+                                        @if (idx == 0)
+                                        {
+                                            <span class="cover-badge"><i class="fas fa-star"></i> Portada</span>
+                                        }
+                                        <div style="width: 100%; height: 120px; background: @ImagenesPreview[idx]; border-radius: 8px;"></div>
+                                        <button type="button" class="delete-btn" @onclick="() => EliminarImagen(idx)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                }
                             </div>
                         }
                     </div>
-                }
-            </div>
 
-            <!-- SERVICIOS / AMENIDADES -->
-            <div class="form-section">
-                <h2 class="section-title" style="text-align: left; font-size: 20px;">
-                    <i class="fas fa-star" style="margin-right: 10px; color: var(--primary);"></i>
-                    Servicios
-                </h2>
+                    <!-- SERVICIOS / AMENIDADES -->
+                    <div class="form-section">
+                        <h2 class="section-title" style="text-align: left; font-size: 20px;">
+                            <i class="fas fa-star" style="margin-right: 10px; color: var(--gold);"></i>
+                            Servicios
+                        </h2>
+                        <p class="section-sub">Marca lo que incluye tu espacio para destacar entre las búsquedas.</p>
 
-                <div class="amenities-grid">
-                    @foreach (var servicio in Servicios)
-                    {
-                        bool activo = ServiciosSeleccionados.Contains(servicio.Key);
-                        <label class="amenity-checkbox @(activo ? "selected" : "")"
-                               @onclick="() => ToggleServicio(servicio.Key)">
-                            <input type="checkbox" checked="@activo" style="display: none;" />
-                            <span>
-                                <i class="fas @servicio.Icono"></i>
-                                @servicio.Nombre
-                            </span>
-                        </label>
-                    }
+                        <div class="svc-head">
+                            <span class="svc-count"><strong>@ServiciosSeleccionados.Count</strong> de @Servicios.Length seleccionados</span>
+                        </div>
+
+                        <div class="svc-grid">
+                            @foreach (var servicio in Servicios)
+                            {
+                                bool activo = ServiciosSeleccionados.Contains(servicio.Key);
+                                <button type="button" class="svc-toggle @(activo ? "selected" : "")"
+                                        aria-pressed="@activo"
+                                        @onclick="() => ToggleServicio(servicio.Key)">
+                                    <span class="svc-toggle-icon"><i class="fas @servicio.Icono"></i></span>
+                                    <span class="svc-toggle-name">@servicio.Nombre</span>
+                                    <i class="fas fa-check svc-toggle-check"></i>
+                                </button>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- REGLAS -->
+                    <div class="form-section">
+                        <h2 class="section-title" style="text-align: left; font-size: 20px;">
+                            <i class="fas fa-clipboard-list" style="margin-right: 10px; color: var(--gold);"></i>
+                            Reglas y políticas
+                        </h2>
+                        <p class="section-sub">Define expectativas claras para una buena estadía.</p>
+                        <div class="rule-chips">
+                            @foreach (var regla in Reglas)
+                            {
+                                bool activa = ReglasSeleccionadas.Contains(regla.Key);
+                                <button type="button" class="rule-chip @(activa ? "selected" : "")"
+                                        @onclick="() => ToggleRegla(regla.Key)">
+                                    <i class="fas @regla.Icono"></i> @regla.Nombre
+                                </button>
+                            }
+                        </div>
+                        <p class="field-help" style="margin-top: 14px;">
+                            Selecciona las reglas que aplican; se mostrarán a los huéspedes antes de reservar.
+                        </p>
+                    </div>
+
+                    <!-- PRECIOS -->
+                    <div class="form-section">
+                        <h2 class="section-title" style="text-align: left; font-size: 20px;">
+                            <i class="fas fa-dollar-sign" style="margin-right: 10px; color: var(--gold);"></i>
+                            Precios (S/)
+                        </h2>
+                        <p class="section-sub">Define tu tarifa; el cobro al huésped siempre se realiza en S/ (PEN).</p>
+
+                        <div class="price-grid">
+                            <div class="form-group">
+                                <label>Precio por noche</label>
+                                <InputNumber @bind-Value="Formulario.PrecioNoche" placeholder="150" min="1" />
+                                <ValidationMessage For="() => Formulario.PrecioNoche" class="validation-message" />
+                                <p class="field-help">El cobro al huésped siempre es en S/ (PEN).</p>
+                            </div>
+                            <div class="form-group">
+                                <label>Tarifa de limpieza</label>
+                                <InputNumber @bind-Value="Formulario.TarifaLimpieza" placeholder="50" min="0" />
+                            </div>
+                            <div class="form-group">
+                                <label>Tarifa de servicio</label>
+                                <InputNumber @bind-Value="Formulario.TarifaServicio" placeholder="20" min="0" />
+                            </div>
+                            <div class="form-group">
+                                <label>Descuento semanal (%)</label>
+                                <InputNumber @bind-Value="Formulario.DescuentoSemanal" placeholder="10" min="0" max="50" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BOTONES -->
+                    <div class="button-group">
+                        <button type="submit" class="btn btn-primary" disabled="@Publicando">
+                            @if (Publicando)
+                            {
+                                <i class="fas fa-spinner fa-spin"></i>
+                            }
+                            else
+                            {
+                                <i class="fas fa-check-circle"></i>
+                            }
+                            Publicar alojamiento
+                        </button>
+
+                        <button type="button" class="btn btn-secondary" @onclick="GuardarBorrador">
+                            <i class="fas fa-save"></i> Guardar borrador
+                        </button>
+
+                        <button type="button" class="btn btn-outline" @onclick='() => Navigation.NavigateTo("/panel-anfitrion")'>
+                            <i class="fas fa-arrow-left"></i> Cancelar
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            <!-- PRECIOS -->
-            <div class="form-section">
-                <h2 class="section-title" style="text-align: left; font-size: 20px;">
-                    <i class="fas fa-dollar-sign" style="margin-right: 10px; color: var(--primary);"></i>
-                    Precios (S/)
-                </h2>
+                <!-- COLUMNA PREVIEW (sticky) -->
+                <aside class="create-aside">
+                    <div class="pub-preview">
+                        <div class="pub-preview-head">Vista previa de publicación</div>
+                        <div class="pub-preview-media">
+                            <span class="badge pub-preview-badge"><i class="fas fa-pen-nib"></i> Borrador</span>
+                            <i class="fas fa-image"></i>
+                        </div>
+                        <div class="pub-preview-body">
+                            <h3 class="pub-preview-title">
+                                @(string.IsNullOrWhiteSpace(Formulario.Nombre) ? "Nombre del alojamiento" : Formulario.Nombre)
+                            </h3>
+                            <p class="pub-preview-loc">
+                                <i class="fas fa-location-dot"></i> @PreviewUbicacion
+                            </p>
 
-                <div class="price-grid">
-                    <div class="form-group">
-                        <label>Precio por noche</label>
-                        <InputNumber @bind-Value="Formulario.PrecioNoche" placeholder="150" min="1" />
-                        <ValidationMessage For="() => Formulario.PrecioNoche" class="validation-message" />
+                            <div class="pub-preview-cap">
+                                <span><i class="fas fa-users"></i> @Formulario.MaxHuespedes huéspedes</span>
+                                <span><i class="fas fa-door-open"></i> @Formulario.Habitaciones hab.</span>
+                            </div>
+
+                            @if (ServiciosSeleccionados.Any())
+                            {
+                                <div class="pub-preview-chips">
+                                    @foreach (var s in Servicios.Where(x => ServiciosSeleccionados.Contains(x.Key)).Take(6))
+                                    {
+                                        <span class="pub-chip"><i class="fas @s.Icono"></i> @s.Nombre</span>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="pub-preview-empty">Selecciona servicios para mostrarlos aquí.</p>
+                            }
+
+                            <div class="pub-preview-foot" style="margin-top: 14px;">
+                                <span class="price price-lg">
+                                    @(Formulario.PrecioNoche > 0 ? AppState.FormatearPrecio(Formulario.PrecioNoche) : "S/ —")<small> /noche</small>
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Tarifa de limpieza</label>
-                        <InputNumber @bind-Value="Formulario.TarifaLimpieza" placeholder="50" min="0" />
-                    </div>
-                    <div class="form-group">
-                        <label>Tarifa de servicio</label>
-                        <InputNumber @bind-Value="Formulario.TarifaServicio" placeholder="20" min="0" />
-                    </div>
-                    <div class="form-group">
-                        <label>Descuento semanal (%)</label>
-                        <InputNumber @bind-Value="Formulario.DescuentoSemanal" placeholder="10" min="0" max="50" />
-                    </div>
-                </div>
-            </div>
-
-            <!-- BOTONES -->
-            <div class="button-group">
-                <button type="submit" class="btn btn-primary" disabled="@Publicando">
-                    @if (Publicando)
-                    {
-                        <i class="fas fa-spinner fa-spin"></i>
-                    }
-                    else
-                    {
-                        <i class="fas fa-check-circle"></i>
-                    }
-                    Publicar alojamiento
-                </button>
-
-                <button type="button" class="btn btn-secondary" @onclick="GuardarBorrador">
-                    <i class="fas fa-save"></i> Guardar borrador
-                </button>
-
-                <button type="button" class="btn btn-outline" @onclick='() => Navigation.NavigateTo("/panel-anfitrion")'>
-                    <i class="fas fa-arrow-left"></i> Cancelar
-                </button>
+                    <p class="field-help" style="margin-top: 12px;">
+                        Así verán tu alojamiento los huéspedes. Se actualiza mientras completas el formulario.
+                    </p>
+                </aside>
             </div>
         </EditForm>
     </div>
@@ -221,6 +349,16 @@
     private CrearAlojamientoForm Formulario = new();
     private bool Publicando = false;
     private string MensajeExito = "";
+
+    private string PreviewUbicacion
+    {
+        get
+        {
+            var distrito = string.IsNullOrWhiteSpace(Formulario.Distrito) ? "Distrito" : Formulario.Distrito;
+            var tipo = string.IsNullOrWhiteSpace(Formulario.Tipo) ? "" : $" · {Formulario.Tipo}";
+            return distrito + tipo;
+        }
+    }
     private HashSet<string> ServiciosSeleccionados = new();
     private List<string> ImagenesPreview = new();
 
@@ -244,6 +382,24 @@
         "linear-gradient(135deg, #4ECDC4, #8FE7E0)",
         "linear-gradient(135deg, #FFD43B, #FFE680)"
     };
+
+    // Reglas (chips visuales, mock de frontend — no persisten ni tocan el modelo).
+    private HashSet<string> ReglasSeleccionadas = new();
+
+    private static readonly ServicioInfo[] Reglas =
+    {
+        new("no-fumar", "No fumar", "fa-ban-smoking"),
+        new("no-fiestas", "Sin fiestas ni eventos", "fa-champagne-glasses"),
+        new("mascotas", "Acepta mascotas", "fa-paw"),
+        new("ninos", "Apto para niños", "fa-child"),
+        new("checkin", "Check-in flexible", "fa-clock")
+    };
+
+    private void ToggleRegla(string key)
+    {
+        if (!ReglasSeleccionadas.Remove(key))
+            ReglasSeleccionadas.Add(key);
+    }
 
     private void ToggleServicio(string key)
     {
