@@ -1,0 +1,381 @@
+@page "/admin/reportes-financieros"
+@layout AdminLayout
+@rendermode InteractiveServer
+@using System.Globalization
+@using System.Text
+@inject IJSRuntime JS
+@inject DataService Data
+@inject ReservaProvider ReservaProvider
+
+<PageTitle>Bunki Admin · Reportes financieros</PageTitle>
+
+<h1 class="admin-page-title">Reportes financieros</h1>
+<p class="admin-page-sub">Ingresos, comisiones y movimientos de la plataforma.</p>
+
+<!-- TOOLBAR · rango de fechas con Flatpickr dark (no picker nativo) -->
+<div class="fin-toolbar">
+    <div class="fin-range">
+        <div class="fin-period">
+            <label for="fin-desde">Desde</label>
+            <input type="text" id="fin-desde" class="fin-date" placeholder="dd/mm/aaaa"
+                   value="@Fmt(_desde)" @onchange="OnDesdeChanged" autocomplete="off" />
+        </div>
+        <div class="fin-period">
+            <label for="fin-hasta">Hasta</label>
+            <input type="text" id="fin-hasta" class="fin-date" placeholder="dd/mm/aaaa"
+                   value="@Fmt(_hasta)" @onchange="OnHastaChanged" autocomplete="off" />
+        </div>
+        <button class="btn btn-secondary fin-apply" @onclick="Aplicar">
+            <i class="fas fa-filter"></i> Aplicar
+        </button>
+    </div>
+    <button class="btn btn-secondary fin-export" @onclick="ExportarCsv">
+        <i class="fas fa-file-csv"></i> Exportar CSV
+    </button>
+</div>
+
+<!-- TARJETAS · derivadas de las reservas cobradas en el rango seleccionado -->
+<div class="fin-cards">
+    <div class="admin-card fin-kpi">
+        <span class="fin-kpi-label"><i class="fas fa-coins"></i> Ingresos brutos</span>
+        <span class="fin-kpi-value">@Money(_brutos)</span>
+        <span class="fin-kpi-sub">Total facturado en el periodo</span>
+    </div>
+    <div class="admin-card fin-kpi fin-kpi--fee">
+        <span class="fin-kpi-label"><i class="fas fa-percent"></i> Comisiones (10%)</span>
+        <span class="fin-kpi-value">- @Money(_comision)</span>
+        <span class="fin-kpi-sub">Retenido por Bunki</span>
+    </div>
+    <div class="admin-card fin-kpi fin-kpi--net">
+        <span class="fin-kpi-label"><i class="fas fa-sack-dollar"></i> Ingresos netos</span>
+        <span class="fin-kpi-value">@Money(_neto)</span>
+        <span class="fin-kpi-sub">A liquidar a anfitriones</span>
+    </div>
+</div>
+
+<!-- GRÁFICO · mock visual temporal: no hay serie histórica mensual en el mock,
+     se mantiene como referencia visual hasta que exista un origen de datos por mes. -->
+<div class="admin-card fin-chart-card">
+    <div class="fin-chart-head">
+        <h2 class="admin-card-title"><i class="fas fa-chart-column"></i> Tendencia de ingresos</h2>
+        <span class="fin-chart-legend"><span class="fin-legend-swatch"></span> Referencia (mock)</span>
+    </div>
+
+    <div class="fin-chart" role="img" aria-label="Gráfico de ingresos de los últimos seis meses">
+        @foreach (var p in _serie)
+        {
+            <div class="fin-col">
+                <span class="fin-bar-val">@p.Valor k</span>
+                <div class="fin-track">
+                    <div class="fin-bar" style="height:@(BarPct(p.Valor))%"></div>
+                </div>
+                <span class="fin-bar-month">@p.Mes</span>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- TRANSACCIONES · reservas cobradas dentro del rango seleccionado -->
+<div class="admin-card fin-tx-card">
+    <h2 class="admin-card-title"><i class="fas fa-receipt"></i> Transacciones del periodo</h2>
+    <div class="fin-scroll">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Fecha</th><th>Concepto</th><th style="text-align: right;">Monto</th><th style="text-align: right;">Comisión</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!_tx.Any())
+                {
+                    <tr><td colspan="4"><div class="fin-empty">No hay transacciones cobradas en el rango seleccionado.</div></td></tr>
+                }
+                else
+                {
+                    @foreach (var t in _tx)
+                    {
+                        <tr>
+                            <td class="fin-muted">@t.Fecha</td>
+                            <td>@t.Concepto</td>
+                            <td style="text-align: right;"><span class="price">@Money(t.Monto)</span></td>
+                            <td style="text-align: right;" class="fin-fee">- @Money(t.Comision)</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    /* Toolbar */
+    .fin-toolbar {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 22px;
+    }
+
+    .fin-range { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+
+    .fin-period { display: flex; flex-direction: column; gap: 6px; }
+
+        .fin-period label {
+            margin: 0;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--ink-faint);
+        }
+
+    .fin-date { width: 150px; color-scheme: dark; cursor: pointer; }
+    .fin-apply { height: 44px; }
+
+    .fin-empty { padding: 36px 20px; text-align: center; color: var(--ink-muted); font-size: 14.5px; }
+
+    /* Tarjetas KPI */
+    .fin-cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+        margin-bottom: 22px;
+    }
+
+    @@media (max-width: 820px) {
+        .fin-cards { grid-template-columns: 1fr; }
+    }
+
+    .fin-kpi { display: flex; flex-direction: column; gap: 6px; }
+
+    .fin-kpi-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--ink-muted);
+    }
+
+        .fin-kpi-label i { color: var(--gold); font-size: 13px; }
+
+    .fin-kpi-value {
+        font-family: var(--font-display);
+        font-size: clamp(26px, 3.4vw, 32px);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        color: var(--ink);
+        font-variant-numeric: tabular-nums;
+        line-height: 1.05;
+    }
+
+    .fin-kpi-sub { font-size: 12.5px; color: var(--ink-faint); }
+
+    .fin-kpi--fee .fin-kpi-value { color: var(--danger); }
+    .fin-kpi--net { border-color: rgba(214, 168, 79, 0.30); background: var(--gold-tint); }
+    .fin-kpi--net .fin-kpi-value { color: var(--champagne); }
+
+    /* Gráfico de barras */
+    .fin-chart-card { margin-bottom: 22px; }
+
+    .fin-chart-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-bottom: 8px;
+    }
+
+    .fin-chart-legend {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12.5px;
+        color: var(--ink-muted);
+    }
+
+    .fin-legend-swatch {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        background: linear-gradient(180deg, var(--champagne), var(--copper));
+    }
+
+    .fin-chart {
+        display: flex;
+        align-items: flex-end;
+        gap: 14px;
+        padding: 18px 6px 4px;
+    }
+
+    .fin-col {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 9px;
+        min-width: 0;
+    }
+
+    .fin-bar-val {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--champagne);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .fin-track {
+        width: 100%;
+        height: 180px;
+        display: flex;
+        align-items: flex-end;
+    }
+
+    .fin-bar {
+        width: 100%;
+        max-width: 56px;
+        margin: 0 auto;
+        min-height: 6px;
+        border-radius: 8px 8px 4px 4px;
+        background: linear-gradient(180deg, var(--champagne), var(--copper));
+        box-shadow: inset 0 1px 0 rgba(255, 244, 222, 0.25);
+        transition: filter var(--t), transform var(--t-fast);
+    }
+
+    .fin-col:last-child .fin-bar { box-shadow: inset 0 1px 0 rgba(255, 244, 222, 0.3), 0 0 0 1px rgba(214, 168, 79, 0.45); }
+    .fin-col:hover .fin-bar { filter: brightness(1.08); transform: translateY(-2px); }
+
+    .fin-bar-month { font-size: 12.5px; font-weight: 600; color: var(--ink-muted); }
+
+    /* Transacciones */
+    .fin-scroll { overflow-x: auto; }
+    .fin-muted { color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+    .fin-fee { color: var(--danger); font-weight: 600; font-variant-numeric: tabular-nums; }
+    .fin-tx-card .admin-card-title { margin-bottom: 18px; }
+    .fin-tx-card { padding-bottom: 6px; }
+
+    @@media (max-width: 560px) {
+        .fin-export { width: 100%; }
+        .fin-range { width: 100%; }
+        .fin-period { flex: 1; }
+        .fin-date { width: 100%; }
+        .fin-chart { gap: 8px; }
+        .fin-bar-val { font-size: 10.5px; }
+    }
+</style>
+
+@code {
+    private static readonly CultureInfo Pe = CultureInfo.GetCultureInfo("es-PE");
+    private string Money(decimal monto) => $"S/ {monto.ToString("N0", Pe)}";
+
+    private const decimal Comision = 0.10m; // comisión de plataforma (10%)
+
+    // ---- Rango de fechas (Flatpickr dark, d/m/Y) ----
+    private DateTime _desde;
+    private DateTime _hasta;
+
+    // ---- Datos derivados de reservas reales (DataService) ----
+    private List<Reserva> _reservasCobradas = new();
+
+    private record Tx(string Fecha, string Concepto, decimal Monto, decimal Comision);
+    private List<Tx> _tx = new();
+    private decimal _brutos, _comision, _neto;
+
+    // ---- Serie del gráfico (mock visual temporal, ver comentario en el markup) ----
+    private record Punto(string Mes, int Valor);
+    private readonly Punto[] _serie =
+    {
+        new("Ene", 80), new("Feb", 90), new("Mar", 110),
+        new("Abr", 115), new("May", 120), new("Jun", 125)
+    };
+
+    private int BarPct(int valor)
+    {
+        int max = _serie.Max(p => p.Valor);
+        return (int)Math.Round(valor / (double)max * 100);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Fuente: REST con fallback automático a mock (provider). Solo reservas
+        // efectivamente cobradas (Confirmada/Completada).
+        var todas = await ReservaProvider.ListarTodasAsync();
+        _reservasCobradas = todas
+            .Where(r => r.Estado is "Confirmada" or "Completada")
+            .OrderByDescending(r => r.FechaEntrada)
+            .ToList();
+
+        // Rango por defecto: cubre todas las reservas cobradas.
+        if (_reservasCobradas.Any())
+        {
+            _desde = _reservasCobradas.Min(r => r.FechaEntrada);
+            _hasta = _reservasCobradas.Max(r => r.FechaEntrada);
+        }
+        else
+        {
+            _desde = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+            _hasta = DateTime.Today;
+        }
+
+        Recalcular();
+    }
+
+    private void Recalcular()
+    {
+        var enRango = _reservasCobradas
+            .Where(r => r.FechaEntrada.Date >= _desde.Date && r.FechaEntrada.Date <= _hasta.Date)
+            .ToList();
+
+        _tx = enRango
+            .Select(r => new Tx(
+                r.FechaEntrada.ToString("dd/MM/yyyy"),
+                $"Reserva · {r.AlojamientoNombre}",
+                r.Total,
+                Math.Round(r.Total * Comision)))
+            .ToList();
+
+        _brutos = enRango.Sum(r => r.Total);
+        _comision = Math.Round(_brutos * Comision);
+        _neto = _brutos - _comision;
+    }
+
+    // ---- Flatpickr (mismo helper dark del resto de Bunki, permite fechas pasadas) ----
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("bunkiDatePicker.initHostDate", "#fin-desde");
+            await JS.InvokeVoidAsync("bunkiDatePicker.initHostDate", "#fin-hasta");
+        }
+    }
+
+    private string Fmt(DateTime d) => d.ToString("dd/MM/yyyy");
+
+    private DateTime ParseFecha(string? texto, DateTime fallback) =>
+        DateTime.TryParseExact(texto, "dd/MM/yyyy", Pe, DateTimeStyles.None, out var d) ? d : fallback;
+
+    // Patrón seguro: el handler recibe ChangeEventArgs (no string) para evitar el
+    // error "ChangeEventArgs cannot be converted to System.String".
+    private void OnDesdeChanged(ChangeEventArgs e) => _desde = ParseFecha(e.Value?.ToString(), _desde);
+    private void OnHastaChanged(ChangeEventArgs e) => _hasta = ParseFecha(e.Value?.ToString(), _hasta);
+
+    private void Aplicar() => Recalcular();
+
+    // ---- Exportar CSV (mock: data-uri + window.open) ----
+    private async Task ExportarCsv()
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("Fecha,Concepto,Monto,Comision");
+        foreach (var t in _tx)
+        {
+            // Comillas en concepto por si hubiera comas.
+            sb.AppendLine($"{t.Fecha},\"{t.Concepto}\",{t.Monto},{t.Comision}");
+        }
+
+        var uri = "data:text/csv;charset=utf-8," + Uri.EscapeDataString(sb.ToString());
+        await JS.InvokeVoidAsync("window.open", uri, "_blank");
+    }
+}

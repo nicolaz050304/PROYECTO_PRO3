@@ -14,7 +14,7 @@
         <module>proyecto-model</module>
         <module>proyecto-dao</module>
         <module>proyect-bl</module>
-        <module>proyect-bl</module>
+        <module>proyecto-web</module>
     </modules>
 
     <properties>

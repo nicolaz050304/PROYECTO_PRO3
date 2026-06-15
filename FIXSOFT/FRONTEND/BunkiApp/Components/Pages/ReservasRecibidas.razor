@@ -1,6 +1,7 @@
 @page "/reservas-recibidas"
 @rendermode InteractiveServer
 @inject DataService Data
+@inject ReservaProvider ReservaProvider
 @inject NavigationManager Navigation
 @inject BunkiApp.Models.AppState AppState
 @implements IDisposable
@@ -120,13 +121,14 @@
             ? _todasReservas
             : _todasReservas.Where(r => r.Estado == _estadoActivo).ToList();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
         AppState.OnChange += OnMonedaChanged;
-        _todasReservas = Data.ObtenerReservasProximas()
-            .Concat(Data.ObtenerReservasPasadas())
-            .ToList();
+        // Fuente: REST con fallback automático a mock (provider).
+        var proximas = await ReservaProvider.ListarProximasAsync();
+        var pasadas = await ReservaProvider.ListarPasadasAsync();
+        _todasReservas = proximas.Concat(pasadas).ToList();
     }
 
     public void Dispose() => AppState.OnChange -= OnMonedaChanged;

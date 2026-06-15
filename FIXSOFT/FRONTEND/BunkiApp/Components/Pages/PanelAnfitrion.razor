@@ -1,6 +1,7 @@
 @page "/panel-anfitrion"
 @rendermode InteractiveServer
 @inject DataService Data
+@inject AlojamientoProvider AlojamientoProvider
 @inject NavigationManager Navigation
 @inject BunkiApp.Models.AppState AppState
 @inject IJSRuntime JS
@@ -256,12 +257,14 @@
         new("fa-triangle-exclamation", "warning", "<strong>Habitación en Barranco</strong> está en revisión", "Hace 2 días")
     };
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
 
         AppState.OnChange += OnMonedaChanged;
-        Alojamientos = Data.ObtenerAlojamientosAnfitrion();
+        // Fuente: REST con fallback automático a mock (provider).
+        var anfitrionId = AppState.UsuarioActual?.Id ?? 0;
+        Alojamientos = await AlojamientoProvider.ListarPorAnfitrionAsync(anfitrionId);
         Stats = Data.ObtenerEstadisticasAnfitrion();
     }
 

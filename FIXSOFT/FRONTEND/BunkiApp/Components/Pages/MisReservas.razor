@@ -1,6 +1,7 @@
 @page "/mis-reservas"
 @rendermode InteractiveServer
 @inject DataService Data
+@inject ReservaProvider ReservaProvider
 @inject NavigationManager Navigation
 @inject BunkiApp.Models.AppState AppState
 <PageTitle>Bunki - Mis Reservas</PageTitle>
@@ -104,18 +105,19 @@
     private List<Reserva> Pasadas = new();
     private List<Reserva> Canceladas = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
 
-        CargarDatos();
+        await CargarDatosAsync();
     }
 
-    private void CargarDatos()
+    private async Task CargarDatosAsync()
     {
-        Proximas = Data.ObtenerReservasProximas();
-        Pasadas = Data.ObtenerReservasPasadas();
-        Canceladas = Data.ObtenerReservasCanceladas();
+        // Fuente: REST con fallback automático a mock (provider).
+        Proximas = await ReservaProvider.ListarProximasAsync();
+        Pasadas = await ReservaProvider.ListarPasadasAsync();
+        Canceladas = await ReservaProvider.ListarCanceladasAsync();
     }
 
     private void CambiarTab(string tab) => TabActiva = tab;

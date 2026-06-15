@@ -134,28 +134,6 @@ public class DataService
         },
         new Alojamiento
         {
-            Id = 6,
-            Nombre = "Casa en Chaclacayo",
-            Tipo = "Cabaña",
-            Descripcion = "Cabaña rústica en contacto con la naturaleza, perfecta para desconectarse del ruido de la ciudad.",
-            Ubicacion = "Carretera Central Km 32, Chaclacayo",
-            Distrito = "Chaclacayo",
-            PrecioNoche = 180,
-            TarifaLimpieza = 80,
-            MaxHuespedes = 5,
-            Habitaciones = 2,
-            Rating = 5.0,
-            TotalResenas = 41,
-            GradienteColor = "linear-gradient(135deg, #F43F5E, #FB7185)",
-            EstadoPublicacion = "Activo",
-            ImagenUrl = "https://i.postimg.cc/Kj35NpjY/casa-chaclacayo.jpg",
-            Servicios = new() { "Jardín", "Barbacoa", "Wifi", "Cocina rústica", "Chimenea" },
-            AnfitrionNombre = "Luis Vega",
-            AnfitrionInicial = "LV",
-            AnfitrionDesde = "2019",
-        },
-        new Alojamiento
-        {
             Id = 7,
             Nombre = "Acogedor Minidepa en Los Olivos",
             Tipo = "Departamento",
@@ -489,6 +467,19 @@ public class DataService
 
     public List<Reserva> ObtenerReservasCanceladas() => new();
 
+    /// <summary>
+    /// Todas las reservas del sistema (próximas + pasadas + canceladas).
+    /// Fuente única para las métricas derivadas del Admin.
+    /// </summary>
+    public List<Reserva> ObtenerTodasLasReservas()
+    {
+        var todas = new List<Reserva>();
+        todas.AddRange(ObtenerReservasProximas());
+        todas.AddRange(ObtenerReservasPasadas());
+        todas.AddRange(ObtenerReservasCanceladas());
+        return todas;
+    }
+
     // =============================================
     // USUARIO
     // =============================================
@@ -640,21 +631,68 @@ public class DataService
     // ADMIN
     // =============================================
 
+    /// <summary>
+    /// Métricas del panel admin DERIVADAS de los mismos datos mock del sistema
+    /// (alojamientos y reservas), no números decorativos.
+    /// </summary>
     public (int Usuarios, int Alojamientos, int Reservas, decimal Ingresos)
-        ObtenerEstadisticasAdmin() => (1250, 345, 890, 125430m);
-
-    public List<(string Nombre, string Anfitrion, string Tipo, string Fecha)>
-        ObtenerAlojamientosPendientes() => new()
+        ObtenerEstadisticasAdmin()
     {
-        ("Habitación Barranco", "Carlos R.", "Habitación", "2026-05-08"),
-        ("Casa Miraflores", "Laura M.", "Casa", "2026-05-07")
+        var alojamientos = ObtenerAlojamientos();
+        var reservas = ObtenerTodasLasReservas();
+
+        // Usuarios: NO existe una entidad/listado de usuarios en el mock
+        // (solo ObtenerUsuarioActual devuelve uno). Derivamos un total verificable
+        // a partir de las personas presentes en los datos reales: anfitriones
+        // distintos de los alojamientos + el usuario actual de la sesión.
+        // LIMITACIÓN: no hay base de clientes modelada; crecerá cuando exista
+        // una entidad Usuario real.
+        int usuarios = alojamientos.Select(a => a.AnfitrionNombre).Distinct().Count() + 1;
+
+        int totalAlojamientos = alojamientos.Count;
+        int totalReservas = reservas.Count;
+
+        // Ingresos = reservas efectivamente cobradas (Confirmada/Completada);
+        // las Pendiente/Cancelada no suman.
+        decimal ingresos = reservas
+            .Where(r => r.Estado is "Confirmada" or "Completada")
+            .Sum(r => r.Total);
+
+        return (usuarios, totalAlojamientos, totalReservas, ingresos);
+    }
+
+    /// <summary>
+    /// Alojamientos pendientes de aprobación: DERIVADO real de EstadoPublicacion == "Revisión".
+    /// Misma fuente para el contador de /admin y la tabla de /admin/moderacion.
+    /// </summary>
+    public List<Alojamiento> ObtenerAlojamientosPorAprobar() =>
+        ObtenerAlojamientos().Where(a => a.EstadoPublicacion == "Revisión").ToList();
+
+    // mock visual temporal: aún no existe una entidad Denuncia en el dominio.
+    // Se centraliza aquí para que /admin y /admin/moderacion muestren lo mismo.
+    public List<(string Id, string Usuario, string Tipo, string Estado, string Fecha)>
+        ObtenerDenunciasAdmin() => new()
+    {
+        ("#REP001", "Juan P.",  "Comportamiento inapropiado", "En revisión", "2026-05-07"),
+        ("#REP002", "María A.", "Incumplimiento",             "Resuelto",    "2026-05-05"),
+        ("#REP003", "Pedro G.", "Contenido engañoso",         "En revisión", "2026-06-11")
     };
 
-    public List<(string Id, string Usuario, string Tipo, string Estado, string Fecha)>
-        ObtenerReportesAdmin() => new()
+    // mock visual temporal: aún no existe una entidad Incidencia/Ticket en el dominio.
+    // Fuente única para /admin (contador), /admin/moderacion (pestaña) y /admin/incidencias.
+    public List<(string Id, string Asunto, string Usuario, string Prioridad, string Estado, string Fecha, string Descripcion)>
+        ObtenerIncidenciasAdmin() => new()
     {
-        ("#REP001", "Juan P.", "Comportamiento Inapropiado", "En Revisión", "2026-05-07"),
-        ("#REP002", "María A.", "Incumplimiento", "Resuelto", "2026-05-05")
+        ("INC001", "No puedo reservar",        "user1@mail.com", "Alta",  "Abierto",    "2026-06-10",
+            "El usuario reporta que al confirmar una reserva el botón \"Reservar ahora\" no responde. Ocurre tras seleccionar fechas y huéspedes. Reproducible en Chrome y Edge; el pago no llega a iniciarse."),
+        ("INC002", "Problema con pago",        "user2@mail.com", "Media", "En proceso", "2026-06-09",
+            "El cobro se procesó pero la reserva quedó en estado pendiente. Se está verificando la conciliación con la pasarela. El usuario solicita confirmación o reembolso."),
+        ("INC003", "Error al subir fotos",     "user3@mail.com", "Baja",  "Resuelto",   "2026-06-07",
+            "Al publicar un alojamiento, algunas imágenes superiores a 5 MB no cargaban. Se aplicó compresión del lado del cliente y el usuario confirmó que ya funciona."),
+        ("INC004", "Reembolso pendiente",      "user4@mail.com", "Media", "Abierto",    "2026-06-11",
+            "El usuario canceló dentro del plazo flexible y aún no recibe el reembolso. Pendiente de revisión por el equipo de finanzas."),
+        ("INC005", "No llega correo de acceso","user5@mail.com", "Alta",  "Abierto",    "2026-06-12",
+            "El usuario no recibe el correo de recuperación de contraseña. Se sospecha de filtro de spam o dirección mal escrita; se solicita verificación.")
     };
 
     // =============================================

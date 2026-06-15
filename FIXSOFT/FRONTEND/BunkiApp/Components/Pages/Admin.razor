@@ -1,455 +1,155 @@
 @page "/admin"
+@layout AdminLayout
 @rendermode InteractiveServer
 @inject DataService Data
 @inject NavigationManager Navigation
 @inject BunkiApp.Models.AppState AppState
 
-<PageTitle>Bunki Admin - Panel de Administración</PageTitle>
+<PageTitle>Bunki Admin · Dashboard</PageTitle>
 
-<div class="section">
-    <div class="container">
-        <div class="flex flex-between items-center mb-30">
-            <h2 style="font-size: 26px; font-weight: 700;">
-                <i class="fas fa-shield-alt" style="color: var(--primary); margin-right: 10px;"></i>
-                Panel de Administración
-            </h2>
-            <span class="badge badge-danger" style="font-size: 13px; padding: 8px 16px;">Admin</span>
-        </div>
+<!-- ENCABEZADO -->
+<div class="admin-dash-head">
+    <div>
+        <h1 class="admin-page-title">Dashboard</h1>
+        <p class="admin-page-sub admin-page-sub--flush">Resumen general de la plataforma Bunki.</p>
+    </div>
+    <span class="admin-pill"><i class="fas fa-shield-halved"></i> Admin</span>
+</div>
 
-        <div class="grid grid-4" style="margin-bottom: 40px;">
-            <StatBox Valor="@Stats.Usuarios.ToString("N0")" Etiqueta="Usuarios Totales" />
-            <StatBox Valor="@Stats.Alojamientos.ToString()" Etiqueta="Alojamientos" />
-            <StatBox Valor="@Stats.Reservas.ToString()" Etiqueta="Reservas del Mes" />
-            <StatBox Valor="@($"S/ {Stats.Ingresos.ToString("N0")}")" Etiqueta="Ingresos del Mes" />
-        </div>
+<!-- KPIs · derivados de DataService (ObtenerEstadisticasAdmin). Las tendencias son
+     mock visual temporal: no hay serie histórica para calcular variación real. -->
+<div class="admin-kpis">
+    <StatBox Valor="@Stats.Usuarios.ToString("N0")" Etiqueta="Usuarios registrados" Icono="fa-users"
+             Tono="info" Tendencia="+12% vs. mes anterior" TendenciaTono="up" />
+    <StatBox Valor="@Stats.Alojamientos.ToString("N0")" Etiqueta="Alojamientos" Icono="fa-house"
+             Tono="rating" Tendencia="+5% vs. mes anterior" TendenciaTono="up" />
+    <StatBox Valor="@Stats.Reservas.ToString("N0")" Etiqueta="Reservas registradas" Icono="fa-calendar-check"
+             Tono="exito" Tendencia="+8% vs. mes anterior" TendenciaTono="up" />
+    <StatBox Valor="@($"S/ {Stats.Ingresos.ToString("N0")}")" Etiqueta="Ingresos cobrados" Icono="fa-sack-dollar"
+             Tono="dinero" Tendencia="+10% vs. mes anterior" TendenciaTono="up" />
+</div>
 
-        <div class="tabs" style="margin-bottom: 24px;">
-            @foreach (var tab in Tabs)
-            {
-                <button class="tab-btn @(TabActiva == tab ? "active" : "")"
-                        @onclick="() => TabActiva = tab">
-                    @tab
-                </button>
-            }
-        </div>
+<!-- PENDIENTES CRÍTICOS -->
+<h2 class="admin-section-label">Pendientes críticos</h2>
+<div class="admin-alerts">
+    <a href="/admin/moderacion" class="admin-card admin-alert">
+        <span class="admin-alert-icon"><i class="fas fa-clipboard-check"></i></span>
+        <span class="admin-alert-body">
+            <span class="admin-alert-count">@_porAprobar</span>
+            <span class="admin-alert-label">Alojamientos por aprobar</span>
+        </span>
+        <i class="fas fa-chevron-right admin-alert-arrow" aria-hidden="true"></i>
+    </a>
 
-        @if (TabActiva == "Pendientes de Revisión")
-        {
-            <div class="card" style="margin-bottom: 30px;">
-                <div style="padding: 20px;">
-                    <div class="flex flex-between items-center" style="margin-bottom: 20px;">
-                        <h3>Alojamientos Pendientes de Revisión</h3>
-                        <span class="badge badge-warning">@Pendientes.Count pendiente(s)</span>
-                    </div>
+    <a href="/admin/moderacion?tab=denuncias" class="admin-card admin-alert">
+        <span class="admin-alert-icon admin-alert-icon--warn"><i class="fas fa-flag"></i></span>
+        <span class="admin-alert-body">
+            <span class="admin-alert-count">@_denunciasNuevas</span>
+            <span class="admin-alert-label">Denuncias nuevas</span>
+        </span>
+        <i class="fas fa-chevron-right admin-alert-arrow" aria-hidden="true"></i>
+    </a>
 
-                    @if (Pendientes.Any())
-                    {
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Alojamiento</th>
-                                    <th>Anfitrión</th>
-                                    <th>Tipo</th>
-                                    <th>Fecha Envío</th>
-                                    <th>Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var item in Pendientes)
-                                {
-                                    <tr>
-                                        <td>@item.Nombre</td>
-                                        <td>@item.Anfitrion</td>
-                                        <td><span class="badge badge-primary">@item.Tipo</span></td>
-                                        <td class="card-text">@item.Fecha</td>
-                                        <td>
-                                            <div class="flex gap-10">
-                                                <button class="btn btn-small btn-success"
-                                                        @onclick="() => Aprobar(item)">
-                                                    <i class="fas fa-check"></i> Aprobar
-                                                </button>
-                                                <button class="btn btn-small btn-danger"
-                                                        @onclick="() => Rechazar(item)">
-                                                    <i class="fas fa-times"></i> Rechazar
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    }
-                    else
-                    {
-                        <AlertMessage Tipo="success" Mensaje="No hay alojamientos pendientes de revisión." Cerrable="false" />
-                    }
-                </div>
-            </div>
-        }
-        else if (TabActiva == "Incidencias")
-        {
-            <div class="card">
-                <div style="padding: 20px;">
-                    <h3 style="margin-bottom: 20px;">Denuncias Recientes</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Usuario</th>
-                                <th>Tipo</th>
-                                <th>Estado</th>
-                                <th>Fecha</th>
-                                <th>Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var rep in Incidencias)
-                            {
-                                <tr>
-                                    <td><code>@rep.Id</code></td>
-                                    <td>@rep.Usuario</td>
-                                    <td>@rep.Tipo</td>
-                                    <td>
-                                        <span class="badge @(rep.Estado == "Resuelto" ? "badge-success" : "badge-warning")">
-                                            @rep.Estado
-                                        </span>
-                                    </td>
-                                    <td class="card-text">@rep.Fecha</td>
-                                    <td>
-                                        <button class="btn btn-small btn-secondary">Ver</button>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        }
-        else if (TabActiva == "Usuarios")
-        {
-            <div class="card">
-                <div style="padding: 20px;">
-                    <div style="display: flex; gap: 14px; margin-bottom: 20px; align-items: flex-end; flex-wrap: wrap;">
-                        <div style="flex: 1; min-width: 180px;">
-                            <input type="text" placeholder="Buscar usuario..." @bind="BusquedaUsuario" />
-                        </div>
-                        <button class="btn btn-primary btn-small" @onclick="() => _mostrarFormAdmin = !_mostrarFormAdmin">
-                            <i class="fas fa-user-shield"></i> Crear Administrador
-                        </button>
-                    </div>
+    <a href="/admin/incidencias" class="admin-card admin-alert">
+        <span class="admin-alert-icon admin-alert-icon--danger"><i class="fas fa-triangle-exclamation"></i></span>
+        <span class="admin-alert-body">
+            <span class="admin-alert-count">@_incidenciasAbiertas</span>
+            <span class="admin-alert-label">Incidencias abiertas</span>
+        </span>
+        <i class="fas fa-chevron-right admin-alert-arrow" aria-hidden="true"></i>
+    </a>
+</div>
 
-                    @if (_mostrarFormAdmin)
-                    {
-                        <div style="background: rgba(212,175,55,0.07); border: 1px solid rgba(212,175,55,0.25); border-radius: 14px; padding: 22px; margin-bottom: 22px;">
-                            <h4 style="margin-bottom: 16px; color: var(--gold);">
-                                <i class="fas fa-shield-alt"></i> Nuevo Administrador
-                            </h4>
-                            <p class="card-text" style="margin-bottom: 16px;">
-                                @* CORRECCIÓN: Se usó @@ para escapar el arroba *@
-                                El correo debe terminar en <strong style="color: var(--gold);">@@bunki.pe</strong>
-                            </p>
+<!-- ACTIVIDAD + ACCESOS -->
+<div class="admin-cols">
 
-                            @if (!string.IsNullOrEmpty(_mensajeAdmin))
-                            {
-                                <AlertMessage Tipo="@_tipoMensajeAdmin" Mensaje="@_mensajeAdmin" />
-                            }
+    <div class="admin-card">
+        <h2 class="admin-card-title"><i class="fas fa-clock-rotate-left"></i> Actividad reciente</h2>
+        <ul class="admin-activity">
+            <li>
+                <span class="admin-activity-dot"></span>
+                <span class="admin-activity-text">
+                    <strong>Juan Pérez</strong> creó el alojamiento “Casa Playa”
+                    <span class="admin-activity-time">hace 2 horas</span>
+                </span>
+            </li>
+            <li>
+                <span class="admin-activity-dot admin-activity-dot--success"></span>
+                <span class="admin-activity-text">
+                    Denuncia <strong>#REP001</strong> resuelta
+                    <span class="admin-activity-time">hace 5 horas</span>
+                </span>
+            </li>
+            <li>
+                <span class="admin-activity-dot admin-activity-dot--warn"></span>
+                <span class="admin-activity-text">
+                    Incidencia <strong>INC004</strong> abierta
+                    <span class="admin-activity-time">hace 8 horas</span>
+                </span>
+            </li>
+            <li>
+                <span class="admin-activity-dot admin-activity-dot--danger"></span>
+                <span class="admin-activity-text">
+                    <strong>María López</strong> fue bloqueada
+                    <span class="admin-activity-time">ayer</span>
+                </span>
+            </li>
+        </ul>
+    </div>
 
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Nombre</label>
-                                    <input type="text" placeholder="Nombre del admin" @bind="_adminNombre" />
-                                </div>
-                                <div class="form-group">
-                                    <label>Correo corporativo</label>
-                                    <input type="email" placeholder="admin@@bunki.pe"
-                                           @bind="_adminEmail"
-                                           @oninput="@(e => { _adminEmail = e.Value?.ToString() ?? ""; _emailAdminValido = AdminEmailValidator.EsValido(_adminEmail); })" />
-                                    @if (!string.IsNullOrEmpty(_adminEmail) && !_emailAdminValido)
-                                    {
-                                        <span class="validation-message">
-                                            <i class="fas fa-exclamation-circle"></i>
-                                            @* CORRECCIÓN: Se usó @@ para escapar los arrobas *@
-                                            Debe terminar en @@bunki.pe (ej: admin@@bunki.pe)
-                                        </span>
-                                    }
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                                <button class="btn btn-outline btn-small" @onclick="() => _mostrarFormAdmin = false">Cancelar</button>
-                                <button class="btn btn-primary btn-small"
-                                        @onclick="CrearAdmin"
-                                        disabled="@(!_emailAdminValido || string.IsNullOrWhiteSpace(_adminNombre))">
-                                    <i class="fas fa-user-shield"></i> Crear
-                                </button>
-                            </div>
-                        </div>
-                    }
-
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Usuario</th>
-                                <th>Email</th>
-                                <th>Tipo</th>
-                                <th>Estado</th>
-                                <th>Registro</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var u in UsuariosEjemplo.Where(u => string.IsNullOrEmpty(BusquedaUsuario)
-                                || u.Nombre.Contains(BusquedaUsuario, StringComparison.OrdinalIgnoreCase)))
-                            {
-                                <tr>
-                                    <td>
-                                        <div class="flex gap-10 items-center">
-                                            <div class="avatar" style="width: 32px; height: 32px; font-size: 12px; background: var(--primary);">@u.Iniciales</div>
-                                            @u.Nombre
-                                        </div>
-                                    </td>
-                                    <td class="card-text">@u.Email</td>
-                                    <td><span class="badge badge-primary">@u.Tipo</span></td>
-                                    <td><span class="badge @(u.Activo ? "badge-success" : "badge-danger")">@(u.Activo ? "Activo" : "Bloqueado")</span></td>
-                                    <td class="card-text">@u.Fecha</td>
-                                    <td>
-                                        <div class="flex gap-10">
-                                            <button class="btn btn-small btn-secondary">Ver</button>
-                                            <button class="btn btn-small @(u.Activo ? "btn-danger" : "btn-success")"
-                                                    @onclick="() => u.Activo = !u.Activo">
-                                                @(u.Activo ? "Bloquear" : "Activar")
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        }
-        else if (TabActiva == "Métricas y Reportes")
-        {
-            <!-- RF20: Filtro por Fechas de Rentabilidad -->
-            <div class="card" style="margin-bottom: 25px;">
-                <div style="padding: 20px;">
-                    <h4 style="color: var(--gold); margin-bottom: 15px;"><i class="fas fa-chart-line"></i> RF20 - Reporte de Rentabilidad Financiera</h4>
-                    <div style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 20px;">
-                        <div style="flex: 1; min-width: 150px;">
-                            <label style="font-size: 12px; margin-bottom: 5px;">Fecha Inicio</label>
-                            <input type="date" @bind="FechaInicio" style="padding: 10px;" />
-                        </div>
-                        <div style="flex: 1; min-width: 150px;">
-                            <label style="font-size: 12px; margin-bottom: 5px;">Fecha Fin</label>
-                            <input type="date" @bind="FechaFin" style="padding: 10px;" />
-                        </div>
-                        <button class="btn btn-primary btn-small" style="height: 43px;" @onclick="SimularFiltradoFechas">
-                            <i class="fas fa-sync-alt"></i> Generar Reporte
-                        </button>
-                    </div>
-
-                    <!-- Cuadrícula Financiera Interna -->
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                        <div style="background: rgba(255,255,255,0.02); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
-                            <p style="color: var(--muted); font-size: 12px;">Ingresos Brutos Totales</p>
-                            <h3 style="color: var(--light-text); font-size: 20px; margin-top: 5px;">S/ @RentabilidadSimulada.Bruto.ToString("N0")</h3>
-                        </div>
-                        <div style="background: rgba(255,255,255,0.02); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
-                            <p style="color: var(--accent); font-size: 12px;">Comisiones de Plataforma (10%)</p>
-                            <h3 style="color: var(--accent); font-size: 20px; margin-top: 5px;">S/ @RentabilidadSimulada.Comision.ToString("N0")</h3>
-                        </div>
-                        <div style="background: rgba(212,175,55,0.05); padding: 15px; border-radius: 8px; border: 1px solid var(--gold);">
-                            <p style="color: var(--gold); font-size: 12px; font-weight: bold;">Ingresos Netos Anfitriones</p>
-                            <h3 style="color: var(--gold); font-size: 22px; margin-top: 5px; font-weight: 800;">S/ @RentabilidadSimulada.Neto.ToString("N0")</h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;" class="two-column">
-                <!-- RF21: Analítica de Ocupación -->
-                <div class="card">
-                    <div style="padding: 20px;">
-                        <h4 style="color: var(--gold); margin-bottom: 20px;"><i class="fas fa-door-open"></i> RF21 - Mayor Nivel de Ocupación</h4>
-                        <div style="display: flex; flex-direction: column; gap: 15px;">
-                            @foreach (var prop in OcupacionPropiedades)
-                            {
-                                <div>
-                                    <div class="flex flex-between" style="margin-bottom: 5px; font-size: 13px;">
-                                        <span style="color: var(--light-text); font-weight: 500;">@prop.Nombre</span>
-                                        <span style="color: var(--gold); font-weight: bold;">@prop.Porcentaje%</span>
-                                    </div>
-                                    <!-- Barra de progreso personalizada -->
-                                    <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden;">
-                                        <div style="width: @prop.Porcentaje%; height: 100%; background: linear-gradient(90deg, var(--secondary), var(--accent)); border-radius: 10px;"></div>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    </div>
-                </div>
-
-                <!-- RF22: Control de Calidad Top 10 -->
-                <div class="card">
-                    <div style="padding: 20px;">
-                        <h4 style="color: var(--gold); margin-bottom: 20px;"><i class="fas fa-award"></i> RF22 - Ranking Calidad (Top Alojamientos)</h4>
-                        <div style="display: flex; flex-direction: column; gap: 10px;">
-                            @foreach (var (alojamiento, index) in TopAlojamientos.Select((value, i) => (value, i)))
-                            {
-                                <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px; background: rgba(255,255,255,0.01); border-radius: 8px; border-bottom: 1px solid rgba(212,175,55,0.05);">
-                                    <div class="flex items-center gap-10">
-                                        <span style="font-weight: 800; color: @(index < 3 ? "var(--gold)" : "var(--muted)"); width: 25px;">#@(index + 1)</span>
-                                        <span style="color: var(--light-text); font-size: 13.5px;">@alojamiento.Nombre</span>
-                                    </div>
-                                    <div class="flex items-center gap-5">
-                                        <i class="fas fa-star" style="color: var(--accent); font-size: 12px;"></i>
-                                        <span style="color: var(--light-text); font-weight: bold; font-size: 13px;">@alojamiento.Score.ToString("F1")</span>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    </div>
-                </div>
-            </div>
-        }
-
-        @if (!string.IsNullOrEmpty(MensajeAccion))
-        {
-            <div style="margin-top: 20px;">
-                <AlertMessage Tipo="success" Mensaje="@MensajeAccion" />
-            </div>
-        }
+    <div class="admin-card">
+        <h2 class="admin-card-title"><i class="fas fa-bolt"></i> Accesos rápidos</h2>
+        <nav class="admin-quick" aria-label="Accesos rápidos del panel">
+            <a href="/admin/moderacion" class="admin-quick-link">
+                <i class="fas fa-scale-balanced" aria-hidden="true"></i>
+                <span>Ir a Moderación</span>
+                <i class="fas fa-chevron-right admin-quick-arrow" aria-hidden="true"></i>
+            </a>
+            <a href="/admin/usuarios" class="admin-quick-link">
+                <i class="fas fa-users" aria-hidden="true"></i>
+                <span>Ver Usuarios</span>
+                <i class="fas fa-chevron-right admin-quick-arrow" aria-hidden="true"></i>
+            </a>
+            <a href="/admin/reportes-financieros" class="admin-quick-link">
+                <i class="fas fa-coins" aria-hidden="true"></i>
+                <span>Ver Reportes</span>
+                <i class="fas fa-chevron-right admin-quick-arrow" aria-hidden="true"></i>
+            </a>
+            <a href="/admin/analytics" class="admin-quick-link">
+                <i class="fas fa-chart-line" aria-hidden="true"></i>
+                <span>Ver Analytics</span>
+                <i class="fas fa-chevron-right admin-quick-arrow" aria-hidden="true"></i>
+            </a>
+            <a href="/admin/incidencias" class="admin-quick-link">
+                <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
+                <span>Ver Incidencias</span>
+                <i class="fas fa-chevron-right admin-quick-arrow" aria-hidden="true"></i>
+            </a>
+        </nav>
     </div>
 </div>
 
 @code {
-    private static readonly string[] Tabs = { "Pendientes de Revisión", "Incidencias", "Usuarios", "Métricas y Reportes"};
-    private string TabActiva = "Pendientes de Revisión";
-    private string BusquedaUsuario = "";
-    private string MensajeAccion = "";
-
     private (int Usuarios, int Alojamientos, int Reservas, decimal Ingresos) Stats;
 
-    private record PendienteItem(string Nombre, string Anfitrion, string Tipo, string Fecha);
-    private record IncidenciasItem(string Id, string Usuario, string Tipo, string Estado, string Fecha);
-
-    private class UsuarioAdmin
-    {
-        public string Nombre { get; set; } = "";
-        public string Email { get; set; } = "";
-        public string Tipo { get; set; } = "";
-        public bool Activo { get; set; } = true;
-        public string Fecha { get; set; } = "";
-        public string Iniciales => Nombre.Length >= 2 ? Nombre.Substring(0, 2).ToUpper() : "?";
-    }
-
-    private List<PendienteItem> Pendientes = new()
-    {
-        new("Habitación Barranco", "Carlos R.", "Habitación", "2026-05-08"),
-        new("Casa Miraflores", "Laura M.", "Casa", "2026-05-07")
-    };
-
-    private List<IncidenciasItem> Incidencias = new()
-    {
-        new("#REP001", "Juan P.", "Comportamiento Inapropiado", "En Revisión", "2026-05-07"),
-        new("#REP002", "María A.", "Incumplimiento", "Resuelto", "2026-05-05")
-    };
-
-    private List<UsuarioAdmin> UsuariosEjemplo = new()
-    {
-        new() { Nombre = "Juan Pérez", Email = "juan@email.com", Tipo = "Cliente", Activo = true, Fecha = "Ene 2024" },
-        new() { Nombre = "María Andrades", Email = "maria@email.com", Tipo = "Anfitrión", Activo = true, Fecha = "Mar 2023" },
-        new() { Nombre = "Carlos Ruiz", Email = "carlos@email.com", Tipo = "Anfitrión", Activo = false, Fecha = "Jun 2023" },
-        new() { Nombre = "Laura Mendez", Email = "laura@email.com", Tipo = "Cliente", Activo = true, Fecha = "Feb 2024" }
-    };
+    // Contadores de "Pendientes críticos" derivados de la MISMA fuente que usan
+    // /admin/moderacion y /admin/incidencias, para que siempre coincidan.
+    private int _porAprobar;
+    private int _denunciasNuevas;
+    private int _incidenciasAbiertas;
 
     protected override void OnInitialized()
     {
-        if (!AppState.EstaAutenticado || !AppState.EsAdmin()) { Navigation.NavigateTo("/"); return; }
-        Stats = Data.ObtenerEstadisticasAdmin();
-    }
-
-    private void Aprobar(PendienteItem item)
-    {
-        Pendientes.Remove(item);
-        MensajeAccion = $"Alojamiento \"{item.Nombre}\" aprobado correctamente.";
-    }
-
-    private void Rechazar(PendienteItem item)
-    {
-        Pendientes.Remove(item);
-        MensajeAccion = $"Alojamiento \"{item.Nombre}\" rechazado.";
-    }
-
-    // Crear Admin fields
-    private bool _mostrarFormAdmin = false;
-    private string _adminNombre = "";
-    private string _adminEmail = "";
-    private bool _emailAdminValido = false;
-    private string _mensajeAdmin = "";
-    private string _tipoMensajeAdmin = "success";
-
-    private async Task CrearAdmin()
-    {
-        if (!AdminEmailValidator.EsValido(_adminEmail))
+        if (!AppState.EstaAutenticado || !AppState.EsAdmin())
         {
-            _tipoMensajeAdmin = "danger";
-            _mensajeAdmin = AdminEmailValidator.MensajeError;
+            Navigation.NavigateTo("/");
             return;
         }
 
-        await Task.Delay(400);
+        Stats = Data.ObtenerEstadisticasAdmin();
 
-        UsuariosEjemplo.Add(new UsuarioAdmin
-        {
-            Nombre = _adminNombre,
-            Email  = _adminEmail,
-            Tipo   = "Admin",
-            Activo = true,
-            Fecha  = DateTime.Now.ToString("MMM yyyy")
-        });
-
-        _tipoMensajeAdmin = "success";
-        MensajeAccion = $"Administrador {_adminNombre} ({_adminEmail}) creado correctamente.";
-        _adminNombre = "";
-        _adminEmail = "";
-        _emailAdminValido = false;
-        _mostrarFormAdmin = false;
+        _porAprobar = Data.ObtenerAlojamientosPorAprobar().Count;
+        _denunciasNuevas = Data.ObtenerDenunciasAdmin().Count(d => d.Estado == "En revisión");
+        _incidenciasAbiertas = Data.ObtenerIncidenciasAdmin().Count(i => i.Estado == "Abierto");
     }
-
-    private DateTime FechaInicio = DateTime.Today.AddDays(-30);
-    private DateTime FechaFin = DateTime.Today;
-    private (decimal Bruto, decimal Comision, decimal Neto) RentabilidadSimulada = (125430, 12543, 112887);
-
-    private void SimularFiltradoFechas()
-    {
-        // Interaccion
-        RentabilidadSimulada = (142000, 14200, 127800);
-        MensajeAccion = "Reporte de rentabilidad recalculado para el rango de fechas seleccionado.";
-    }
-
-    // Datos de ocupación
-    private record OcupacionItem(string Nombre, int Porcentaje);
-    private List<OcupacionItem> OcupacionPropiedades = new()
-    {
-        new("Casa de Playa en Asia", 94),
-        new("Departamento de Lujo Miraflores", 88),
-        new("Mini-depa en Barranco", 79),
-        new("Bungalow Ecológico Tarapoto", 72),
-        new("Habitación Ejecutiva San Isidro", 65)
-    };
-
-    // Datos de calidad
-    private record TopAlojamientoItem(string Nombre, double Score);
-    private List<TopAlojamientoItem> TopAlojamientos = new()
-    {
-        new("Departamento de Lujo Miraflores", 5.0),
-        new("Casa de Playa en Asia", 4.9),
-        new("Bungalow Ecológico Tarapoto", 4.9),
-        new("Mini-depa en Barranco", 4.8),
-        new("Villa de Campo Cieneguilla", 4.8)
-    };
-
-
-
-
 }

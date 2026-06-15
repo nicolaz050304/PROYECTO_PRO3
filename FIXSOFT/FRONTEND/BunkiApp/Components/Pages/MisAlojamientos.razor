@@ -1,6 +1,8 @@
 @page "/mis-alojamientos"
 @rendermode InteractiveServer
 @inject DataService Data
+@inject AlojamientoProvider AlojamientoProvider
+@inject ReservaProvider ReservaProvider
 @inject NavigationManager Navigation
 @inject BunkiApp.Models.AppState AppState
 @implements IDisposable
@@ -187,12 +189,14 @@
     private Alojamiento? _alojamientoAEliminar;
     private string _mensajeAccion = "";
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
         AppState.OnChange += OnMonedaChanged;
-        _alojamientos = Data.ObtenerAlojamientosAnfitrion();
-        _reservas = Data.ObtenerReservasProximas();
+        // Fuente: REST con fallback automático a mock (providers).
+        var anfitrionId = AppState.UsuarioActual?.Id ?? 0;
+        _alojamientos = await AlojamientoProvider.ListarPorAnfitrionAsync(anfitrionId);
+        _reservas = await ReservaProvider.ListarProximasAsync();
     }
 
     public void Dispose() => AppState.OnChange -= OnMonedaChanged;

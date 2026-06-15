@@ -27,7 +27,7 @@ public class DBManager {
         String port = properties.getProperty("port");
         String database = properties.getProperty("database");
         //ESTO HAGO PARA QUE MI BD LEA TILDES
-        this.url = "jdbc:mysql://" + host + ":" + port + "/" + database + "?useUnicode=true&characterEncoding=UTF-8&useSSL=false";
+        this.url = "jdbc:mysql://" + host + ":" + port + "/" + database + "?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
         this.user = properties.getProperty("user");
         this.password = properties.getProperty("password");
     }

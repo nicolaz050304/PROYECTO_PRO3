@@ -1,6 +1,7 @@
 @page "/alojamiento/{Id:int}"
 @rendermode InteractiveServer
 @inject DataService Data
+@inject AlojamientoProvider AlojamientoProvider
 @inject NavigationManager Navigation
 @inject BunkiApp.Models.AppState AppState
 @using System.Globalization
@@ -317,9 +318,10 @@ else
     private decimal Comision => Subtotal * 0.10m;
     private decimal Total => Subtotal + (Alojamiento?.TarifaLimpieza ?? 0) + Comision;
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
-        Alojamiento = Data.ObtenerAlojamiento(Id);
+        // Fuente de datos: REST con fallback automático a mock (provider).
+        Alojamiento = await AlojamientoProvider.ObtenerPorIdAsync(Id);
 
         if (!queryAplicada && Alojamiento is not null)
         {

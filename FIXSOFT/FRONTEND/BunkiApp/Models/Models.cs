@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace BunkiApp.Models;
 
@@ -29,6 +30,7 @@ public class Alojamiento
     public string Reglas { get; set; } = "Sin mascotas, sin fiestas";
     public int AnfitrionId { get; set; } = 0;
 
+    [JsonIgnore]
     public decimal ComisionServicio => PrecioNoche * 0.10m;
 }
 
@@ -55,9 +57,12 @@ public class Reserva
     public int HuespedId { get; set; } = 0;
     public int AlojamientoId { get; set; } = 0;
 
+    [JsonIgnore]
     public int Noches => (FechaSalida - FechaEntrada).Days;
+    [JsonIgnore]
     public string FechasTexto => $"{FechaEntrada:dd MMM} - {FechaSalida:dd MMM yyyy}";
 
+    [JsonIgnore]
     public string EstadoBadgeClass => Estado switch
     {
         "Confirmada" => "badge-success",
@@ -87,9 +92,11 @@ public class Usuario
     public int TotalNoches { get; set; } = 62;
     public decimal GastoTotal { get; set; } = 8500;
 
+    [JsonIgnore]
     public string NombreCompleto => $"{Nombre} {Apellido}".Trim();
 
     // FIX: genera iniciales correctamente incluso con nombre vacío
+    [JsonIgnore]
     public string Iniciales
     {
         get

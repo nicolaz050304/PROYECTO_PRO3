@@ -12,6 +12,46 @@ builder.Services.AddRazorComponents()
 builder.Services.AddSingleton<DataService>();
 builder.Services.AddScoped<AppState>(); // <-- ¡Perfecto! Ahora es un servicio Scoped por usuario
 
+// --- Integración REST de Alojamiento ---
+builder.Services.AddHttpClient<AlojamientoServiceRest>(client =>
+{
+    client.BaseAddress = new Uri("http://localhost:8080/TU_CONTEXTO/webresources/");
+    client.Timeout = TimeSpan.FromSeconds(5);
+});
+builder.Services.AddScoped<AlojamientoProvider>();
+
+// --- Integración REST de Reserva ---
+builder.Services.AddHttpClient<ReservaServiceRest>(client =>
+{
+    client.BaseAddress = new Uri("http://localhost:8080/TU_CONTEXTO/webresources/");
+    client.Timeout = TimeSpan.FromSeconds(5);
+});
+builder.Services.AddScoped<ReservaProvider>();
+
+// --- Integración REST de Usuario ---
+builder.Services.AddHttpClient<UsuarioServiceRest>(client =>
+{
+    client.BaseAddress = new Uri("http://localhost:8080/TU_CONTEXTO/webresources/");
+    client.Timeout = TimeSpan.FromSeconds(5);
+});
+builder.Services.AddScoped<UsuarioProvider>();
+
+// --- Integración REST de Pago (transacción NO cableada; lista para historial futuro) ---
+builder.Services.AddHttpClient<PagoServiceRest>(client =>
+{
+    client.BaseAddress = new Uri("http://localhost:8080/TU_CONTEXTO/webresources/");
+    client.Timeout = TimeSpan.FromSeconds(5);
+});
+builder.Services.AddScoped<PagoProvider>();
+
+// --- Integración REST de Reseña (creación NO cableada; reseñas se leen vía Alojamiento) ---
+builder.Services.AddHttpClient<ResenaServiceRest>(client =>
+{
+    client.BaseAddress = new Uri("http://localhost:8080/TU_CONTEXTO/webresources/");
+    client.Timeout = TimeSpan.FromSeconds(5);
+});
+builder.Services.AddScoped<ResenaProvider>();
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

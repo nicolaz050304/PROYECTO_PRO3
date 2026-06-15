@@ -2,6 +2,7 @@
 @page "/buscar"
 @rendermode InteractiveServer
 @inject DataService Data
+@inject AlojamientoProvider AlojamientoProvider
 @inject IJSRuntime JS
 @using System.Globalization
 
@@ -217,11 +218,14 @@
 
     private BusquedaFiltros Filtros = new() { PrecioMaximo = 500 };
     private List<Alojamiento> AlojamientosFiltrados = new();
+    // Lista completa cargada una vez desde el provider (REST con fallback a mock).
+    // El filtrado se aplica localmente sobre ella para que funcione con cualquier fuente.
+    private List<Alojamiento> _todos = new();
     private int PaginaActual = 1;
     private int ElementosPorPagina = 6;
     private string Vista = "lista";
 
-    private static readonly string[] TiposAlojamiento = { "Casa", "Departamento", "Habitación", "Cabaña" };
+    private static readonly string[] TiposAlojamiento = { "Casa", "Departamento", "Habitación" };
     private static readonly string[] RatingsOpciones = { "Cualquiera", "4+ estrellas", "4.5+ estrellas", "5 estrellas" };
 
     private List<Alojamiento> AlojamientosPaginados =>
@@ -232,9 +236,11 @@
 
     private int TotalPaginas => (int)Math.Ceiling((double)AlojamientosFiltrados.Count / ElementosPorPagina);
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        AlojamientosFiltrados = Data.ObtenerAlojamientos();
+        // Fuente de datos: REST con fallback automático a mock (provider).
+        _todos = await AlojamientoProvider.ListarAsync();
+        AlojamientosFiltrados = _todos;
 
         // Precarga de filtros desde el query string (Home → Buscar). Idempotente.
         bool hayQuery = false;
@@ -246,7 +252,7 @@
         if (hayQuery)
         {
             PaginaActual = 1;
-            AlojamientosFiltrados = Data.FiltrarAlojamientos(Filtros);
+            AlojamientosFiltrados = FiltrarLocal(Filtros);
         }
     }
 
@@ -262,14 +268,44 @@
     private void AplicarFiltros()
     {
         PaginaActual = 1;
-        AlojamientosFiltrados = Data.FiltrarAlojamientos(Filtros);
+        AlojamientosFiltrados = FiltrarLocal(Filtros);
     }
 
     private void LimpiarFiltros()
     {
         Filtros = new BusquedaFiltros { PrecioMaximo = 500 };
         PaginaActual = 1;
-        AlojamientosFiltrados = Data.ObtenerAlojamientos();
+        AlojamientosFiltrados = _todos;
+    }
+
+    // Filtrado local sobre la lista del provider. Replica EXACTAMENTE la lógica de
+    // DataService.FiltrarAlojamientos para conservar el mismo comportamiento de filtros,
+    // pero operando sobre la fuente activa (REST o mock) sin modificar DataService.
+    private List<Alojamiento> FiltrarLocal(BusquedaFiltros filtros)
+    {
+        var lista = _todos.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(filtros.Ubicacion))
+            lista = lista.Where(a => a.Distrito.Contains(filtros.Ubicacion, StringComparison.OrdinalIgnoreCase)
+                                  || a.Nombre.Contains(filtros.Ubicacion, StringComparison.OrdinalIgnoreCase));
+
+        if (filtros.PrecioMaximo < 500)
+            lista = lista.Where(a => a.PrecioNoche <= filtros.PrecioMaximo);
+
+        if (filtros.TiposSeleccionados.Count > 0)
+            lista = lista.Where(a => filtros.TiposSeleccionados.Contains(a.Tipo));
+
+        if (filtros.RatingMinimo == "4+ estrellas")
+            lista = lista.Where(a => a.Rating >= 4.0);
+        else if (filtros.RatingMinimo == "4.5+ estrellas")
+            lista = lista.Where(a => a.Rating >= 4.5);
+        else if (filtros.RatingMinimo == "5 estrellas")
+            lista = lista.Where(a => a.Rating >= 5.0);
+
+        if (filtros.Huespedes > 1)
+            lista = lista.Where(a => a.MaxHuespedes >= filtros.Huespedes);
+
+        return lista.ToList();
     }
 
     private void ToggleTipo(string tipo)

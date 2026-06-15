@@ -1,0 +1,98 @@
+@page "/admin/notificaciones"
+@layout AdminLayout
+
+<PageTitle>Bunki Admin · Notificaciones</PageTitle>
+
+<h1 class="admin-page-title">Notificaciones</h1>
+<p class="admin-page-sub">Historial de avisos del sistema y de la plataforma.</p>
+
+<div class="admin-card" style="padding: 8px 0;">
+    <div class="notif-list">
+        @foreach (var n in _historial)
+        {
+            <div class="notif-row @(n.NoLeida ? "is-unread" : "")">
+                <span class="notif-icon notif-icon--@n.Tono"><i class="fas @n.Icono"></i></span>
+                <div class="notif-body">
+                    <p class="notif-msg">@n.Mensaje</p>
+                    <span class="notif-time"><i class="fas fa-clock"></i> @n.Fecha</span>
+                </div>
+                @if (n.NoLeida)
+                {
+                    <span class="notif-dot" title="No leída"></span>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .notif-list { display: flex; flex-direction: column; }
+
+    .notif-row {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 16px 22px;
+        border-bottom: 1px solid var(--hairline);
+        transition: background var(--t);
+    }
+
+        .notif-row:last-child { border-bottom: none; }
+        .notif-row:hover { background: rgba(168, 162, 158, 0.03); }
+        .notif-row.is-unread { background: rgba(214, 168, 79, 0.05); }
+
+    .notif-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 16px;
+        background: var(--gold-tint);
+        color: var(--gold);
+    }
+
+    .notif-icon--success { background: var(--success-tint); color: var(--success); }
+    .notif-icon--info { background: var(--blue-tint); color: var(--blue-strong); }
+    .notif-icon--warning { background: var(--warning-tint); color: var(--warning); }
+    .notif-icon--danger { background: var(--danger-tint); color: var(--danger); }
+
+    .notif-body { flex: 1; min-width: 0; }
+    .notif-msg { font-size: 14px; color: var(--ink); line-height: 1.45; }
+
+    .notif-time {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: var(--ink-faint);
+        margin-top: 3px;
+    }
+
+        .notif-time i { font-size: 10px; }
+
+    .notif-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--gold);
+        flex-shrink: 0;
+    }
+</style>
+
+@code {
+    private record Aviso(string Icono, string Tono, string Mensaje, string Fecha, bool NoLeida);
+
+    private readonly Aviso[] _historial =
+    {
+        new("fa-calendar-plus", "success", "Nueva reserva confirmada en Casa Playa", "Hoy · 09:12", true),
+        new("fa-flag", "danger", "Nueva denuncia #REP003 contra un anfitrión", "Hoy · 08:40", true),
+        new("fa-triangle-exclamation", "warning", "Incidencia INC001 lleva más de 24h abierta", "Ayer · 18:05", true),
+        new("fa-house-circle-check", "info", "Alojamiento \"Dpto Lujo\" fue aprobado", "Ayer · 14:22", false),
+        new("fa-user-plus", "info", "Nuevo usuario registrado: laura@email.com", "12 jun · 11:30", false),
+        new("fa-sack-dollar", "success", "Liquidación mensual procesada (S/ 112,887)", "10 jun · 09:00", false),
+        new("fa-user-slash", "danger", "Usuario maria@email.com fue bloqueado", "08 jun · 16:48", false)
+    };
+}
