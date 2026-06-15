@@ -12,6 +12,7 @@ public class Alojamiento
     public string Ubicacion { get; set; } = "";
     public string Distrito { get; set; } = "";
     public string Provincia { get; set; } = "Lima";
+    public string Pais { get; set; } = "Perú";
     public decimal PrecioNoche { get; set; }
     public decimal TarifaLimpieza { get; set; }
     public int MaxHuespedes { get; set; }

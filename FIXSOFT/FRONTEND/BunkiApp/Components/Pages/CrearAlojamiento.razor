@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
 @inject BunkiApp.Models.AppState AppState
+@inject Services.AlojamientoProvider AlojamientoProvider
 
 <PageTitle>Bunki - Crear Alojamiento</PageTitle>
 
@@ -40,6 +41,10 @@
             {
                 <AlertMessage Tipo="success" Mensaje="@MensajeExito" />
             }
+            @if (!string.IsNullOrEmpty(MensajeError))
+            {
+                <AlertMessage Tipo="danger" Mensaje="@MensajeError" />
+            }
 
             <!-- STEPPER PREMIUM -->
             <div class="pub-stepper">
@@ -66,7 +71,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Nombre del alojamiento</label>
-                                <InputText @bind-Value="Formulario.Nombre" @bind-Value:event="oninput" placeholder="Ej: Departamento en Miraflores" />
+                                <InputText @bind-Value="Formulario.Nombre" placeholder="Ej: Departamento en Miraflores" />
                                 <ValidationMessage For="() => Formulario.Nombre" class="validation-message" />
                                 <p class="field-help">Un buen título describe el lugar y su mayor atractivo (vista, ubicación, estilo).</p>
                             </div>
@@ -347,6 +352,7 @@
     private CrearAlojamientoForm Formulario = new();
     private bool Publicando = false;
     private string MensajeExito = "";
+    private string MensajeError = "";
 
     private string PreviewUbicacion
     {
@@ -421,13 +427,65 @@
 
     private async Task Publicar()
     {
-        Publicando = true;
-        await Task.Delay(1000);
-        Publicando = false;
-        MensajeExito = "¡Alojamiento publicado exitosamente! Está en revisión.";
+        MensajeError = "";
+        MensajeExito = "";
 
-        await Task.Delay(2000);
-        Navigation.NavigateTo("/panel-anfitrion");
+        // Validación mínima (la EditForm ya valida vía DataAnnotations, pero reforzamos aquí
+        // antes de enviar al backend para no mandar una publicación incompleta).
+        if (string.IsNullOrWhiteSpace(Formulario.Nombre) ||
+            string.IsNullOrWhiteSpace(Formulario.Tipo) ||
+            string.IsNullOrWhiteSpace(Formulario.Distrito) ||
+            Formulario.PrecioNoche <= 0)
+        {
+            MensajeError = "Completa al menos el nombre, el tipo, el distrito y un precio por noche válido.";
+            return;
+        }
+
+        Publicando = true;
+        try
+        {
+            // Servicios: el UI guarda las selecciones en ServiciosSeleccionados (claves), así que
+            // armamos la lista con los nombres legibles de los servicios marcados.
+            var serviciosLista = Servicios
+                .Where(s => ServiciosSeleccionados.Contains(s.Key))
+                .Select(s => s.Nombre)
+                .ToList();
+
+            var alojamiento = new Alojamiento
+            {
+                Nombre = Formulario.Nombre,
+                Tipo = Formulario.Tipo,                 // "Casa" / "Departamento" / "Habitación" (con tilde, como el backend)
+                Descripcion = Formulario.Descripcion,
+                Ubicacion = string.IsNullOrWhiteSpace(Formulario.Direccion)
+                                ? Formulario.Distrito
+                                : $"{Formulario.Direccion}, {Formulario.Distrito}",
+                Distrito = Formulario.Distrito,
+                Provincia = Formulario.Provincia,
+                Pais = "Perú",                          // columna 'pais' es NOT NULL en BD; el form no la captura
+                PrecioNoche = Formulario.PrecioNoche,
+                TarifaLimpieza = Formulario.TarifaLimpieza,
+                MaxHuespedes = Formulario.MaxHuespedes,
+                Habitaciones = Formulario.Habitaciones,
+                Servicios = serviciosLista,
+                AnfitrionId = AppState.UsuarioActual?.Id ?? 1,  // TEMPORAL: login mock (Id=1); corregir con login real
+                Latitud = 0,    // TODO: el formulario no captura coordenadas todavía; quedará sin pin
+                Longitud = 0    //       en el mapa hasta agregar selección de ubicación.
+            };
+
+            await AlojamientoProvider.RegistrarAsync(alojamiento);
+
+            MensajeExito = "¡Alojamiento publicado exitosamente! Está en revisión.";
+            await Task.Delay(1500);
+            Navigation.NavigateTo("/panel-anfitrion");
+        }
+        catch (Exception)
+        {
+            MensajeError = "No se pudo publicar el alojamiento. Revisa los datos e intenta de nuevo.";
+        }
+        finally
+        {
+            Publicando = false;
+        }
     }
 
     private void GuardarBorrador()

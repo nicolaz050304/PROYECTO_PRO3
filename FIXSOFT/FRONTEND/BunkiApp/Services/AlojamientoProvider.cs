@@ -69,6 +69,11 @@ namespace BunkiApp.Services
             }
         }
 
+        // Creación (escritura) vía REST: POST AlojamientoRS. A diferencia de las lecturas,
+        // aquí NO hay fallback a mock: si el REST falla, propagamos la excepción para que la
+        // UI avise que no se guardó (igual que ResenaProvider.RegistrarAsync).
+        public async Task RegistrarAsync(Alojamiento a) => await _rest.RegistrarAsync(a);
+
         // El backend no envía datos visuales; los rellenamos para no romper el theme dark luxury.
         private static void AplicarDefaultsVisuales(Alojamiento a)
         {
