@@ -47,4 +47,18 @@ BUNKI / FIXSOFT — PENDIENTES Y MEJORAS
 ## SEGURIDAD (antes de entregar/hacer público)
 - Regenerar la API key de Stadia (quedó en wwwroot/js/mapa.js).
 - No exponer la contraseña real de MySQL en db.properties si el repo se hace público.
+
+## ESCRITURAS PENDIENTES (cablear formularios al backend; las lecturas ya son reales)
+Patrón general: las LECTURAS de cada entidad ya consumen el REST, pero las ESCRITURAS
+(crear/editar) siguen guardando en el mock. Falta cablearlas al backend (POST/PUT que en
+general YA existen en los RS, solo que el frontend no los llama todavía).
+- CREAR ALOJAMIENTO: la pantalla "Publica un alojamiento" (CrearAlojamiento.razor) hoy
+  guarda en mock. Cablearla al POST de AlojamientoRS. OJO: el alojamiento necesita un dueño
+  (anfitrión); conviene hacerlo DESPUÉS de tener login real (Usuario) para asociarlo al
+  anfitrión correcto en vez del usuario mock.
+- CREAR RESERVA: el botón "Reservar Ahora" (en DetalleAlojamiento) hoy no persiste vía REST.
+  Cablear al POST de ReservaRS. También depende de saber quién reserva (Usuario).
+- EDITAR/CANCELAR: editar alojamiento, cancelar reserva (PUT/DELETE) — cablear cuando aplique.
+Nota: el POST/PUT de Reserva y Reseña ya quedaron generados en el backend (marcados como
+funcionales); el de Reseña (crear) YA está cableado y funcionando desde el modal de Mis Reservas.
 ====================================================================
