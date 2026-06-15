@@ -24,6 +24,8 @@ public class MapInterop(IJSRuntime js)
                 a.PrecioNoche,
                 a.Rating,
                 a.TotalResenas,
+                a.Latitud,
+                a.Longitud,
                 ImagenUrl = a.ImagenUrl ?? string.Empty
             });
             await _js.InvokeVoidAsync("bunki.mapa.actualizarMarcadores", payload);

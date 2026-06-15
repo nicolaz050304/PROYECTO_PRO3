@@ -29,6 +29,8 @@ public class Alojamiento
     public string PoliticaCancelacion { get; set; } = "Flexible hasta 48 horas antes";
     public string Reglas { get; set; } = "Sin mascotas, sin fiestas";
     public int AnfitrionId { get; set; } = 0;
+    public double Latitud { get; set; }
+    public double Longitud { get; set; }
 
     [JsonIgnore]
     public decimal ComisionServicio => PrecioNoche * 0.10m;

@@ -4,6 +4,8 @@ bunki.mapa = (function () {
     let map = null;
     let markersLayer = null;
     let distritoLayer = null;
+    let alojamientosPendientes = null;
+    let intentosMarcadores = 0;
 
     const distritoCoords = {
         "Miraflores": [-12.1191, -77.0333],
@@ -39,12 +41,27 @@ bunki.mapa = (function () {
             scrollWheelZoom: true,
         });
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
-            maxZoom: 18,
+        L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png?api_key=274e9521-ccf4-41b7-86ba-6a9fb1647a5b', {
+            attribution: '© Stadia Maps © OpenMapTiles © OpenStreetMap contributors',
+            maxZoom: 20,
         }).addTo(map);
 
         markersLayer = L.layerGroup().addTo(map);
+
+        // El contenedor puede aún tener tamaño 0 (recién montado / oculto): forzamos
+        // un recálculo de tamaño una vez que el layout se estabilice.
+        setTimeout(() => { if (map) map.invalidateSize(); }, 200);
+
+        // Si llegaron marcadores antes de que el mapa estuviera listo, dibújalos ya.
+        if (alojamientosPendientes !== null) {
+            const pendientes = alojamientosPendientes;
+            alojamientosPendientes = null;
+            actualizarMarcadores(pendientes);
+        }
+    }
+
+    function estaListo() {
+        return map !== null && markersLayer !== null;
     }
 
     function crearIcono(precio) {
@@ -58,16 +75,33 @@ bunki.mapa = (function () {
     }
 
     function actualizarMarcadores(alojamientos) {
-        if (!map || !markersLayer) return;
+        // Posible carrera: init aún no terminó. Guardamos los datos pendientes y
+        // reintentamos cada 150ms hasta ~15 veces (sin bucle infinito). init() también
+        // dibujará lo pendiente en cuanto el mapa esté listo.
+        if (!map || !markersLayer) {
+            alojamientosPendientes = alojamientos;
+            if (intentosMarcadores < 15) {
+                intentosMarcadores++;
+                setTimeout(() => actualizarMarcadores(alojamientosPendientes), 150);
+            }
+            return;
+        }
+        intentosMarcadores = 0;
+        alojamientosPendientes = null;
         markersLayer.clearLayers();
         if (!alojamientos || alojamientos.length === 0) return;
 
         const bounds = [];
 
         alojamientos.forEach(function (a) {
-            const base = distritoCoords[a.distrito] || limaCenter;
-            const lat = base[0] + (Math.random() - 0.5) * 0.014;
-            const lng = base[1] + (Math.random() - 0.5) * 0.014;
+            let lat, lng;
+            if (a.latitud && a.longitud && a.latitud !== 0 && a.longitud !== 0) {
+                lat = a.latitud; lng = a.longitud;
+            } else {
+                const base = distritoCoords[a.distrito] || limaCenter;
+                lat = base[0] + (Math.random() - 0.5) * 0.014;
+                lng = base[1] + (Math.random() - 0.5) * 0.014;
+            }
 
             const marker = L.marker([lat, lng], { icon: crearIcono(a.precioNoche) });
 
@@ -148,5 +182,5 @@ bunki.mapa = (function () {
         if (map) setTimeout(() => map.invalidateSize(), 150);
     }
 
-    return { init, actualizarMarcadores, resaltarDistrito, limpiarDistrito, invalidarTamano };
+    return { init, estaListo, actualizarMarcadores, resaltarDistrito, limpiarDistrito, invalidarTamano };
 })();

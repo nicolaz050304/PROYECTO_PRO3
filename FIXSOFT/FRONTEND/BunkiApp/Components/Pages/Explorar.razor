@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @inject DataService Data
 @inject AlojamientoProvider AlojamientoProvider
+@inject Services.MapInterop MapInterop
 @inject IJSRuntime JS
 @using System.Globalization
 
@@ -26,13 +27,13 @@
                 <button type="button"
                         class="view-toggle-btn @(Vista == "lista" ? "active" : "")"
                         aria-pressed="@(Vista == "lista" ? "true" : "false")"
-                        @onclick='() => Vista = "lista"'>
+                        @onclick="MostrarLista">
                     <i class="fas fa-table-cells-large"></i> Lista
                 </button>
                 <button type="button"
                         class="view-toggle-btn @(Vista == "mapa" ? "active" : "")"
                         aria-pressed="@(Vista == "mapa" ? "true" : "false")"
-                        @onclick='() => Vista = "mapa"'>
+                        @onclick="MostrarMapa">
                     <i class="fas fa-map-location-dot"></i> Mapa
                 </button>
             </div>
@@ -150,14 +151,26 @@
             <div class="explorar-results">
                 @if (Vista == "mapa")
                 {
-                    <!-- Zona reservada para futura integración con Google Maps (NO implementada) -->
-                    <div class="map-placeholder">
-                        <div class="map-placeholder-inner">
-                            <span class="map-placeholder-icon"><i class="fas fa-map-location-dot"></i></span>
-                            <h3>Vista de mapa</h3>
-                            <p>Pronto podrás explorar los @AlojamientosFiltrados.Count alojamientos sobre el mapa, con precios y ubicación.</p>
-                            <span class="badge badge-primary">Próximamente</span>
-                        </div>
+                    <!-- Mapa real (Leaflet + OpenStreetMap). Refleja AlojamientosFiltrados. -->
+                    <div id="mapaExplorar" style="width:100%;height:600px;border-radius:16px;overflow:hidden;"></div>
+                }
+                else if (Cargando)
+                {
+                    <!-- Estado de carga: skeleton cards mientras llega la respuesta del provider -->
+                    <div class="grid grid-3" aria-busy="true" aria-label="Cargando alojamientos">
+                        @for (int s = 0; s < ElementosPorPagina; s++)
+                        {
+                            <div class="card skeleton-card" aria-hidden="true">
+                                <div class="skeleton skeleton-image"></div>
+                                <div class="card-body">
+                                    <div class="skeleton skeleton-line skeleton-title"></div>
+                                    <div class="skeleton skeleton-line skeleton-short"></div>
+                                    <div class="skeleton skeleton-line"></div>
+                                    <div class="skeleton skeleton-line skeleton-short"></div>
+                                    <div class="skeleton skeleton-line skeleton-footer"></div>
+                                </div>
+                            </div>
+                        }
                     </div>
                 }
                 else if (AlojamientosFiltrados.Count == 0)
@@ -224,6 +237,10 @@
     private int PaginaActual = 1;
     private int ElementosPorPagina = 6;
     private string Vista = "lista";
+    // Estado de carga mientras el provider (REST con fallback) responde.
+    private bool Cargando = true;
+    // Evita reinicializar el mapa en cada render; se resetea al entrar a la vista mapa.
+    private bool _mapaInicializado = false;
 
     private static readonly string[] TiposAlojamiento = { "Casa", "Departamento", "Habitación" };
     private static readonly string[] RatingsOpciones = { "Cualquiera", "4+ estrellas", "4.5+ estrellas", "5 estrellas" };
@@ -238,21 +255,29 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Fuente de datos: REST con fallback automático a mock (provider).
-        _todos = await AlojamientoProvider.ListarAsync();
-        AlojamientosFiltrados = _todos;
-
-        // Precarga de filtros desde el query string (Home → Buscar). Idempotente.
-        bool hayQuery = false;
-        if (!string.IsNullOrWhiteSpace(UbicacionQuery)) { Filtros.Ubicacion = UbicacionQuery; hayQuery = true; }
-        if (HuespedesQuery is > 0) { Filtros.Huespedes = HuespedesQuery.Value; hayQuery = true; }
-        if (EntradaQuery.HasValue) { Filtros.FechaEntrada = EntradaQuery; hayQuery = true; }
-        if (SalidaQuery.HasValue) { Filtros.FechaSalida = SalidaQuery; hayQuery = true; }
-
-        if (hayQuery)
+        try
         {
-            PaginaActual = 1;
-            AlojamientosFiltrados = FiltrarLocal(Filtros);
+            // Fuente de datos: REST con fallback automático a mock (provider).
+            _todos = await AlojamientoProvider.ListarAsync();
+            AlojamientosFiltrados = _todos;
+
+            // Precarga de filtros desde el query string (Home → Buscar). Idempotente.
+            bool hayQuery = false;
+            if (!string.IsNullOrWhiteSpace(UbicacionQuery)) { Filtros.Ubicacion = UbicacionQuery; hayQuery = true; }
+            if (HuespedesQuery is > 0) { Filtros.Huespedes = HuespedesQuery.Value; hayQuery = true; }
+            if (EntradaQuery.HasValue) { Filtros.FechaEntrada = EntradaQuery; hayQuery = true; }
+            if (SalidaQuery.HasValue) { Filtros.FechaSalida = SalidaQuery; hayQuery = true; }
+
+            if (hayQuery)
+            {
+                PaginaActual = 1;
+                AlojamientosFiltrados = FiltrarLocal(Filtros);
+            }
+        }
+        finally
+        {
+            // Siempre termina la carga, incluso si el provider cae al fallback o lanza.
+            Cargando = false;
         }
     }
 
@@ -263,6 +288,32 @@
             // Reutiliza el mismo inicializador de Flatpickr que la Home.
             await JS.InvokeVoidAsync("bunkiDatePicker.init", ".flatpickr-date");
         }
+
+        // El div #mapaExplorar solo existe cuando Vista=="mapa": inicializar DESPUÉS
+        // del render. La bandera evita repetir la init en cada render.
+        if (Vista == "mapa" && !_mapaInicializado)
+        {
+            _mapaInicializado = true;
+            await MapInterop.InitAsync("mapaExplorar");
+            // Deja que el contenedor termine de montar/medir antes de medir tamaño.
+            await Task.Delay(300);
+            await MapInterop.InvalidarTamanoAsync();
+            await MapInterop.ActualizarMarcadoresAsync(AlojamientosFiltrados);
+        }
+    }
+
+    private void MostrarLista()
+    {
+        // Volver a lista no requiere acción especial sobre el mapa.
+        Vista = "lista";
+    }
+
+    private void MostrarMapa()
+    {
+        Vista = "mapa";
+        // Resetea la bandera para que OnAfterRenderAsync reinicialice el mapa y
+        // pinte los marcadores con la lista filtrada actual (lo que se ve).
+        _mapaInicializado = false;
     }
 
     private void AplicarFiltros()
