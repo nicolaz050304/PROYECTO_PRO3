@@ -21,6 +21,21 @@ window.bunkiDatePicker = {
         });
     },
 
+    // Usado por Explorar cuando llega con fechas en la URL: inicializa Flatpickr con las
+    // fechas pasadas explícitamente desde C# (no depende del value del DOM, que aún puede
+    // estar vacío) y las refleja en el altInput vía setDate.
+    initConFechas: function (selectorEntrada, selectorSalida, fechaEntrada, fechaSalida) {
+        if (typeof flatpickr === "undefined") { console.error("flatpickr no está cargado."); return; }
+        var opts = {
+            locale: "es", dateFormat: "Y-m-d", altInput: true, altFormat: "d/m/Y",
+            minDate: "today", disableMobile: true, allowInput: false, position: "below"
+        };
+        var fpE = flatpickr(selectorEntrada, opts);
+        if (fechaEntrada) fpE.setDate(fechaEntrada, false);  // false: no dispara onChange
+        var fpS = flatpickr(selectorSalida, opts);
+        if (fechaSalida) fpS.setDate(fechaSalida, false);
+    },
+
     // Usado SOLO por DetalleAlojamiento: sin altInput, el input real es el visible
     // y muestra la fecha como d/m/Y. Así las fechas precargadas (incluso pasadas)
     // se ven directamente desde el value del input, sin sincronizar un altInput.

@@ -63,7 +63,8 @@
                 <div class="filter-group">
                     <label class="filter-group-label">Fechas</label>
                     <div class="filter-dates">
-                        <input class="flatpickr-date"
+                        <input id="explorar-fecha-entrada"
+                               class="flatpickr-date"
                                type="text"
                                placeholder="Entrada"
                                aria-label="Fecha de entrada"
@@ -71,7 +72,8 @@
                                @onchange="OnFechaEntradaChanged"
                                autocomplete="off" />
 
-                        <input class="flatpickr-date"
+                        <input id="explorar-fecha-salida"
+                               class="flatpickr-date"
                                type="text"
                                placeholder="Salida"
                                aria-label="Fecha de salida"
@@ -152,7 +154,7 @@
                 @if (Vista == "mapa")
                 {
                     <!-- Mapa real (Leaflet + OpenStreetMap). Refleja AlojamientosFiltrados. -->
-                    <div id="mapaExplorar" style="width:100%;height:600px;border-radius:16px;overflow:hidden;"></div>
+                    <div id="mapaExplorar" class="mapa-explorar"></div>
                 }
                 else if (Cargando)
                 {
@@ -241,6 +243,9 @@
     private bool Cargando = true;
     // Evita reinicializar el mapa en cada render; se resetea al entrar a la vista mapa.
     private bool _mapaInicializado = false;
+    // Hubo query string de búsqueda (Home → Buscar): cubre ambos órdenes init/parámetros.
+    private bool _hayQuery = false;
+    private bool _fechasPendientesDePintar = false;
 
     private static readonly string[] TiposAlojamiento = { "Casa", "Departamento", "Habitación" };
     private static readonly string[] RatingsOpciones = { "Cualquiera", "4+ estrellas", "4.5+ estrellas", "5 estrellas" };
@@ -261,14 +266,9 @@
             _todos = await AlojamientoProvider.ListarAsync();
             AlojamientosFiltrados = _todos;
 
-            // Precarga de filtros desde el query string (Home → Buscar). Idempotente.
-            bool hayQuery = false;
-            if (!string.IsNullOrWhiteSpace(UbicacionQuery)) { Filtros.Ubicacion = UbicacionQuery; hayQuery = true; }
-            if (HuespedesQuery is > 0) { Filtros.Huespedes = HuespedesQuery.Value; hayQuery = true; }
-            if (EntradaQuery.HasValue) { Filtros.FechaEntrada = EntradaQuery; hayQuery = true; }
-            if (SalidaQuery.HasValue) { Filtros.FechaSalida = SalidaQuery; hayQuery = true; }
-
-            if (hayQuery)
+            // Los query params los lee OnParametersSet (más fiable ante carrera de render).
+            // Si ya había query pero los datos aún no estaban, reaplica el filtro ahora.
+            if (_hayQuery)
             {
                 PaginaActual = 1;
                 AlojamientosFiltrados = FiltrarLocal(Filtros);
@@ -281,12 +281,53 @@
         }
     }
 
+    protected override void OnParametersSet()
+    {
+        // Lee el query string (Home → Buscar). Corre en cada set de parámetros, así que
+        // captura los valores aunque lleguen después del primer render (evita la carrera).
+        _hayQuery = false;
+        if (!string.IsNullOrWhiteSpace(UbicacionQuery)) { Filtros.Ubicacion = UbicacionQuery; _hayQuery = true; }
+        if (HuespedesQuery is > 0) { Filtros.Huespedes = HuespedesQuery.Value; _hayQuery = true; }
+        if (EntradaQuery.HasValue) { Filtros.FechaEntrada = EntradaQuery; _hayQuery = true; }
+        if (SalidaQuery.HasValue) { Filtros.FechaSalida = SalidaQuery; _hayQuery = true; }
+
+        if (_hayQuery)
+        {
+            PaginaActual = 1;
+            // Solo si los datos ya cargaron; si no, OnInitializedAsync lo reaplicará al terminar.
+            if (_todos.Count > 0) AlojamientosFiltrados = FiltrarLocal(Filtros);
+        }
+        if (EntradaQuery.HasValue)
+        {
+            Filtros.FechaEntrada = EntradaQuery;
+            _hayQuery = true;
+            _fechasPendientesDePintar = true;
+        }
+
+        if (SalidaQuery.HasValue)
+        {
+            Filtros.FechaSalida = SalidaQuery;
+            _hayQuery = true;
+            _fechasPendientesDePintar = true;
+        }
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (firstRender || _fechasPendientesDePintar)
         {
-            // Reutiliza el mismo inicializador de Flatpickr que la Home.
-            await JS.InvokeVoidAsync("bunkiDatePicker.init", ".flatpickr-date");
+            string? fe = Filtros.FechaEntrada?.ToString("yyyy-MM-dd");
+            string? fs = Filtros.FechaSalida?.ToString("yyyy-MM-dd");
+
+            await JS.InvokeVoidAsync(
+                "bunkiDatePicker.initConFechas",
+                "#explorar-fecha-entrada",
+                "#explorar-fecha-salida",
+                fe,
+                fs
+            );
+
+            _fechasPendientesDePintar = false;
         }
 
         // El div #mapaExplorar solo existe cuando Vista=="mapa": inicializar DESPUÉS

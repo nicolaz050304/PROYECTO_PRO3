@@ -5163,6 +5163,17 @@ footer {
     .skeleton::after { animation: none; }
 }
 
+/* ===== Mapa (Leaflet) — contenedor "luxury" ===== */
+.mapa-explorar {
+    width: 100%;
+    height: 600px;
+    border-radius: 16px;
+    overflow: hidden;
+    /* Borde ultrafino dorado muy sutil + sombra flotante sobre el fondo oscuro */
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
 /* ===== Mapa (Leaflet) — pines y popups ===== */
 .bunki-pin {
     position: relative;
