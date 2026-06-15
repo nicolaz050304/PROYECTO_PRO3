@@ -1,0 +1,50 @@
+====================================================================
+BUNKI / FIXSOFT — PENDIENTES Y MEJORAS
+(actualizado: sesión de integración REST)
+====================================================================
+
+## OPTIMIZACIÓN DE RENDIMIENTO (hacer al FINAL, con todos los REST listos)
+- Cambiar DBManager.getConnection() a un POOL de conexiones con HikariCP.
+  * Problema actual: DBManager.getConnection() hace DriverManager.getConnection()
+    => abre una conexión NUEVA a MySQL en cada llamada. El endpoint de Reserva abre
+    ~13 conexiones por petición (1 por listarTodos + lookups de alojamiento/usuario
+    en el mapper), lo que da ~8 segundos de latencia.
+  * Solución: pool HikariCP de conexiones reutilizables => baja a <1s.
+  * IMPORTANTE: el cambio es SOLO en DBManager (agregar dependencia HikariCP al pom
+    del módulo db-manager + cambiar getConnection() para entregar del pool).
+    Los DAO NO cambian (siguen llamando getConnection() igual; lo agarran automático).
+  * Beneficia a TODOS los servicios (actuales y futuros) de una sola vez.
+  * Hacerlo con commit de respaldo y probar todos los endpoints (sin fugas de conexión).
+- Mientras tanto, para demos: "calentar" el servidor (abrir la app y entrar a Mis
+  Reservas una vez antes de presentar) + timeout del frontend ya está en 20s.
+
+## SERVICIOS REST PENDIENTES
+- USUARIO: login y registro reales (hoy el login es mock: AppState.Login pone Id=1 fijo).
+  Es la pieza que destraba "lo mío" (Mis Reservas del usuario, Reservas Recibidas del
+  anfitrión, autor real de reseñas). Ojo: revisar cómo se guardan las contraseñas.
+- PAGO: transacción de pago (hoy en mock; baja prioridad para demo).
+
+## RESEÑAS — pendientes de UI
+- Modal para que el invitado deje reseña (en Mis Reservas). [en progreso]
+- Sección para que el ANFITRIÓN vea las reseñas de sus alojamientos.
+- Pantalla de MODERACIÓN del admin (aprobar/ocultar reseñas; el campo 'activo' ya
+  permite ocultar vía baja lógica).
+- Filtro opcional en el detalle: mostrar solo reseñas de tipo INVITADO (no las del anfitrión).
+- PUT de reseña pisa la fecha con la de edición si el DTO no trae fecha ISO (menor).
+
+## NOTIFICACIONES (mejora futura)
+- Hacer el REST de Notificación (hoy en mock).
+- Generar notificación al anfitrión cuando recibe una reseña (conecta Reseña -> Notificación).
+
+## IMÁGENES DE ALOJAMIENTOS (delegado a compañeros)
+- Agregar columna imagen_url a la tabla alojamiento -> modelo Java -> DAO -> DTO ->
+  mapper (el C# ya tiene ImagenUrl). Sembrar URLs reales (Unsplash/Pexels) en el script.
+
+## MAPA — detalle menor
+- Click en un pin del mapa debería resaltar la card del alojamiento; falta el id="card-{id}"
+  en AlojamientoCard para que funcione el scroll/realce.
+
+## SEGURIDAD (antes de entregar/hacer público)
+- Regenerar la API key de Stadia (quedó en wwwroot/js/mapa.js).
+- No exponer la contraseña real de MySQL en db.properties si el repo se hace público.
+====================================================================

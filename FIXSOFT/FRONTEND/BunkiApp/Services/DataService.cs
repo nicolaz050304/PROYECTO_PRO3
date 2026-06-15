@@ -38,8 +38,8 @@ public class DataService
             Reglas = "Sin mascotas, sin fiestas",
             Resenas = new()
             {
-                new() { Id = 1, AutorNombre = "Carlos R.", Estrellas = 5, Comentario = "Excelente lugar, muy limpio y cómodo. El anfitrión fue muy atento.", FechaTexto = "Hace 2 semanas" },
-                new() { Id = 2, AutorNombre = "Laura M.", Estrellas = 5, Comentario = "Perfecto para una escapada en Lima. Ubicación inmejorable.", FechaTexto = "Hace 1 mes" }
+                new() { Id = 1, AutorNombre = "Carlos R.", Estrellas = 5, Comentario = "Excelente lugar, muy limpio y cómodo. El anfitrión fue muy atento.", FechaPublicacion = new DateTime(2026, 6, 1) },
+                new() { Id = 2, AutorNombre = "Laura M.", Estrellas = 5, Comentario = "Perfecto para una escapada en Lima. Ubicación inmejorable.", FechaPublicacion = new DateTime(2026, 5, 15) }
             }
         },
         new Alojamiento

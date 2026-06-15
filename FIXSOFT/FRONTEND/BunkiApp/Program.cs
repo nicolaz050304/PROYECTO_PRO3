@@ -17,7 +17,7 @@ builder.Services.AddScoped<MapInterop>(); // Puente C#->JS del mapa (Leaflet)
 builder.Services.AddHttpClient<AlojamientoServiceRest>(client =>
 {
     client.BaseAddress = new Uri("http://localhost:8080/BunkiBackend/webresources/");
-    client.Timeout = TimeSpan.FromSeconds(5);
+    client.Timeout = TimeSpan.FromSeconds(20);
 });
 builder.Services.AddScoped<AlojamientoProvider>();
 
@@ -25,7 +25,7 @@ builder.Services.AddScoped<AlojamientoProvider>();
 builder.Services.AddHttpClient<ReservaServiceRest>(client =>
 {
     client.BaseAddress = new Uri("http://localhost:8080/BunkiBackend/webresources/");
-    client.Timeout = TimeSpan.FromSeconds(5);
+    client.Timeout = TimeSpan.FromSeconds(20);
 });
 builder.Services.AddScoped<ReservaProvider>();
 
@@ -33,7 +33,7 @@ builder.Services.AddScoped<ReservaProvider>();
 builder.Services.AddHttpClient<UsuarioServiceRest>(client =>
 {
     client.BaseAddress = new Uri("http://localhost:8080/BunkiBackend/webresources/");
-    client.Timeout = TimeSpan.FromSeconds(5);
+    client.Timeout = TimeSpan.FromSeconds(20);
 });
 builder.Services.AddScoped<UsuarioProvider>();
 
@@ -41,7 +41,7 @@ builder.Services.AddScoped<UsuarioProvider>();
 builder.Services.AddHttpClient<PagoServiceRest>(client =>
 {
     client.BaseAddress = new Uri("http://localhost:8080/BunkiBackend/webresources/");
-    client.Timeout = TimeSpan.FromSeconds(5);
+    client.Timeout = TimeSpan.FromSeconds(20);
 });
 builder.Services.AddScoped<PagoProvider>();
 
@@ -49,7 +49,7 @@ builder.Services.AddScoped<PagoProvider>();
 builder.Services.AddHttpClient<ResenaServiceRest>(client =>
 {
     client.BaseAddress = new Uri("http://localhost:8080/BunkiBackend/webresources/");
-    client.Timeout = TimeSpan.FromSeconds(5);
+    client.Timeout = TimeSpan.FromSeconds(20);
 });
 builder.Services.AddScoped<ResenaProvider>();
 

@@ -42,7 +42,11 @@ public class Resena
     public string AutorNombre { get; set; } = "";
     public int Estrellas { get; set; }
     public string Comentario { get; set; } = "";
-    public string FechaTexto { get; set; } = "";
+    public DateTime? FechaPublicacion { get; set; }
+    public int AlojamientoId { get; set; }
+    public int ReservaId { get; set; }
+    public string TipoAutor { get; set; } = "INVITADO";
+    public bool Activo { get; set; } = true;
 }
 
 public class Reserva

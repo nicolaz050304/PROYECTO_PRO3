@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @inject DataService Data
 @inject AlojamientoProvider AlojamientoProvider
+@inject ResenaProvider ResenaProvider
 @inject NavigationManager Navigation
 @inject BunkiApp.Models.AppState AppState
 @using System.Globalization
@@ -136,7 +137,7 @@ else
                                                     <span class="star">@GenerarEstrellas(resena.Estrellas)</span>
                                                 </div>
                                             </div>
-                                            <span class="card-text">@resena.FechaTexto</span>
+                                            <span class="card-text">@(resena.FechaPublicacion?.ToString("dd MMM yyyy") ?? "")</span>
                                         </div>
                                         <p class="card-text" style="margin-top: 10px;">@resena.Comentario</p>
                                     </div>
@@ -322,6 +323,26 @@ else
     {
         // Fuente de datos: REST con fallback automático a mock (provider).
         Alojamiento = await AlojamientoProvider.ObtenerPorIdAsync(Id);
+
+        // Reseñas reales vía REST (GET ResenaRS/alojamiento/{id}); con fallback en el provider.
+        // Si algo falla, la página sigue mostrando el alojamiento, solo sin reseñas.
+        if (Alojamiento is not null)
+        {
+            try
+            {
+                var resenas = await ResenaProvider.ListarPorAlojamientoAsync(Id);
+                if (resenas is not null && resenas.Count > 0)
+                {
+                    Alojamiento.Resenas = resenas;
+                    Alojamiento.TotalResenas = resenas.Count;
+                    Alojamiento.Rating = resenas.Average(r => (double)r.Estrellas);
+                }
+            }
+            catch (Exception)
+            {
+                // No rompemos la página si el REST de reseñas falla.
+            }
+        }
 
         if (!queryAplicada && Alojamiento is not null)
         {

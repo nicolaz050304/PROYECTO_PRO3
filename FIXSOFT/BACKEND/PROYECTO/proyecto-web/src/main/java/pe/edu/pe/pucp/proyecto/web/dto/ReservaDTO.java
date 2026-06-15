@@ -1,23 +1,21 @@
 package pe.edu.pe.pucp.proyecto.web.dto;
 
-import java.util.Date;
-
 /**
  * DTO plano de Reserva. Único objeto expuesto por los endpoints: sin entidades
  * del modelo, sin objetos anidados -> evita los ciclos de serialización
  * (Reserva<->Invitado, Reserva->Alojamiento->Anfitrion->propiedades).
  *
  * Campos camelCase; el System.Text.Json del frontend C# mapea camelCase ->
- * PascalCase case-insensitive. fechaEntrada/fechaSalida viajan como fecha ISO
- * y el C# las deserializa a DateTime.
+ * PascalCase case-insensitive. fechaEntrada/fechaSalida viajan como String ISO
+ * "yyyy-MM-dd" (sin hora ni 'Z'); el C# las deserializa a DateTime sin líos.
  */
 public class ReservaDTO {
 
     private int id;
     private String alojamientoNombre;
     private String ubicacion;
-    private Date fechaEntrada;
-    private Date fechaSalida;
+    private String fechaEntrada;
+    private String fechaSalida;
     private int numHuespedes;
     private double total;
     private String estado;
@@ -37,11 +35,11 @@ public class ReservaDTO {
     public String getUbicacion() { return ubicacion; }
     public void setUbicacion(String ubicacion) { this.ubicacion = ubicacion; }
 
-    public Date getFechaEntrada() { return fechaEntrada; }
-    public void setFechaEntrada(Date fechaEntrada) { this.fechaEntrada = fechaEntrada; }
+    public String getFechaEntrada() { return fechaEntrada; }
+    public void setFechaEntrada(String fechaEntrada) { this.fechaEntrada = fechaEntrada; }
 
-    public Date getFechaSalida() { return fechaSalida; }
-    public void setFechaSalida(Date fechaSalida) { this.fechaSalida = fechaSalida; }
+    public String getFechaSalida() { return fechaSalida; }
+    public void setFechaSalida(String fechaSalida) { this.fechaSalida = fechaSalida; }
 
     public int getNumHuespedes() { return numHuespedes; }
     public void setNumHuespedes(int numHuespedes) { this.numHuespedes = numHuespedes; }

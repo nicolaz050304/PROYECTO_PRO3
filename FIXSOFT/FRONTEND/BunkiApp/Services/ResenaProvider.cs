@@ -36,5 +36,21 @@ namespace BunkiApp.Services
             // Fallback real: las reseñas embebidas del alojamiento en DataService.
             return _mock.ObtenerAlojamiento(alojamientoId)?.Resenas ?? new();
         }
+
+        // Registro (escritura) vía REST: POST ResenaRS. A diferencia de las lecturas, aquí
+        // NO hay fallback silencioso: si el REST falla, propagamos la excepción para que la
+        // UI muestre el error (no tiene sentido "guardar" en un mock que no persiste).
+        public async Task RegistrarAsync(Resena resena)
+        {
+            try
+            {
+                await _rest.RegistrarAsync(resena);
+            }
+            catch (Exception ex)
+            {
+                _log.LogWarning(ex, "No se pudo registrar la reseña (reserva {Id})", resena.ReservaId);
+                throw;
+            }
+        }
     }
 }

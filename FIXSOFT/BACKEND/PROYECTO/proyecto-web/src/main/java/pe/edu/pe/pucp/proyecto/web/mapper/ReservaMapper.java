@@ -11,6 +11,9 @@ import pe.edu.pe.pucp.proyecto.users.Usuario;
 import pe.edu.pe.pucp.proyecto.users.bl.UsuarioBL;
 import pe.edu.pe.pucp.proyecto.web.dto.ReservaDTO;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -20,6 +23,9 @@ import java.util.Map;
  * lookups a AlojamientoBL/UsuarioBL, cacheados por request para evitar N+1.
  */
 public final class ReservaMapper {
+
+    /** Patrón ISO estable para transportar las fechas como dato (sin hora ni 'Z'). */
+    private static final String PATRON_ISO = "yyyy-MM-dd";
 
     private ReservaMapper() {
     }
@@ -49,8 +55,8 @@ public final class ReservaMapper {
 
         ReservaDTO dto = new ReservaDTO();
         dto.setId(r.getIdReserva());
-        dto.setFechaEntrada(r.getFechaInicio());
-        dto.setFechaSalida(r.getFechaFin());
+        dto.setFechaEntrada(formatearFechaIso(r.getFechaInicio()));
+        dto.setFechaSalida(formatearFechaIso(r.getFechaFin()));
         dto.setTotal(r.getMontoTotal());
         dto.setEstado(estadoToString(r.getEstadoReserva()));
 
@@ -151,8 +157,8 @@ public final class ReservaMapper {
 
         Reserva r = new Reserva();
         r.setIdReserva(dto.getId());
-        r.setFechaInicio(dto.getFechaEntrada());
-        r.setFechaFin(dto.getFechaSalida());
+        r.setFechaInicio(parsearFechaIso(dto.getFechaEntrada()));
+        r.setFechaFin(parsearFechaIso(dto.getFechaSalida()));
         r.setMontoTotal(dto.getTotal());
         r.setEstadoReserva(estadoFromString(dto.getEstado()));
         r.setMoneda(TipoMoneda.PEN); // default: el DTO no trae moneda y el DAO la exige no-nula
@@ -180,5 +186,27 @@ public final class ReservaMapper {
             case "completada", "finalizada" -> EstadoReserva.FINALIZADA;
             default -> EstadoReserva.PENDIENTE;
         };
+    }
+
+    /** Formatea a ISO "yyyy-MM-dd" (sin hora ni 'Z'); null -> null. */
+    private static String formatearFechaIso(Date fecha) {
+        if (fecha == null) {
+            return null;
+        }
+        return new SimpleDateFormat(PATRON_ISO).format(fecha);
+    }
+
+    /** Parsea ISO "yyyy-MM-dd" a Date (no lenient); vacío/null/inválido -> null. */
+    private static Date parsearFechaIso(String iso) {
+        if (iso == null || iso.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat(PATRON_ISO);
+            sdf.setLenient(false);
+            return sdf.parse(iso.trim());
+        } catch (ParseException ex) {
+            return null;
+        }
     }
 }
