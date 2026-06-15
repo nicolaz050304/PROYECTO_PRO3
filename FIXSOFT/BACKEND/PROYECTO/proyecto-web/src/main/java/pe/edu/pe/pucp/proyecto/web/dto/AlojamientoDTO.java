@@ -15,6 +15,7 @@ public class AlojamientoDTO {
     private String tipo;
     private String descripcion;
     private String ubicacion;
+    private String pais;
     private double precioNoche;
     private int maxHuespedes;
     private int habitaciones;
@@ -43,6 +44,9 @@ public class AlojamientoDTO {
 
     public String getUbicacion() { return ubicacion; }
     public void setUbicacion(String ubicacion) { this.ubicacion = ubicacion; }
+
+    public String getPais() { return pais; }
+    public void setPais(String pais) { this.pais = pais; }
 
     public double getPrecioNoche() { return precioNoche; }
     public void setPrecioNoche(double precioNoche) { this.precioNoche = precioNoche; }

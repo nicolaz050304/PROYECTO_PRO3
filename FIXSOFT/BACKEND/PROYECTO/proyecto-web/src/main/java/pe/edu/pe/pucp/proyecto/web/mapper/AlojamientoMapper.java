@@ -162,6 +162,15 @@ public final class AlojamientoMapper {
         al.setLatitud(dto.getLatitud());
         al.setLongitud(dto.getLongitud());
 
+        // pais es NOT NULL en BD: ESTE era el campo que faltaba y disparaba el 500.
+        // Default "Perú" si el DTO no lo trae (proyecto Perú; todos los sembrados son Perú).
+        String pais = dto.getPais() != null && !dto.getPais().isBlank() ? dto.getPais() : "Perú";
+        al.setPais(pais);
+
+        // estadoValidacion: el DTO no lo transporta; el constructor ya pone "PENDIENTE",
+        // pero lo fijamos explícito por si acaso (default seguro para la moderación).
+        al.setEstadoValidacion("PENDIENTE");
+
         // El DAO inserta/actualiza usando duenho.getIdUsuario().
         Anfitrion duenho = new Anfitrion();
         duenho.setIdUsuario(dto.getAnfitrionId());
