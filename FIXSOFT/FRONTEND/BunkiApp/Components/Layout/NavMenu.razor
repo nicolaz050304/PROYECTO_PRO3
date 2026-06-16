@@ -100,14 +100,17 @@
                         <a href="/mis-reservas" class="nav-dropdown-item" @onclick="CerrarMenus"><i class="fas fa-calendar-check"></i> Mis Reservas</a>
                         <div class="nav-dd-divider"></div>
 
-                        <span class="nav-dd-section">Como anfitrión</span>
-                        <a href="/panel-anfitrion" class="nav-dropdown-item @NavClass("/panel-anfitrion")" @onclick="CerrarMenus">
-                            <i class="fas fa-chart-line"></i> Panel</a>
-                        <a href="/mis-alojamientos" class="nav-dropdown-item" @onclick="CerrarMenus"><i class="fas fa-home"></i> Mis Alojamientos</a>
-                        <a href="/crear-alojamiento" class="nav-dropdown-item" @onclick="CerrarMenus"><i class="fas fa-plus-circle"></i> Crear Alojamiento</a>
-                        <a href="/reservas-recibidas" class="nav-dropdown-item" @onclick="CerrarMenus"><i class="fas fa-inbox"></i> Reservas Recibidas</a>
-                        <a href="/mis-resenas" class="nav-dropdown-item" @onclick="CerrarMenus"><i class="fas fa-star"></i> Reseñas</a>
-                        <div class="nav-dd-divider"></div>
+                        @if (AppState.EsAnfitrion())
+                        {
+                            <span class="nav-dd-section">Como anfitrión</span>
+                            <a href="/panel-anfitrion" class="nav-dropdown-item @NavClass("/panel-anfitrion")" @onclick="CerrarMenus">
+                                <i class="fas fa-chart-line"></i> Panel</a>
+                            <a href="/mis-alojamientos" class="nav-dropdown-item" @onclick="CerrarMenus"><i class="fas fa-home"></i> Mis Alojamientos</a>
+                            <a href="/crear-alojamiento" class="nav-dropdown-item" @onclick="CerrarMenus"><i class="fas fa-plus-circle"></i> Crear Alojamiento</a>
+                            <a href="/reservas-recibidas" class="nav-dropdown-item" @onclick="CerrarMenus"><i class="fas fa-inbox"></i> Reservas Recibidas</a>
+                            <a href="/mis-resenas" class="nav-dropdown-item" @onclick="CerrarMenus"><i class="fas fa-star"></i> Reseñas</a>
+                            <div class="nav-dd-divider"></div>
+                        }
 
                         <a href="/perfil" class="nav-dropdown-item" @onclick="CerrarMenus"><i class="fas fa-cog"></i> Configuración</a>
 
