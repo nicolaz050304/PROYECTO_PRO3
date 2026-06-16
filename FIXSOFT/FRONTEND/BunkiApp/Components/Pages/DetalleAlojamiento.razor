@@ -310,6 +310,7 @@ else
     private int NumHuespedes = 1;
     private bool EsFavorito = false;
     private int FotoActiva = 0;
+    private bool _pickerInicializado = false;
 
     private string FechaMinima => DateTime.Today.ToString("yyyy-MM-dd");
     private int Noches => (FechaSalida.HasValue && FechaEntrada.HasValue && FechaSalida > FechaEntrada)
@@ -394,10 +395,12 @@ else
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        // El alojamiento se carga async (REST), así que los inputs del calendario recién existen
+        // cuando Alojamiento != null. Inicializamos Flatpickr en el primer render en que los inputs
+        // YA están en el DOM (no en firstRender, que puede ocurrir mientras el alojamiento aún carga).
+        if (Alojamiento is not null && !_pickerInicializado)
         {
-            // Inputs reales (sin altInput): el value ya trae la fecha en dd/MM/yyyy.
-            // Solo relajamos minDate para que las fechas pasadas no se descarten.
+            _pickerInicializado = true;
             await JS.InvokeVoidAsync("bunkiDatePicker.initDetalle", "#detalle-fecha-entrada",
                 new { minDate = MinDateFor(FechaEntrada) });
             await JS.InvokeVoidAsync("bunkiDatePicker.initDetalle", "#detalle-fecha-salida",

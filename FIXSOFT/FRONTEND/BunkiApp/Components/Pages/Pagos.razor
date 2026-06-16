@@ -4,6 +4,7 @@
 @inject NavigationManager Navigation
 @inject BunkiApp.Models.AppState AppState
 @inject DataService Data
+@inject ReservaProvider ReservaProvider
 @implements IDisposable
 
 <div class="section">
@@ -76,6 +77,13 @@
                             </label>
                         }
                     </div>
+
+                    @if (!string.IsNullOrEmpty(ErrorPago))
+                    {
+                        <div style="margin-bottom: 14px;">
+                            <AlertMessage Tipo="danger" Mensaje="@ErrorPago" />
+                        </div>
+                    }
 
                     @if (Formulario.MetodoPago == "tarjeta")
                     {
@@ -218,9 +226,13 @@
     [Parameter, SupplyParameterFromQuery(Name = "huespedes")]
     public int? HuespedesQuery { get; set; }
 
+    [Parameter, SupplyParameterFromQuery(Name = "reservaId")]
+    public int? ReservaIdQuery { get; set; }
+
     private PagoForm Formulario = new();
     private bool Procesando = false;
     private bool PagoCompletado = false;
+    private string ErrorPago = "";
 
     private Alojamiento? Alojamiento;
     private DateTime? FechaEntrada;
@@ -299,20 +311,61 @@
     private async Task Pagar()
     {
         if (!ReservaValida) return;
-
+        ErrorPago = "";
         Procesando = true;
-        await Task.Delay(2000);
+        await Task.Delay(2000);                 // pago simulado (mock)
+        var ok = await PersistirReservaAsync();
         Procesando = false;
-        PagoCompletado = true;
+        if (ok) PagoCompletado = true;
     }
 
     private async Task PagarOtroMetodo()
     {
         if (!ReservaValida) return;
-
+        ErrorPago = "";
         Procesando = true;
-        await Task.Delay(1500);
+        await Task.Delay(1500);                 // pago simulado (mock)
+        var ok = await PersistirReservaAsync();
         Procesando = false;
-        PagoCompletado = true;
+        if (ok) PagoCompletado = true;
+    }
+
+    // Si viene reservaId -> confirma la reserva existente (PUT, solo cambia el estado).
+    // Si no -> crea una reserva nueva (POST).
+    private async Task<bool> PersistirReservaAsync()
+    {
+        try
+        {
+            if (ReservaIdQuery is > 0)
+            {
+                var existente = await ReservaProvider.ObtenerPorIdAsync(ReservaIdQuery.Value);
+                if (existente is null)
+                {
+                    ErrorPago = "No encontramos la reserva a pagar. Intenta de nuevo.";
+                    return false;
+                }
+                existente.Estado = "Confirmada";       // el pago se completó
+                await ReservaProvider.ActualizarAsync(existente);
+                return true;
+            }
+
+            var nueva = new Reserva
+            {
+                AlojamientoId = Alojamiento!.Id,          // ReservaValida garantiza Alojamiento != null
+                HuespedId     = AppState.UsuarioActual!.Id,
+                FechaEntrada  = FechaEntrada!.Value,
+                FechaSalida   = FechaSalida!.Value,
+                NumHuespedes  = Huespedes,                // el backend lo ignora, pero lo enviamos completo
+                Total         = Total,
+                Estado        = "Confirmada"              // el pago se completó
+            };
+            await ReservaProvider.RegistrarAsync(nueva);
+            return true;
+        }
+        catch (Exception)
+        {
+            ErrorPago = "No se pudo procesar el pago. Inténtalo de nuevo en unos segundos.";
+            return false;
+        }
     }
 }

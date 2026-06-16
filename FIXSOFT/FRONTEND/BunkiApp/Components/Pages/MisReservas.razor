@@ -187,10 +187,14 @@
 
     private async Task CargarDatosAsync()
     {
-        // Fuente: REST con fallback automático a mock (provider).
-        Proximas = await ReservaProvider.ListarProximasAsync();
-        Pasadas = await ReservaProvider.ListarPasadasAsync();
-        Canceladas = await ReservaProvider.ListarCanceladasAsync();
+        // Filtra por el INVITADO logueado (una sola llamada REST: ReservaRS/usuario/{id}).
+        // Las pestañas se derivan por Estado en memoria, así no golpeamos 3 veces el endpoint.
+        var uid = AppState.UsuarioActual!.Id;
+        var mias = await ReservaProvider.ListarPorUsuarioAsync(uid);
+
+        Proximas   = mias.Where(r => r.Estado is "Confirmada" or "Pendiente").ToList();
+        Pasadas    = mias.Where(r => r.Estado == "Completada").ToList();
+        Canceladas = mias.Where(r => r.Estado == "Cancelada").ToList();
     }
 
     private void CambiarTab(string tab) => TabActiva = tab;

@@ -125,10 +125,11 @@
     {
         if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
         AppState.OnChange += OnMonedaChanged;
-        // Fuente: REST con fallback automático a mock (provider).
-        var proximas = await ReservaProvider.ListarProximasAsync();
-        var pasadas = await ReservaProvider.ListarPasadasAsync();
-        _todasReservas = proximas.Concat(pasadas).ToList();
+
+        // Filtra por el ANFITRIÓN logueado (ReservaRS/anfitrion/{id}). Una sola llamada que trae
+        // TODAS sus reservas (incluye Canceladas, que el concat próximas+pasadas se saltaba).
+        var aid = AppState.UsuarioActual!.Id;
+        _todasReservas = await ReservaProvider.ListarPorAnfitrionAsync(aid);
     }
 
     public void Dispose() => AppState.OnChange -= OnMonedaChanged;

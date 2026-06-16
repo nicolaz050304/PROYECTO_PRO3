@@ -91,7 +91,8 @@
         var url = $"/pagos?alojamientoId={AlojamientoIdSeguro}" +
                   $"&entrada={Reserva.FechaEntrada:yyyy-MM-dd}" +
                   $"&salida={Reserva.FechaSalida:yyyy-MM-dd}" +
-                  $"&huespedes={Reserva.NumHuespedes}";
+                  $"&huespedes={Reserva.NumHuespedes}" +
+                  $"&reservaId={Reserva.Id}";
 
         Navigation.NavigateTo(url);
     }

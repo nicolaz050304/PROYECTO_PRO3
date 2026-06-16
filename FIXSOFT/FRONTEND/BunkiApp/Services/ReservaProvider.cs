@@ -97,5 +97,57 @@ namespace BunkiApp.Services
                 return _mock.ObtenerTodasLasReservas().FirstOrDefault(r => r.Id == id);
             }
         }
+
+        // Reservas del INVITADO logueado (el backend filtra por HuespedId en ReservaRS/usuario/{id}).
+        // OJO: una lista vacía es un resultado VÁLIDO (ese invitado no tiene reservas), así que
+        // NO caemos al mock por vacío —solo ante caída del REST—.
+        public async Task<List<Reserva>> ListarPorUsuarioAsync(int usuarioId)
+        {
+            try
+            {
+                return await _rest.ListarPorUsuarioAsync(usuarioId) ?? new();
+            }
+            catch (Exception ex)
+            {
+                _log.LogWarning(ex, "REST no disponible (reservas del usuario {Id}); usando mock", usuarioId);
+                return _mock.ObtenerTodasLasReservas();
+            }
+        }
+
+        // Reservas recibidas por el ANFITRIÓN logueado (ReservaRS/anfitrion/{id}). Mismo criterio.
+        public async Task<List<Reserva>> ListarPorAnfitrionAsync(int anfitrionId)
+        {
+            try
+            {
+                return await _rest.ListarPorAnfitrionAsync(anfitrionId) ?? new();
+            }
+            catch (Exception ex)
+            {
+                _log.LogWarning(ex, "REST no disponible (reservas del anfitrión {Id}); usando mock", anfitrionId);
+                return _mock.ObtenerTodasLasReservas();
+            }
+        }
+
+        // Registro (ESCRITURA): POST ReservaRS. Sin fallback: propaga para que la UI avise.
+        public async Task RegistrarAsync(Reserva reserva)
+        {
+            try { await _rest.RegistrarAsync(reserva); }
+            catch (Exception ex)
+            {
+                _log.LogWarning(ex, "No se pudo registrar la reserva (alojamiento {Id})", reserva.AlojamientoId);
+                throw;
+            }
+        }
+
+        // Actualización (ESCRITURA): PUT ReservaRS/{id}. Sin fallback: propaga.
+        public async Task ActualizarAsync(Reserva reserva)
+        {
+            try { await _rest.ActualizarAsync(reserva); }
+            catch (Exception ex)
+            {
+                _log.LogWarning(ex, "No se pudo actualizar la reserva {Id}", reserva.Id);
+                throw;
+            }
+        }
     }
 }

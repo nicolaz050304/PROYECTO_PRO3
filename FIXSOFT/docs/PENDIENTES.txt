@@ -1,85 +1,73 @@
 ====================================================================
 BUNKI / FIXSOFT — ESTADO DEL PROYECTO Y PENDIENTES
-(actualizado: sesión de integración REST)
+(actualizado tras: login real + módulo de reseñas completo)
 ====================================================================
 
-## ✅ LO QUE YA FUNCIONA (end-to-end: frontend -> REST -> MySQL)
-- ALOJAMIENTO:
-  * Lectura: listado (Explorar), detalle, mapa con coordenadas reales (Stadia).
-  * Escritura: CREAR alojamiento (form -> POST -> MySQL). [dueño mock id 1 por ahora]
-- RESERVA:
-  * Lectura: Mis Reservas (Próximas/Pasadas/Canceladas) con datos reales.
-  * (timeout del frontend en 20s porque el endpoint tarda ~8s; ver optimización abajo)
-- RESEÑA:
-  * Lectura: reseñas reales en el detalle del alojamiento.
-  * Escritura: CREAR reseña (modal en Mis Reservas -> POST -> MySQL).
-- Continuidad de filtros Home->Explorar. Skeletons de carga. Fechas en formato ISO.
+## ✅ LO QUE YA FUNCIONA (end-to-end: frontend -> REST -> MySQL en RDS AWS)
+- LOGIN REAL: UsuarioRS/login valida correo+password contra la BD (texto plano), devuelve el usuario
+  real (id + rol vía tipoUsuario: ADMINISTRADOR/ANFITRION/INVITADO), sin password. El frontend
+  (AppState) guarda el usuario real; EsAdmin() mira el ROL (no el correo). Login.razor valida de verdad.
+  Usuarios de prueba en docs/usuarios.txt (todos password demo1234).
+- ALOJAMIENTO: lectura (Explorar, detalle, mapa Stadia con coords) + escritura (crear alojamiento).
+- RESERVA: lectura (Mis Reservas con datos reales). [timeout frontend 20s; endpoint tarda ~8s]
+- RESEÑA — MÓDULO COMPLETO:
+  * Crear (modal en Mis Reservas, con validación 1-5 estrellas y >=10 chars).
+  * Leer en el detalle del alojamiento.
+  * Vista de ANFITRIÓN: página propia /mis-resenas (resumen estilo Airbnb + reseñas agrupadas por
+    alojamiento, solo TipoAutor INVITADO). Accesible desde el menú "Como anfitrión".
+  * Moderación ADMIN: /admin/moderar-resenas (ver todas incl. ocultas, ocultar=DELETE/activo=0,
+    reactivar=PUT/activo=1). Muestra nombre del alojamiento. Solo accesible para admin. Afecta lo que
+    ven los usuarios en el detalle. Backend: ResenaRS/todas y ResenaRS/{id}/reactivar.
 
 ## ❌ SERVICIOS REST QUE FALTAN
-- USUARIO (login y registro reales). HOY el login es MOCK: AppState.Login pone Id=1 fijo,
-  sin importar el email. Es la pieza CLAVE que destraba "lo mío":
-    * Mis Reservas filtradas por el usuario logueado (hoy muestra todas, filtra solo por estado).
-    * Reservas Recibidas del anfitrión (las de SUS alojamientos).
-    * Autor real de las reseñas (hoy sale el mock).
-    * Dueño real de los alojamientos creados (hoy id 1).
-  Ojo al implementar: revisar cómo se guardan las contraseñas (¿hash o texto plano?).
-  Considerar JWT para la autenticación (estándar en APIs REST).
-- PAGO (transacción de pago). Hoy en mock. Baja prioridad para demo.
-- NOTIFICACIÓN. Hoy en mock. Mejora futura (ver abajo).
+- PAGO (transacción). Hoy en mock. Baja prioridad.
+- NOTIFICACIÓN. Hoy en mock. Mejora futura.
 
-## ❌ ESCRITURAS QUE FALTAN (las lecturas ya son reales; faltan los POST/PUT/DELETE)
-- CREAR RESERVA: el botón "Reservar Ahora" (en DetalleAlojamiento) NO persiste vía REST.
-  Cablear al POST de ReservaRS. Depende de saber quién reserva (Usuario).
-- EDITAR / CANCELAR RESERVA: cancelar reserva (DELETE/baja lógica) y editar; cablear cuando aplique.
-- EDITAR / ELIMINAR ALOJAMIENTO: el PUT/DELETE de AlojamientoRS existe; falta cablear UI de edición.
-- (CREAR ALOJAMIENTO y CREAR RESEÑA ya están HECHAS.)
+## ❌ FILTRADO POR USUARIO (importante, detectado)
+Varias pantallas NO filtran por el usuario logueado, ahora que el login es real se puede arreglar:
+- MIS RESERVAS: muestra todas las reservas (filtra solo por estado), debería filtrar por el id del
+  invitado logueado. Existe ReservaRS/usuario/{id} en el backend para esto.
+- RESERVAS RECIBIDAS: muestra reservas de otros anfitriones (ej. logueado como Carlos, salen las de
+  Lucía); debería mostrar solo las de los alojamientos del anfitrión logueado. Existe
+  ReservaRS/anfitrion/{id} en el backend.
+
+## ❌ ESCRITURAS QUE FALTAN
+- CREAR RESERVA: el botón "Reservar Ahora" (DetalleAlojamiento) NO persiste vía REST. Cablear al POST
+  de ReservaRS (ya con usuario real para el invitado).
+- EDITAR / CANCELAR RESERVA; EDITAR / ELIMINAR ALOJAMIENTO (PUT/DELETE existen, falta UI).
 
 ## ❌ FUNCIONALIDADES / UI PENDIENTES
-- CREAR ALOJAMIENTO - mejoras menores:
-  * El form NO captura campos de subclase (Casa: numPisos/conPatio/numCocheras/numHabitaciones;
-    Departamento: numPiso/nroDepartamento/nroHabitaciones; Habitación: nroHabitacion/tipoCama/
-    conBanhoPrivado). Hoy van con default. Falta agregarlos al form según el tipo elegido.
-  * El form NO captura coordenadas (lat/long van en 0 -> el alojamiento creado no tiene pin en el mapa).
-    Falta selección de ubicación en el mapa.
-- PANEL DE ANFITRIÓN (/panel-anfitrion): es MOCK (ingresos, ocupación, "1 alojamiento activo" fijo,
-  gráficos). No lee del backend. Falta conectarlo a datos reales (alojamientos del anfitrión, reservas
-  recibidas, etc.). Depende de Usuario.
-- RESEÑAS - UI pendiente:
-  * Sección para que el ANFITRIÓN vea las reseñas de sus alojamientos.
-  * Pantalla de MODERACIÓN del admin (aprobar/ocultar reseñas; el campo 'activo' ya permite baja lógica).
-  * Filtro en el detalle: mostrar solo reseñas de tipo INVITADO (no las del anfitrión).
-- MAPA - detalle menor: click en un pin debería resaltar la card del alojamiento; falta id="card-{id}"
-  en AlojamientoCard.
-- NOTIFICACIONES: REST de Notificación + generar notificación al anfitrión cuando recibe una reseña.
-- IMÁGENES DE ALOJAMIENTOS (delegado a compañeros): agregar columna imagen_url a la tabla -> modelo Java
-  -> DAO -> DTO -> mapper (el C# ya tiene ImagenUrl). Sembrar URLs reales.
+- Mostrar/ocultar opciones del menú según el ROL (invitado vs anfitrión vs admin). Hoy todos ven todo.
+- PANEL DE ANFITRIÓN: las métricas (ingresos, ocupación) son mock; conectar a datos reales.
+- CREAR ALOJAMIENTO - mejoras: el form no captura campos de subclase (numPisos, nroHabitacion, etc.,
+  van con default) ni coordenadas (lat/long en 0 -> sin pin en mapa); dueño = anfitrión logueado (ya real).
+- MAPA: click en pin debería resaltar la card (falta id="card-{id}" en AlojamientoCard).
+- IMÁGENES de alojamientos (delegado): columna imagen_url -> modelo/DAO/DTO/mapper (C# ya tiene ImagenUrl).
 
-## ⚙️ OPTIMIZACIÓN DE RENDIMIENTO (hacer al FINAL, con todos los REST listos)
-- HIKARI (pool de conexiones): cambiar DBManager.getConnection() de DriverManager.getConnection()
-  (abre conexión NUEVA cada vez) a un pool HikariCP. El endpoint de Reserva abre ~13 conexiones por
-  petición (1 + lookups en el mapper) -> ~8s de latencia. El pool baja a <1s. Toca SOLO el DBManager
-  (dependencia al pom + getConnection del pool); los DAO NO cambian; beneficia a TODOS los servicios.
-  Hacerlo con commit de respaldo y probar sin fugas de conexión.
-- REDIS (caché en memoria) — sugerido por el profesor. Va DESPUÉS de Hikari. Cachear los lookups
-  repetidos de Reserva (nombres de alojamiento/anfitrión) y el listado de alojamientos -> de ~8s a ms.
-  Infraestructura aparte: instalar/correr Redis (en Windows vía Docker o WSL) + librería Java
-  (Jedis/Lettuce) + lógica "busca en Redis, si no MySQL y cachea". Orden: 1) Hikari, 2) Redis.
-  Confirmar con el profe si es obligatorio u opcional.
-- Para demos mientras tanto: "calentar" el servidor (abrir la app y entrar a Mis Reservas una vez antes
-  de presentar) + timeout del frontend ya en 20s.
-- NO hacer (sobre-ingeniería para este proyecto): balanceador de carga, microservicios, colas de
-  mensajes, CQRS. El problema de escala que resuelven no existe aquí.
+## ⚙️ OPTIMIZACIÓN (al final, con todo listo)
+- HASHING de contraseñas: hoy en texto plano (login plano funciona). El usuario maneja todo el código.
+  Pasos: hashear en login+registro + convertir/resembrar las contraseñas ya existentes en la RDS.
+  Hacerlo en 2 fases (ya está el login plano; agregar hash encima). PRIORIDAD del usuario: hacerlo pronto.
+- HIKARI (pool de conexiones): DBManager.getConnection() abre conexión nueva cada vez -> el endpoint de
+  Reserva abre ~13 por petición (~8s). Pool -> <1s. Toca SOLO el DBManager; los DAO no cambian; beneficia
+  a todos. Con commit de respaldo.
+- REDIS (caché, sugerido por el profe): DESPUÉS de Hikari. Cachear lookups de Reserva y listados.
+  Infra aparte (Docker/WSL + Jedis/Lettuce). Orden: 1) Hikari, 2) Redis.
+- Demo: "calentar" el servidor antes de presentar + timeout 20s.
+- NO hacer (sobre-ingeniería): balanceador de carga, microservicios, colas, CQRS.
 
-## 🔒 SEGURIDAD (antes de entregar / hacer público)
-- Regenerar la API key de Stadia (quedó en wwwroot/js/mapa.js).
-- No exponer la contraseña real de MySQL en db.properties si el repo se hace público.
-- Al hacer Usuario: contraseñas con hash (no texto plano). Considerar JWT.
+## 🔒 SEGURIDAD (antes de entregar/publicar)
+- Regenerar API key de Stadia (en wwwroot/js/mapa.js).
+- docs/usuarios.txt y db.properties tienen credenciales: OK en repo PRIVADO; quitarlas del historial si
+  se hace público.
+- Hashing de contraseñas (ver optimización).
 
 ## 🎯 ORDEN SUGERIDO PARA RETOMAR
-1. USUARIO (login real) — destraba "lo mío" Y habilita escrituras con dueño/autor real.
-2. Escrituras restantes: "Reservar Ahora" (crear reserva), editar/cancelar.
-3. Conectar panel de anfitrión a datos reales.
-4. UI de reseñas (anfitrión, moderación admin, filtro invitados).
-5. Hikari, luego Redis (optimización).
-6. Pago, notificaciones, imágenes.
+1. Filtrado por usuario (Mis Reservas y Reservas Recibidas por id real) — destraba "lo mío" del todo.
+2. Escrituras restantes: "Reservar Ahora" (crear reserva).
+3. Mostrar/ocultar menú según rol.
+4. Hashing de contraseñas.
+5. Panel de anfitrión con datos reales.
+6. Hikari -> Redis (optimización).
+7. Pago, notificaciones, imágenes.
 ====================================================================
