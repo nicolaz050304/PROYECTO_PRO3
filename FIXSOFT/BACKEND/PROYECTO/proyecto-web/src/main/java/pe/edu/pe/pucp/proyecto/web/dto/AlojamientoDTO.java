@@ -26,6 +26,7 @@ public class AlojamientoDTO {
     private int anfitrionId;
     private double latitud;
     private double longitud;
+    private String imagenUrl;
 
     public AlojamientoDTO() {
     }
@@ -77,4 +78,7 @@ public class AlojamientoDTO {
 
     public double getLongitud() { return longitud; }
     public void setLongitud(double longitud) { this.longitud = longitud; }
+
+    public String getImagenUrl() { return imagenUrl; }
+    public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
 }

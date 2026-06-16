@@ -2,15 +2,18 @@
 @inject BunkiApp.Models.AppState AppState
 @implements IDisposable
 <div class="card">
-    @if (!string.IsNullOrEmpty(Alojamiento.ImagenUrl))
+    @if (!string.IsNullOrWhiteSpace(Alojamiento.ImagenUrl))
     {
-        <!-- Si tiene imagen, cargamos la foto única -->
-        <img src="@Alojamiento.ImagenUrl" alt="@Alojamiento.Nombre" class="card-image" style="width: 100%; height: 200px; object-fit: cover;" />
+        <!-- Si tiene imagen, cargamos la foto real llenando el contenedor (sin deformar) -->
+        <img src="@Alojamiento.ImagenUrl" alt="@Alojamiento.Nombre" class="card-image" loading="lazy" style="width: 100%; height: 200px; object-fit: cover;" />
     }
     else
     {
-        <!-- Por si acaso algún alojamiento no tiene foto, dejamos tu gradiente como respaldo -->
-        <div class="card-image-placeholder" style="background: @Alojamiento.GradienteColor;"></div>
+        <!-- Fallback lindo: degradado suave + casa + "Sin imagen" -->
+        <div class="card-image-placeholder" style="background: @Alojamiento.GradienteColor; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;">
+            <span style="font-size: 42px; line-height: 1;">🏠</span>
+            <span style="font-size: 12px; font-weight: 500; color: rgba(255, 255, 255, 0.85);">Sin imagen</span>
+        </div>
     }
 
     <div class="card-body">

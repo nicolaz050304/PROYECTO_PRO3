@@ -18,7 +18,7 @@ public class AlojamientoImpl implements AlojamientoIDAO {
                 "latitud, longitud, estado_validacion, id_admin_validador, " + // Nuevos campos
                 "num_pisos, con_patio, num_cocheras, num_habitaciones_casa, " +
                 "num_piso, nro_departamento, nro_habitaciones_departamento, " +
-                "nro_habitacion, tipo_cama, con_banho_privado FROM alojamiento WHERE id_alojamiento = ?";
+                "nro_habitacion, tipo_cama, con_banho_privado, imagen_url FROM alojamiento WHERE id_alojamiento = ?";
 
         try (Connection connection = DBManager.getInstance().getConnection();
              PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -61,6 +61,7 @@ public class AlojamientoImpl implements AlojamientoIDAO {
                         alojamiento.setLatitud(rs.getDouble("latitud"));
                         alojamiento.setLongitud(rs.getDouble("longitud"));
                         alojamiento.setEstadoValidacion(rs.getString("estado_validacion"));
+                        alojamiento.setImagenUrl(rs.getString("imagen_url"));
                     }
                     return alojamiento;
                 }
@@ -77,8 +78,8 @@ public class AlojamientoImpl implements AlojamientoIDAO {
         String sql = "INSERT INTO alojamiento (nombre, descripcion, precio_por_noche, direccion, capacidad_max, " +
                 "calificacion_promedio, disponibilidad, pais, id_duenho, latitud, longitud, estado_validacion, " +
                 "tipo, num_pisos, con_patio, num_cocheras, num_habitaciones_casa, num_piso, " +
-                "nro_departamento, nro_habitaciones_departamento, nro_habitacion, tipo_cama, con_banho_privado) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "nro_departamento, nro_habitaciones_departamento, nro_habitacion, tipo_cama, con_banho_privado, imagen_url) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = DBManager.getInstance().getConnection();
              PreparedStatement pstmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -120,6 +121,9 @@ public class AlojamientoImpl implements AlojamientoIDAO {
                 pstmt.setBoolean(23, h.isConbanhoPrivado());
             }
 
+            // 24: imagen_url (última columna; no afecta los índices anteriores)
+            pstmt.setString(24, al.getImagenUrl());
+
             int affectedRows = pstmt.executeUpdate();
             if (affectedRows > 0) {
                 try (ResultSet rs = pstmt.getGeneratedKeys()) {
@@ -155,7 +159,7 @@ public class AlojamientoImpl implements AlojamientoIDAO {
                 "latitud, longitud, estado_validacion, id_admin_validador, " +
                 "num_pisos, con_patio, num_cocheras, num_habitaciones_casa, " +
                 "num_piso, nro_departamento, nro_habitaciones_departamento, " +
-                "nro_habitacion, tipo_cama, con_banho_privado FROM alojamiento";
+                "nro_habitacion, tipo_cama, con_banho_privado, imagen_url FROM alojamiento";
 
         try (Connection connection = DBManager.getInstance().getConnection();
              Statement stm = connection.createStatement();
@@ -198,6 +202,7 @@ public class AlojamientoImpl implements AlojamientoIDAO {
                     al.setLatitud(rs.getDouble("latitud"));
                     al.setLongitud(rs.getDouble("longitud"));
                     al.setEstadoValidacion(rs.getString("estado_validacion"));
+                    al.setImagenUrl(rs.getString("imagen_url"));
                     lista.add(al);
                 }
             }
@@ -214,8 +219,9 @@ public class AlojamientoImpl implements AlojamientoIDAO {
                 "latitud=?, longitud=?, estado_validacion=?, " + // 10, 11, 12
                 "num_pisos=?, con_patio=?, num_cocheras=?, num_habitaciones_casa=?, " + // 13-16
                 "num_piso=?, nro_departamento=?, nro_habitaciones_departamento=?, " + // 17-19
-                "nro_habitacion=?, tipo_cama=?, con_banho_privado=? " + // 20-22
-                "WHERE id_alojamiento=?"; // 23
+                "nro_habitacion=?, tipo_cama=?, con_banho_privado=?, " + // 20-22
+                "imagen_url=? " + // 23
+                "WHERE id_alojamiento=?"; // 24
 
         try (Connection connection = DBManager.getInstance().getConnection();
              PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -255,8 +261,11 @@ public class AlojamientoImpl implements AlojamientoIDAO {
                 pstmt.setBoolean(22, h.isConbanhoPrivado());
             }
 
-            // 23: El ID para el WHERE
-            pstmt.setInt(23, al.getIdAlojamiento());
+            // 23: imagen_url (último campo del SET)
+            pstmt.setString(23, al.getImagenUrl());
+
+            // 24: El ID para el WHERE
+            pstmt.setInt(24, al.getIdAlojamiento());
 
             pstmt.executeUpdate();
             return al;

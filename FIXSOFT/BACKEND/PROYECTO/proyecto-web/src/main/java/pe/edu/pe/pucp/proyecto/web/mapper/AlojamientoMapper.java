@@ -59,6 +59,7 @@ public final class AlojamientoMapper {
 
         dto.setLatitud(al.getLatitud());
         dto.setLongitud(al.getLongitud());
+        dto.setImagenUrl(al.getImagenUrl());
         return dto;
     }
 
@@ -179,6 +180,7 @@ public final class AlojamientoMapper {
         al.setDisponibilidad(!"Pausado".equalsIgnoreCase(dto.getEstadoPublicacion()));
         al.setLatitud(dto.getLatitud());
         al.setLongitud(dto.getLongitud());
+        al.setImagenUrl(dto.getImagenUrl());
 
         // pais es NOT NULL en BD: ESTE era el campo que faltaba y disparaba el 500.
         // Default "Perú" si el DTO no lo trae (proyecto Perú; todos los sembrados son Perú).

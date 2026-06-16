@@ -27,6 +27,7 @@ public abstract class Alojamiento implements IConsultable {
     private double longitud;        // Para Google Maps (RF10)
     private String estadoValidacion; // PENDIENTE, APROBADO, RECHAZADO
     private Usuario adminValidador;  // Quién autorizó el alojamiento
+    private String imagenUrl;        // URL de la imagen (columna imagen_url)
 
     public Alojamiento() {
         this.estadoValidacion = "PENDIENTE"; // Valor por defecto
@@ -59,6 +60,9 @@ public abstract class Alojamiento implements IConsultable {
 
     public Usuario getAdminValidador() { return adminValidador; }
     public void setAdminValidador(Usuario adminValidador) { this.adminValidador = adminValidador; }
+
+    public String getImagenUrl() { return imagenUrl; }
+    public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
 
     // --- TUS GETTERS Y SETTERS ORIGINALES ---
     public int getIdAlojamiento() { return idAlojamiento; }
