@@ -122,9 +122,9 @@
                         }
                         <div class="nav-dd-divider"></div>
 
-                        <button class="nav-dropdown-item nav-dd-logout" @onclick="CerrarSesion">
+                        <a href="/auth/logout" class="nav-dropdown-item nav-dd-logout">
                             <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-                        </button>
+                        </a>
                     </div>
                 }
             }
@@ -482,10 +482,4 @@
     private void SeleccionarMoneda(string codigo) { AppState.SetMoneda(codigo); _menuMoneda = false; StateHasChanged(); }
     private void CerrarMenus() { _menuVisitante = false; _menuUsuario = false; _menuMoneda = false; StateHasChanged(); }
 
-    private void CerrarSesion()
-    {
-        AppState.Logout();
-        CerrarMenus();
-        Navigation.NavigateTo("/");
-    }
 }

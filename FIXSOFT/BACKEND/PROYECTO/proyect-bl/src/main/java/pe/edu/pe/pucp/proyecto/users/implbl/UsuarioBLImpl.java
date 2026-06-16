@@ -1,6 +1,7 @@
 package pe.edu.pe.pucp.proyecto.users.implbl;
 
 
+import pe.edu.pe.pucp.proyecto.security.PasswordHasher;
 import pe.edu.pe.pucp.proyecto.tipoDoc.TipoDocumento;
 import pe.edu.pe.pucp.proyecto.users.Usuario;
 import pe.edu.pe.pucp.proyecto.users.bl.UsuarioBL;
@@ -27,6 +28,11 @@ public class UsuarioBLImpl implements UsuarioBL {
         if (usuario.getTipoDocumento() == TipoDocumento.DNI &&
                 (usuario.getNumeroDocumento() == null || usuario.getNumeroDocumento().length() != 8)) {
             throw new RuntimeException("Error: El DNI debe tener exactamente 8 dígitos.");
+        }
+
+        // Hashea la contraseña antes de persistir, si aún no está hasheada.
+        if (usuario.getPassword() != null && !PasswordHasher.looksHashed(usuario.getPassword())) {
+            usuario.setPassword(PasswordHasher.hash(usuario.getPassword()));
         }
 
         // Si pasa las reglas, llamamos al DAO
@@ -62,7 +68,6 @@ public class UsuarioBLImpl implements UsuarioBL {
 
     @Override
     public Usuario autenticar(String correo, String password) {
-        // Login plano: el hashing se agregará en un paso posterior.
         if (correo == null || password == null) {
             return null;
         }
@@ -70,10 +75,18 @@ public class UsuarioBLImpl implements UsuarioBL {
         if (usuario == null) {
             return null; // no existe ese correo
         }
-        // Comparación en texto plano (tal como está almacenado hoy)
-        if (password.equals(usuario.getPassword())) {
-            return usuario;
+        String almacenada = usuario.getPassword();
+        if (almacenada == null) {
+            return null;
         }
-        return null; // contraseña incorrecta
+
+        boolean coincide;
+        if (PasswordHasher.looksHashed(almacenada)) {
+            coincide = PasswordHasher.verify(password, almacenada); // hash BCrypt
+        } else {
+            coincide = almacenada.equals(password); // legacy en texto plano (compatibilidad)
+        }
+
+        return coincide ? usuario : null;
     }
 }

@@ -1,3 +1,9 @@
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@using BunkiApp.Models
+@inject BunkiApp.Models.AppState AppState
+@inject AuthenticationStateProvider AuthProvider
+
 <Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
         <RouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)" />
@@ -17,3 +23,22 @@
         </LayoutView>
     </NotFound>
 </Router>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var estado = await AuthProvider.GetAuthenticationStateAsync();
+        var user = estado.User;
+        if (user.Identity?.IsAuthenticated == true && !AppState.EstaAutenticado)
+        {
+            AppState.LoginConUsuario(new Usuario
+            {
+                Id = int.TryParse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var id) ? id : 0,
+                Email = user.FindFirst("Email")?.Value ?? user.Identity.Name ?? "",
+                Nombre = user.FindFirst("Nombre")?.Value ?? "",
+                Apellido = user.FindFirst("Apellido")?.Value ?? "",
+                TipoUsuario = user.FindFirst(ClaimTypes.Role)?.Value ?? "INVITADO"
+            });
+        }
+    }
+}

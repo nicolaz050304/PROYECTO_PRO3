@@ -1,6 +1,7 @@
 using BunkiApp.Components;
 using BunkiApp.Models;
 using BunkiApp.Services;
+using BunkiApp.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,6 +54,9 @@ builder.Services.AddHttpClient<ResenaServiceRest>(client =>
 });
 builder.Services.AddScoped<ResenaProvider>();
 
+// --- Autenticación por cookie (ClaimsPrincipal) ---
+builder.Services.AddCookieAuth();
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
@@ -63,9 +67,15 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
    .AddInteractiveServerRenderMode();
+
+app.MapAuthEndpoints();
 
 app.Run();

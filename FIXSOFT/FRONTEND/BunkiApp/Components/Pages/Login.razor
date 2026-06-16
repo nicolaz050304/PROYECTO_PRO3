@@ -1,9 +1,5 @@
 @page "/login"
-@rendermode InteractiveServer
-@inject NavigationManager Navigation
 @layout EmptyLayout
-@inject BunkiApp.Models.AppState AppState
-@inject BunkiApp.Services.UsuarioProvider UsuarioProvider
 <PageTitle>Bunki - Inicia Sesión</PageTitle>
 
 <header>
@@ -16,24 +12,20 @@
     <div class="container" style="max-width:420px;">
         <h2 class="section-title">Inicia Sesión</h2>
 
-        @if (!string.IsNullOrEmpty(_error))
+        @if (Error is not null)
         {
-            <AlertMessage Tipo="danger" Mensaje="@_error" />
+            <AlertMessage Tipo="danger" Mensaje="@MensajeError" />
         }
 
-        <EditForm Model="_form" OnValidSubmit="Ingresar">
-            <DataAnnotationsValidator />
-
+        <form action="/auth/login" method="post">
             <div class="form-group">
                 <label>Correo Electrónico</label>
-                <InputText @bind-Value="_form.Email" type="email" placeholder="tu@ejemplo.com" />
-                <ValidationMessage For="() => _form.Email" class="validation-message" />
+                <input name="correo" type="email" placeholder="tu@ejemplo.com" required />
             </div>
 
             <div class="form-group">
                 <label>Contraseña</label>
-                <InputText @bind-Value="_form.Password" type="password" placeholder="••••••••" />
-                <ValidationMessage For="() => _form.Password" class="validation-message" />
+                <input name="contrasena" type="password" placeholder="••••••••" required />
             </div>
 
             <div class="form-group" style="text-align:right;">
@@ -42,11 +34,8 @@
                 </a>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-large" disabled="@_cargando">
-                @if (_cargando) { <i class="fas fa-spinner fa-spin"></i> }
-                Inicia Sesión
-            </button>
-        </EditForm>
+            <button type="submit" class="btn btn-primary btn-large">Inicia Sesión</button>
+        </form>
 
         <p style="text-align:center;margin-top:20px;color:var(--text-light);">
             ¿No tienes cuenta?
@@ -58,37 +47,8 @@
 <footer><div class="container"><p>&copy; 2026 Bunki. Todos los derechos reservados.</p></div></footer>
 
 @code {
-    private readonly LoginForm _form  = new();
-    private string _error  = "";
-    private bool   _cargando = false;
-
-    private async Task Ingresar()
-    {
-        _cargando = true;
-        _error    = "";
-
-        try
-        {
-            // Login real contra el backend: valida correo + contraseña.
-            var usuario = await UsuarioProvider.LoginAsync(_form.Email, _form.Password);
-
-            if (usuario is null)
-            {
-                _error = "Correo o contraseña incorrectos.";
-                return;   // no navega
-            }
-
-            // Guarda el usuario real autenticado (el rol viene de tipoUsuario).
-            AppState.LoginConUsuario(usuario);
-            Navigation.NavigateTo("/");
-        }
-        catch
-        {
-            _error = "No se pudo conectar con el servidor. Inténtalo de nuevo.";
-        }
-        finally
-        {
-            _cargando = false;
-        }
-    }
+    [SupplyParameterFromQuery] public int? Error { get; set; }
+    private string MensajeError => Error == 2
+        ? "No se pudo conectar con el servidor. Inténtalo de nuevo."
+        : "Correo o contraseña incorrectos.";
 }
