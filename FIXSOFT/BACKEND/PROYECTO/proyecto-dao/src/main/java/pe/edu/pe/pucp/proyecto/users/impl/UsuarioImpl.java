@@ -79,6 +79,81 @@ public class UsuarioImpl implements UsuarioIDAO {
         return null;
     }
 
+    /**
+     * Igual que load() pero filtrando por correo (UNIQUE en BD). Reutiliza la
+     * misma lógica de discriminación de subclase (tipo_usuario) y poblado del
+     * Set<roles>. Devuelve null si no existe. NO transforma el password.
+     */
+    @Override
+    public Usuario buscarPorCorreo(String correo) {
+        String sql = "SELECT id_usuario, username, correo, password, nombre, apellido_paterno, " +
+                "apellido_materno, pais, estado_sesion, estado_actual, telefono, " +
+                "puntuacion_promedio, tipo_documento, numero_documento, nivel_acceso, " +
+                "fecha_contratacion, area_responsabilidad, tipo_usuario, estado_validacion, " +
+                "id_admin_validador FROM usuario WHERE correo = ?";
+
+        try (Connection connection = DBManager.getInstance().getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(sql)) {
+
+            pstmt.setString(1, correo);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    Usuario usuario = null;
+                    String rolesRaw = rs.getString("tipo_usuario");
+
+                    if (rolesRaw.contains("ADMINISTRADOR")) {
+                        Administrador admin = new Administrador();
+                        admin.setNivelAcceso(rs.getInt("nivel_acceso"));
+                        admin.setFechaContratacion(rs.getDate("fecha_contratacion"));
+                        admin.setAreaResponsabilidad(rs.getString("area_responsabilidad"));
+                        usuario = admin;
+                    } else if (rolesRaw.contains("ANFITRION")) {
+                        Anfitrion anfitrion = new Anfitrion();
+                        anfitrion.setTelefono(rs.getString("telefono"));
+                        anfitrion.setPuntuacionPromedio(rs.getDouble("puntuacion_promedio"));
+                        usuario = anfitrion;
+                    } else {
+                        Invitado invitado = new Invitado();
+                        invitado.setTelefono(rs.getString("telefono"));
+                        usuario = invitado;
+                    }
+
+                    if (usuario != null) {
+                        usuario.setIdUsuario(rs.getInt("id_usuario"));
+                        usuario.setUsername(rs.getString("username"));
+                        usuario.setCorreo(rs.getString("correo"));
+                        usuario.setPassword(rs.getString("password"));
+                        usuario.setNombre(rs.getString("nombre"));
+                        usuario.setApellidoPaterno(rs.getString("apellido_paterno"));
+                        usuario.setApellidoMaterno(rs.getString("apellido_materno"));
+                        usuario.setPais(rs.getString("pais"));
+                        usuario.setEstadoSesion(rs.getBoolean("estado_sesion"));
+                        usuario.setEstadoActual(EstadoUsuario.valueOf(rs.getString("estado_actual")));
+                        usuario.setNumeroDocumento(rs.getString("numero_documento"));
+                        usuario.setEstadoValidacion(rs.getString("estado_validacion"));
+                        usuario.setTelefono(rs.getString("telefono"));
+
+                        if (rolesRaw != null && !rolesRaw.isEmpty()) {
+                            for (String rol : rolesRaw.split(",")) {
+                                usuario.agregarRol(rol);
+                            }
+                        }
+
+                        String tDoc = rs.getString("tipo_documento");
+                        if (tDoc != null) {
+                            usuario.setTipoDocumento(TipoDocumento.valueOf(tDoc));
+                        }
+                    }
+                    return usuario;
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return null;
+    }
+
     @Override
     public Usuario update(Usuario usuario) {
         String sql = "UPDATE usuario SET username=?, correo=?, password=?, nombre=?, apellido_paterno=?, " +

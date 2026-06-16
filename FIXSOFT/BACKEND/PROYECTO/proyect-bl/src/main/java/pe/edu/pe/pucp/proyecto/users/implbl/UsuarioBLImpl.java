@@ -59,4 +59,21 @@ public class UsuarioBLImpl implements UsuarioBL {
         daoUsuario.remove(usuario);
         return 1;
     }
+
+    @Override
+    public Usuario autenticar(String correo, String password) {
+        // Login plano: el hashing se agregará en un paso posterior.
+        if (correo == null || password == null) {
+            return null;
+        }
+        Usuario usuario = daoUsuario.buscarPorCorreo(correo);
+        if (usuario == null) {
+            return null; // no existe ese correo
+        }
+        // Comparación en texto plano (tal como está almacenado hoy)
+        if (password.equals(usuario.getPassword())) {
+            return usuario;
+        }
+        return null; // contraseña incorrecta
+    }
 }

@@ -15,5 +15,8 @@ public interface UsuarioBL extends IBL<Usuario, Integer> {
     int modificar(Usuario usuario);
 
     int eliminar(Usuario usuario);
-    // Aquí puedes definir métodos como autenticar o validarCorreo
+
+    // Login plano: busca por correo y compara password tal cual (el hashing vendrá después).
+    // Devuelve el usuario si las credenciales coinciden; null si el correo no existe o no coincide.
+    Usuario autenticar(String correo, String password);
 }

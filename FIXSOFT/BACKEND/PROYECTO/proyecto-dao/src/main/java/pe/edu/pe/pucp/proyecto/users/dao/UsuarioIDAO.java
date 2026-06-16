@@ -7,4 +7,7 @@ import java.util.List;
 
 public interface UsuarioIDAO extends IDAO <Usuario,Integer>{
     List<Usuario> listAll();
+
+    // Búsqueda por correo (necesaria para login). Devuelve null si no existe.
+    Usuario buscarPorCorreo(String correo);
 }
