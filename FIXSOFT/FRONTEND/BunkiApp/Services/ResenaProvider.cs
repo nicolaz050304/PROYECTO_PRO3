@@ -37,6 +37,18 @@ namespace BunkiApp.Services
             return _mock.ObtenerAlojamiento(alojamientoId)?.Resenas ?? new();
         }
 
+        // Moderación admin: lista TODAS (incl. ocultas). Sin fallback a mock; si falla, lista vacía.
+        public async Task<List<Resena>> ListarTodasAsync()
+        {
+            try { return await _rest.ListarTodasAsync(); }
+            catch (Exception ex) { _log.LogWarning(ex, "REST no disponible (listar todas resenas)"); return new(); }
+        }
+
+        // Moderación admin (escritura): ocultar (DELETE -> activo=0) y reactivar (activo=1).
+        // Sin fallback: si el REST falla, propaga para que la UI avise.
+        public async Task OcultarAsync(int id) => await _rest.EliminarAsync(id);
+        public async Task ReactivarAsync(int id) => await _rest.ReactivarAsync(id);
+
         // Registro (escritura) vía REST: POST ResenaRS. A diferencia de las lecturas, aquí
         // NO hay fallback silencioso: si el REST falla, propagamos la excepción para que la
         // UI muestre el error (no tiene sentido "guardar" en un mock que no persiste).

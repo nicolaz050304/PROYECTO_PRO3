@@ -11,4 +11,9 @@ public interface ResenhaIDAO extends IDAO<Resenha, Integer> {
     List<Resenha> listarPorAlojamiento(int idAlojamiento);
     // ¡AÑADE ESTA LÍNEA!
     List<Resenha> listAll();
+
+    // Moderación admin: todas las reseñas (activas e inactivas), sin filtrar por activo.
+    List<Resenha> listarTodasIncluidasInactivas();
+    // Moderación admin: reactiva una reseña oculta (activo = 1). Inverso de remove().
+    void reactivar(Resenha resenha);
 }

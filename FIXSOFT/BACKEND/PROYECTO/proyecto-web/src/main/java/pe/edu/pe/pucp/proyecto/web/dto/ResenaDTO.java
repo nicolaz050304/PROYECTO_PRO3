@@ -19,6 +19,7 @@ public class ResenaDTO {
     private String comentario;
     private String fechaPublicacion;
     private int alojamientoId;
+    private String alojamientoNombre;
     private int reservaId;
     private String tipoAutor;
     private boolean activo;
@@ -43,6 +44,9 @@ public class ResenaDTO {
 
     public int getAlojamientoId() { return alojamientoId; }
     public void setAlojamientoId(int alojamientoId) { this.alojamientoId = alojamientoId; }
+
+    public String getAlojamientoNombre() { return alojamientoNombre; }
+    public void setAlojamientoNombre(String alojamientoNombre) { this.alojamientoNombre = alojamientoNombre; }
 
     public int getReservaId() { return reservaId; }
     public void setReservaId(int reservaId) { this.reservaId = reservaId; }

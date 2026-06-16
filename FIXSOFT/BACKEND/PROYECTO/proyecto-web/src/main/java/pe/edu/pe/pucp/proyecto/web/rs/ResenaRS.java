@@ -107,6 +107,38 @@ public class ResenaRS {
         return salida;
     }
 
+    /**
+     * GET ResenaRS/todas -> TODAS las reseñas, incluidas las inactivas (ocultas).
+     * Para moderación admin: el ResenaDTO lleva 'activo', así el frontend distingue
+     * activas de ocultas. Cachés compartidas (anti N+1), igual que el GET normal.
+     */
+    @GET
+    @Path("todas")
+    public List<ResenaDTO> listarTodasIncluidasInactivas() {
+        Map<Integer, Reserva> reservaCache = new HashMap<>();
+        Map<Integer, Alojamiento> aloCache = new HashMap<>();
+        Map<Integer, String> usuarioCache = new HashMap<>();
+        List<ResenaDTO> salida = new ArrayList<>();
+        List<Resenha> lista = resenhaBL.listarTodasIncluidasInactivas();
+        if (lista != null) {
+            for (Resenha r : lista) {
+                salida.add(ResenaMapper.toDTO(r, reservaBL, alojamientoBL, usuarioBL,
+                        reservaCache, aloCache, usuarioCache));
+            }
+        }
+        return salida;
+    }
+
+    /** PUT ResenaRS/{id}/reactivar -> reactiva (activo=1) una reseña oculta. */
+    @PUT
+    @Path("{id}/reactivar")
+    public Response reactivar(@PathParam("id") int id) {
+        Resenha r = new Resenha();
+        r.setIdResenha(id);
+        resenhaBL.reactivar(r);
+        return Response.ok().build();
+    }
+
     /** POST ResenaRS -> crea; devuelve el DTO creado con su id. */
     @POST
     public Response crear(ResenaDTO dto) {

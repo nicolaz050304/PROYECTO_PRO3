@@ -1,0 +1,138 @@
+@page "/admin/moderar-resenas"
+@layout AdminLayout
+@rendermode InteractiveServer
+@inject ResenaProvider ResenaProvider
+@inject NavigationManager Navigation
+@inject BunkiApp.Models.AppState AppState
+
+<PageTitle>Bunki Admin · Moderar Reseñas</PageTitle>
+
+<!-- ENCABEZADO -->
+<div class="admin-dash-head">
+    <div>
+        <h1 class="admin-page-title">Moderación de reseñas</h1>
+        <p class="admin-page-sub admin-page-sub--flush">Revisa, oculta o reactiva reseñas de la plataforma.</p>
+    </div>
+    <span class="admin-pill"><i class="fas fa-star-half-stroke"></i> Reseñas</span>
+</div>
+
+@if (!string.IsNullOrEmpty(MensajeAccion))
+{
+    <div class="mod-resena-toast"><i class="fas fa-circle-check"></i> @MensajeAccion</div>
+}
+
+@if (Cargando)
+{
+    <p class="host-reviews-loading"><i class="fas fa-spinner fa-spin"></i> Cargando reseñas...</p>
+}
+else
+{
+    <!-- RESUMEN -->
+    <div class="mod-resena-summary">
+        <div class="mod-resena-stat">
+            <span class="mod-resena-stat-num">@Resenas.Count</span>
+            <span class="mod-resena-stat-cap">Total</span>
+        </div>
+        <div class="mod-resena-stat">
+            <span class="mod-resena-stat-num mod-ok">@Resenas.Count(r => r.Activo)</span>
+            <span class="mod-resena-stat-cap">Visibles</span>
+        </div>
+        <div class="mod-resena-stat">
+            <span class="mod-resena-stat-num mod-off">@Resenas.Count(r => !r.Activo)</span>
+            <span class="mod-resena-stat-cap">Ocultas</span>
+        </div>
+    </div>
+
+    @if (Resenas.Count == 0)
+    {
+        <div class="host-reviews-empty">
+            <i class="fas fa-comment-dots"></i>
+            <p>No hay reseñas en la plataforma.</p>
+        </div>
+    }
+    else
+    {
+        <div class="mod-resena-list">
+            @foreach (var r in Resenas)
+            {
+                <div class="mod-resena-card @(r.Activo ? "" : "is-oculta")">
+                    <div class="mod-resena-card-head">
+                        <div>
+                            <strong class="host-review-author">@r.AutorNombre</strong>
+                            <div class="star host-review-stars">@GenerarEstrellas(r.Estrellas)</div>
+                        </div>
+                        <div class="mod-resena-meta-right">
+                            @if (r.Activo)
+                            {
+                                <span class="mod-resena-badge mod-resena-badge--visible">Visible</span>
+                            }
+                            else
+                            {
+                                <span class="mod-resena-badge mod-resena-badge--oculta">Oculta</span>
+                            }
+                            <span class="host-review-date">@(r.FechaPublicacion?.ToString("dd MMM yyyy") ?? "")</span>
+                        </div>
+                    </div>
+
+                    <p class="host-review-comment">@r.Comentario</p>
+
+                    <div class="mod-resena-card-foot">
+                        <div class="mod-resena-tags">
+                            <span class="mod-resena-tag"><i class="fas fa-user-tag"></i> @r.TipoAutor</span>
+                            <span class="mod-resena-tag"><i class="fas fa-house"></i> @(string.IsNullOrWhiteSpace(r.AlojamientoNombre) ? $"Alojamiento #{r.AlojamientoId}" : r.AlojamientoNombre)</span>
+                        </div>
+
+                        @if (r.Activo)
+                        {
+                            <button class="btn btn-small btn-secondary" @onclick="() => Ocultar(r.Id)">
+                                <i class="fas fa-eye-slash"></i> Ocultar
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-small btn-primary" @onclick="() => Reactivar(r.Id)">
+                                <i class="fas fa-rotate-left"></i> Reactivar
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+}
+
+@code {
+    private List<Resena> Resenas = new();
+    private bool Cargando = true;
+    private string? MensajeAccion;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Pantalla solo para admin.
+        if (!AppState.EstaAutenticado || !AppState.EsAdmin()) { Navigation.NavigateTo("/"); return; }
+
+        Resenas = await ResenaProvider.ListarTodasAsync();
+        Cargando = false;
+    }
+
+    private async Task Ocultar(int id)
+    {
+        await ResenaProvider.OcultarAsync(id);
+        var r = Resenas.FirstOrDefault(x => x.Id == id);
+        if (r != null) r.Activo = false;
+        MensajeAccion = "Reseña ocultada.";
+        StateHasChanged();
+    }
+
+    private async Task Reactivar(int id)
+    {
+        await ResenaProvider.ReactivarAsync(id);
+        var r = Resenas.FirstOrDefault(x => x.Id == id);
+        if (r != null) r.Activo = true;
+        MensajeAccion = "Reseña reactivada.";
+        StateHasChanged();
+    }
+
+    private static string GenerarEstrellas(int rating)
+        => string.Concat(Enumerable.Range(0, 5).Select(i => i < rating ? "★" : "☆"));
+}

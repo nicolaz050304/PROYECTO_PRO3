@@ -76,6 +76,13 @@ public final class ResenaMapper {
                 ? reserva.getAlojamiento().getIdAlojamiento() : 0;
         dto.setAlojamientoId(alojamientoId);
 
+        // Reusa el MISMO lookup cacheado (buscarAlojamiento/aloCache) que ya emplea
+        // resolverAutorNombre para ANFITRION: aquí poblamos la caché y aprovechamos el
+        // objeto Alojamiento para el nombre. No hay lookup extra (la resolución del autor
+        // lo recupera de la caché). null si no se pudo resolver -> el frontend hace fallback.
+        Alojamiento alojamiento = buscarAlojamiento(alojamientoId, alojamientoBL, aloCache);
+        dto.setAlojamientoNombre(alojamiento != null ? alojamiento.getNombre() : null);
+
         dto.setAutorNombre(resolverAutorNombre(tipoAutor, reserva, alojamientoId,
                 alojamientoBL, usuarioBL, aloCache, usuarioCache));
 

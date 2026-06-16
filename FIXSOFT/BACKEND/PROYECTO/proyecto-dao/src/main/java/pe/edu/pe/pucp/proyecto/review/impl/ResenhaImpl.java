@@ -180,4 +180,57 @@ public class ResenhaImpl implements ResenhaIDAO {
         }
         return list;
     }
+
+    /**
+     * Igual que listAll() pero SIN el filtro "WHERE activo = 1": trae activas e
+     * inactivas (para la moderación admin). Reconstruye cada Resenha igual que listAll,
+     * incluyendo el flag activo y el objeto Reserva con su id.
+     */
+    @Override
+    public List<Resenha> listarTodasIncluidasInactivas() {
+        String sql = "SELECT id_resenha, calificacion, comentario, fecha_publicacion, activo, " +
+                "id_reserva, tipo_autor FROM resenha";
+
+        List<Resenha> list = new ArrayList<>();
+
+        try (Connection con = DBManager.getInstance().getConnection();
+             PreparedStatement pst = con.prepareStatement(sql);
+             ResultSet rs = pst.executeQuery()) {
+
+            while (rs.next()) {
+                Resenha res = new Resenha();
+                res.setIdResenha(rs.getInt("id_resenha"));
+                res.setCalificacion(rs.getInt("calificacion"));
+                res.setComentario(rs.getString("comentario"));
+                res.setFechaPublicacion(rs.getDate("fecha_publicacion"));
+                res.setActivo(rs.getBoolean("activo"));
+                res.setTipoAutor(rs.getString("tipo_autor"));
+
+                Reserva r = new Reserva();
+                r.setIdReserva(rs.getInt("id_reserva"));
+                res.setReserva(r);
+
+                list.add(res);
+            }
+        } catch (SQLException ex) {
+            System.err.println("ERROR al listar todas las reseñas (incl. inactivas): " + ex.getMessage());
+        }
+        return list;
+    }
+
+    /** Reactiva una reseña oculta (activo = 1). Inverso de remove(). */
+    @Override
+    public void reactivar(Resenha resenha) {
+        String sql = "UPDATE resenha SET activo = 1 WHERE id_resenha = ?";
+        try (Connection con = DBManager.getInstance().getConnection();
+             PreparedStatement pst = con.prepareStatement(sql)) {
+
+            pst.setInt(1, resenha.getIdResenha());
+            pst.executeUpdate();
+            resenha.setActivo(true);
+
+        } catch (SQLException ex) {
+            System.err.println("ERROR al reactivar reseña: " + ex.getMessage());
+        }
+    }
 }

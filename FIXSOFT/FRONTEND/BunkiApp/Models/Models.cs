@@ -45,6 +45,7 @@ public class Resena
     public string Comentario { get; set; } = "";
     public DateTime? FechaPublicacion { get; set; }
     public int AlojamientoId { get; set; }
+    public string? AlojamientoNombre { get; set; }
     public int ReservaId { get; set; }
     public string TipoAutor { get; set; } = "INVITADO";
     public bool Activo { get; set; } = true;

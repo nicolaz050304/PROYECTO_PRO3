@@ -22,6 +22,14 @@ namespace BunkiApp.Services
         public async Task<List<Resena>> ListarAsync()
             => await _http.GetFromJsonAsync<List<Resena>>(Endpoint) ?? new();
 
+        // Moderación admin: TODAS las reseñas, incluidas las ocultas (campo Activo).
+        public async Task<List<Resena>> ListarTodasAsync()
+            => await _http.GetFromJsonAsync<List<Resena>>($"{Endpoint}/todas") ?? new();
+
+        // Moderación admin: reactiva una reseña oculta (activo=1).
+        public async Task ReactivarAsync(int id)
+            => (await _http.PutAsync($"{Endpoint}/{id}/reactivar", null)).EnsureSuccessStatusCode();
+
         public async Task<Resena?> ObtenerPorIdAsync(int id)
             => await _http.GetFromJsonAsync<Resena>($"{Endpoint}/{id}");
 

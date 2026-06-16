@@ -71,4 +71,15 @@ public class ResenhaBLImpl implements ResenhaBL {
         daoResenha.remove(resenha);
         return 1;
     }
+
+    @Override
+    public List<Resenha> listarTodasIncluidasInactivas() {
+        return daoResenha.listarTodasIncluidasInactivas();
+    }
+
+    @Override
+    public int reactivar(Resenha resenha) {
+        daoResenha.reactivar(resenha);
+        return 1;
+    }
 }
