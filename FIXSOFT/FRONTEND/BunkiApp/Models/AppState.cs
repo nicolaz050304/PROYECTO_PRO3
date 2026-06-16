@@ -57,9 +57,19 @@ public class AppState // <-- LE QUITAMOS EL STATIC AQUÍ
     public string FormatearPrecio(decimal montoPen) =>
         $"{MonedaActual.Simbolo} {ConvertirPrecio(montoPen).ToString("N0", CulturaPe)}";
 
-    public bool EsAdmin()
+    // EsAdmin ahora mira el ROL real (tipoUsuario), no el dominio del correo:
+    // todos los correos son @bunki.pe, así que el dominio no discrimina nada.
+    public bool EsAdmin() =>
+        UsuarioActual?.TipoUsuario?.Equals("ADMINISTRADOR", StringComparison.OrdinalIgnoreCase) ?? false;
+
+    public bool EsAnfitrion() =>
+        UsuarioActual?.TipoUsuario?.Equals("ANFITRION", StringComparison.OrdinalIgnoreCase) ?? false;
+
+    // Login real: guarda el usuario ya autenticado por el backend.
+    public void LoginConUsuario(Usuario u)
     {
-        return UsuarioActual.Email?.EndsWith("@bunki.pe", StringComparison.OrdinalIgnoreCase) ?? false;
+        UsuarioActual = u;
+        OnChange?.Invoke();
     }
 
     public bool Login(string nombre, string apellido, string email, string tipoUsuario = "Usuario")

@@ -19,6 +19,16 @@ namespace BunkiApp.Services
                 new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
+        // Login real: POST UsuarioRS/login con {correo, password}.
+        // 200 -> usuario autenticado (sin password); 401 -> credenciales inválidas -> null.
+        public async Task<Usuario?> LoginAsync(string correo, string password)
+        {
+            var payload = new { correo, password };
+            var resp = await _http.PostAsJsonAsync($"{Endpoint}/login", payload);
+            if (!resp.IsSuccessStatusCode) return null;   // 401 -> credenciales inválidas
+            return await resp.Content.ReadFromJsonAsync<Usuario>();
+        }
+
         public async Task<List<Usuario>> ListarAsync()
             => await _http.GetFromJsonAsync<List<Usuario>>(Endpoint) ?? new();
 

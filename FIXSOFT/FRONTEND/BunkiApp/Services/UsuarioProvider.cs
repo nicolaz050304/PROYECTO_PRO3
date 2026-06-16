@@ -21,6 +21,11 @@ namespace BunkiApp.Services
             _log = log;
         }
 
+        // Login real: sin fallback a mock. Un 401 devuelve null (credenciales inválidas);
+        // un fallo de red propaga la excepción para que la UI avise.
+        public async Task<Usuario?> LoginAsync(string correo, string password)
+            => await _rest.LoginAsync(correo, password);
+
         public async Task<List<Usuario>> ListarAsync()
         {
             try

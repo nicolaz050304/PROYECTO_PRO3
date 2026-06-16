@@ -3,6 +3,7 @@
 @inject NavigationManager Navigation
 @layout EmptyLayout
 @inject BunkiApp.Models.AppState AppState
+@inject BunkiApp.Services.UsuarioProvider UsuarioProvider
 <PageTitle>Bunki - Inicia Sesión</PageTitle>
 
 <header>
@@ -65,15 +66,29 @@
     {
         _cargando = true;
         _error    = "";
-        await Task.Delay(400);
 
-        // Determinar tipo de usuario por dominio
-        string tipo = _form.Email.TrimEnd().EndsWith("@bunki.pe", StringComparison.OrdinalIgnoreCase)
-            ? "Admin" : "Usuario";
+        try
+        {
+            // Login real contra el backend: valida correo + contraseña.
+            var usuario = await UsuarioProvider.LoginAsync(_form.Email, _form.Password);
 
-        // AppState.Login guarda el usuario globalmente
-        AppState.Login("Usuario", "", _form.Email, tipo);
+            if (usuario is null)
+            {
+                _error = "Correo o contraseña incorrectos.";
+                return;   // no navega
+            }
 
-        Navigation.NavigateTo("/");   // sin forceLoad — AppState es estático
+            // Guarda el usuario real autenticado (el rol viene de tipoUsuario).
+            AppState.LoginConUsuario(usuario);
+            Navigation.NavigateTo("/");
+        }
+        catch
+        {
+            _error = "No se pudo conectar con el servidor. Inténtalo de nuevo.";
+        }
+        finally
+        {
+            _cargando = false;
+        }
     }
 }

@@ -84,13 +84,26 @@ public class Usuario
 {
     public int Id { get; set; }
     public string Nombre { get; set; } = "";
+    // El backend manda "apellidoPaterno"; lo mapeamos al Apellido existente.
+    [JsonPropertyName("apellidoPaterno")]
     public string Apellido { get; set; } = "";
+    // El backend manda "apellidoMaterno" (lo capturamos por completitud).
+    [JsonPropertyName("apellidoMaterno")]
+    public string ApellidoMaterno { get; set; } = "";
+    // El backend usa "correo"; el resto del front sigue usando .Email sin cambios.
+    [JsonPropertyName("correo")]
     public string Email { get; set; } = "";
     public string Telefono { get; set; } = "";
     public string Ciudad { get; set; } = "";
+    // El backend manda "pais" (la BD lo guarda como país, no ciudad).
+    [JsonPropertyName("pais")]
+    public string Pais { get; set; } = "";
     public string Bio { get; set; } = "";
-    // FIX: solo "Usuario" o "Admin" — no existe rol anfitrion separado
+    // Rol real del backend: "ADMINISTRADOR" / "ANFITRION" / "INVITADO".
+    // (calza por case-insensitive con "tipoUsuario" del JSON)
     public string TipoUsuario { get; set; } = "Usuario";
+    // Lista completa de roles que envía el backend.
+    public List<string> Roles { get; set; } = new();
     public bool Verificado { get; set; } = true;
     public string MiembroDesde { get; set; } = "Enero 2024";
     public double Rating { get; set; } = 4.9;
