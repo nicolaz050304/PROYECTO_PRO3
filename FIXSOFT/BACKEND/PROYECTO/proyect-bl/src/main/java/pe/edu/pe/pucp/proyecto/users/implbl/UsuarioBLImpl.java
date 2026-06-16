@@ -75,18 +75,7 @@ public class UsuarioBLImpl implements UsuarioBL {
         if (usuario == null) {
             return null; // no existe ese correo
         }
-        String almacenada = usuario.getPassword();
-        if (almacenada == null) {
-            return null;
-        }
-
-        boolean coincide;
-        if (PasswordHasher.looksHashed(almacenada)) {
-            coincide = PasswordHasher.verify(password, almacenada); // hash BCrypt
-        } else {
-            coincide = almacenada.equals(password); // legacy en texto plano (compatibilidad)
-        }
-
-        return coincide ? usuario : null;
+        // Solo-hash: cualquier valor que no sea un hash BCrypt válido no autentica.
+        return PasswordHasher.verify(password, usuario.getPassword()) ? usuario : null;
     }
 }
