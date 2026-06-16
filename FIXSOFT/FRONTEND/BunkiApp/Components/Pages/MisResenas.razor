@@ -1,0 +1,120 @@
+@page "/mis-resenas"
+@rendermode InteractiveServer
+@inject AlojamientoProvider AlojamientoProvider
+@inject ResenaProvider ResenaProvider
+@inject NavigationManager Navigation
+@inject BunkiApp.Models.AppState AppState
+
+<PageTitle>Bunki - Reseñas de mis alojamientos</PageTitle>
+
+<div class="section host-page">
+    <div class="container">
+
+        <!-- CABECERA -->
+        <header class="host-head">
+            <div>
+                <span class="host-head-eyebrow">Bunki Host Center</span>
+                <h1 class="host-head-title">Reseñas de mis alojamientos</h1>
+                <p class="host-head-sub">Mira lo que opinan los huéspedes que se hospedaron en tus espacios.</p>
+            </div>
+        </header>
+
+        <div class="host-panel">
+            <div class="host-panel-head">
+                <h2 class="host-panel-title"><i class="fas fa-star"></i> Reseñas de mis alojamientos</h2>
+            </div>
+
+            @if (CargandoResenas)
+            {
+                <p class="host-reviews-loading"><i class="fas fa-spinner fa-spin"></i> Cargando reseñas...</p>
+            }
+            else if (TotalResenas == 0)
+            {
+                <div class="host-reviews-empty">
+                    <i class="fas fa-comment-dots"></i>
+                    <p>Aún no tienes reseñas en tus alojamientos.</p>
+                </div>
+            }
+            else
+            {
+                <!-- RESUMEN (estilo Airbnb) -->
+                <div class="host-reviews-summary">
+                    <span class="host-reviews-score">★ @RatingPromedio.ToString("0.0")</span>
+                    <span class="host-reviews-total">@TotalResenas @(TotalResenas == 1 ? "reseña" : "reseñas") en total</span>
+                </div>
+
+                <!-- AGRUPADAS POR ALOJAMIENTO -->
+                @foreach (var alo in Alojamientos)
+                {
+                    var resenas = ResenasPorAlojamiento.TryGetValue(alo.Id, out var lst) ? lst : new List<Resena>();
+                    if (resenas.Count == 0) { continue; }
+
+                    <div class="host-reviews-group">
+                        <div class="host-reviews-group-head">
+                            <h3 class="host-reviews-group-title"><i class="fas fa-house"></i> @alo.Nombre</h3>
+                            <span class="host-reviews-group-meta">
+                                ★ @PromedioDe(resenas).ToString("0.0") · @resenas.Count @(resenas.Count == 1 ? "reseña" : "reseñas")
+                            </span>
+                        </div>
+
+                        <div class="host-reviews-list">
+                            @foreach (var r in resenas)
+                            {
+                                <div class="host-review">
+                                    <div class="host-review-head">
+                                        <div>
+                                            <strong class="host-review-author">@r.AutorNombre</strong>
+                                            <div class="star host-review-stars">@GenerarEstrellas(r.Estrellas)</div>
+                                        </div>
+                                        <span class="host-review-date">@(r.FechaPublicacion?.ToString("dd MMM yyyy") ?? "")</span>
+                                    </div>
+                                    <p class="host-review-comment">@r.Comentario</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Alojamiento> Alojamientos = new();
+
+    // Reseñas de invitados, agrupadas por alojamiento (clave: alojamientoId).
+    private Dictionary<int, List<Resena>> ResenasPorAlojamiento = new();
+    private bool CargandoResenas = true;
+
+    // Resumen global (todas las reseñas de todos mis alojamientos).
+    private IEnumerable<Resena> TodasLasResenas => ResenasPorAlojamiento.Values.SelectMany(x => x);
+    private int TotalResenas => TodasLasResenas.Count();
+    private double RatingPromedio => TotalResenas == 0 ? 0 : Math.Round(TodasLasResenas.Average(r => r.Estrellas), 1);
+
+    private static double PromedioDe(List<Resena> rs) => rs.Count == 0 ? 0 : Math.Round(rs.Average(r => r.Estrellas), 1);
+
+    private static string GenerarEstrellas(double rating)
+    {
+        int llenas = (int)Math.Round(rating);
+        return string.Concat(Enumerable.Range(0, 5).Select(i => i < llenas ? "★" : "☆"));
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
+
+        var anfitrionId = AppState.UsuarioActual?.Id ?? 0;
+        Alojamientos = await AlojamientoProvider.ListarPorAnfitrionAsync(anfitrionId);
+
+        // Reseñas por alojamiento: una llamada REST por cada uno (el backend tarda algo).
+        foreach (var alo in Alojamientos)
+        {
+            var resenas = await ResenaProvider.ListarPorAlojamientoAsync(alo.Id);
+            // Solo feedback de huéspedes (INVITADO) y solo activas.
+            var deInvitados = resenas.Where(r => r.Activo &&
+                string.Equals(r.TipoAutor, "INVITADO", StringComparison.OrdinalIgnoreCase)).ToList();
+            ResenasPorAlojamiento[alo.Id] = deInvitados;
+        }
+        CargandoResenas = false;
+    }
+}

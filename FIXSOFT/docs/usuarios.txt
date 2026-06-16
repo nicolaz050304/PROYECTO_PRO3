@@ -1,0 +1,28 @@
+
+BUNKI / FIXSOFT — USUARIOS DE PRUEBA
+
+Contraseña para TODOS: demo1234
+
+┌────┬──────────────────────┬───────────────┬────────────────┬─────────────────────────────┐
+│ id │ correo               │ contraseña    │ rol            │ datos / para qué sirve      │
+├────┼──────────────────────┼───────────────┼────────────────┼─────────────────────────────┤
+│ 1  │ admin@bunki.pe       │ demo1234      │ ADMINISTRADOR  │ Ana Soto. Moderar reseñas.  │
+│    │                      │               │                │ Tiene "Gatitas".            │
+│ 2  │ lucia@bunki.pe       │ demo1234      │ ANFITRION      │ Lucía Ramos. Alojam. 1,2,5. │
+│ 3  │ carlos@bunki.pe      │ demo1234      │ ANFITRION      │ Carlos Vega. Alojam. 3,4    │
+│    │                      │               │                │ (CON reseñas). ★ probar     │
+│    │                      │               │                │ vista de anfitrión.         │
+│ 4  │ maria@bunki.pe       │ demo1234      │ INVITADO       │ María Flores. Reservas +    │
+│    │                      │               │                │ dejó reseñas. ★ probar      │
+│    │                      │               │                │ Mis Reservas / dejar reseña.│
+│ 5  │ jose@bunki.pe        │ demo1234      │ INVITADO       │ José Castro. Reservas.      │
+└────┴──────────────────────┴───────────────┴────────────────┴─────────────────────────────┘
+
+CASOS DE PRUEBA:
+- Vista de anfitrión (reseñas de mis alojamientos): carlos@bunki.pe (tiene reseñas).
+- Vista de admin (moderar reseñas): admin@bunki.pe.
+- Como invitado (reservar / dejar reseña / Mis Reservas): maria@bunki.pe o jose@bunki.pe.
+- Login válido: cualquiera con demo1234 (200). Login inválido: contraseña distinta (401).
+
+NOTA: "qué alojamientos tiene cada anfitrión" está según los datos sembrados al inicio
+(anfitrionId en AlojamientoRS). Verificar en el JSON de AlojamientoRS si cambió.

@@ -5225,3 +5225,135 @@ footer {
     outline-offset: 2px;
     transition: outline .2s ease;
 }
+
+/* ===========================================================
+   Reseñas de mis alojamientos (Panel Anfitrión) — estilo Airbnb
+   Reutiliza el theme: var(--gold), var(--surface), var(--hairline),
+   var(--ink), var(--ink-muted) y la clase .star existente.
+   =========================================================== */
+.host-reviews-loading {
+    color: var(--ink-muted);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+}
+
+    .host-reviews-loading i { color: var(--gold); }
+
+.host-reviews-empty {
+    text-align: center;
+    color: var(--ink-muted);
+    padding: 28px 16px;
+}
+
+    .host-reviews-empty i { font-size: 26px; color: var(--gold); opacity: .65; margin-bottom: 10px; display: block; }
+    .host-reviews-empty p { font-size: 14px; }
+
+/* Resumen global */
+.host-reviews-summary {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    flex-wrap: wrap;
+    padding: 16px 18px;
+    background: var(--gold-tint);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    margin-bottom: 22px;
+}
+
+.host-reviews-score {
+    font-family: var(--font-display);
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--gold);
+}
+
+.host-reviews-total {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink-muted);
+}
+
+/* Grupo por alojamiento */
+.host-reviews-group {
+    padding-top: 18px;
+    margin-top: 18px;
+    border-top: 1px solid var(--hairline);
+}
+
+    .host-reviews-group:first-of-type { border-top: 0; margin-top: 0; padding-top: 0; }
+
+.host-reviews-group-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.host-reviews-group-title {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+    .host-reviews-group-title i { color: var(--gold); font-size: 13px; }
+
+.host-reviews-group-meta {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gold);
+    white-space: nowrap;
+}
+
+/* Lista y tarjeta de reseña */
+.host-reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.host-review {
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+}
+
+.host-review-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.host-review-author {
+    font-size: 14px;
+    color: var(--ink);
+}
+
+.host-review-stars {
+    margin-top: 4px;
+}
+
+.host-review-date {
+    font-size: 12.5px;
+    color: var(--ink-muted);
+    white-space: nowrap;
+}
+
+.host-review-comment {
+    margin-top: 10px;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--ink-muted);
+}
