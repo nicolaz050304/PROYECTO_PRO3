@@ -62,6 +62,24 @@ public final class AlojamientoMapper {
         return dto;
     }
 
+    /**
+     * Overload anti-N+1: reusa el toDTO de 3 args y SOBRESCRIBE rating/totalResenas
+     * SIEMPRE desde {@code resenasCache} (idAlojamiento -> [promedio, total]). Si el
+     * alojamiento no tiene reseñas (no está en el cache) quedan en 0 — nunca se usa
+     * el valor sembrado en la entidad.
+     */
+    public static AlojamientoDTO toDTO(Alojamiento al, UsuarioBL usuarioBL,
+                                       java.util.Map<Integer, String> nombreCache,
+                                       java.util.Map<Integer, double[]> resenasCache) {
+        AlojamientoDTO dto = toDTO(al, usuarioBL, nombreCache);
+        if (dto != null && al != null && resenasCache != null) {
+            double[] resumen = resenasCache.get(al.getIdAlojamiento());
+            dto.setRating(resumen != null ? resumen[0] : 0.0);
+            dto.setTotalResenas(resumen != null ? (int) resumen[1] : 0);
+        }
+        return dto;
+    }
+
     /** Casa -> "Casa", Departamento -> "Departamento", Habitacion -> "Habitación" (con tilde). */
     private static String resolverTipo(Alojamiento al) {
         if (al instanceof Casa) {

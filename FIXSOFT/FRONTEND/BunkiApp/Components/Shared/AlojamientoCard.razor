@@ -16,8 +16,15 @@
     <div class="card-body">
         <h3 class="card-title">@Alojamiento.Nombre</h3>
         <div class="rating mb-20">
-            <span class="star">@GenerarEstrellas(Alojamiento.Rating)</span>
-            <span class="rating-text">(@Alojamiento.TotalResenas reseñas)</span>
+            @if (Alojamiento.TotalResenas > 0)
+            {
+                <span class="star">@GenerarEstrellas(Alojamiento.Rating)</span>
+                <span class="rating-text">(@Alojamiento.TotalResenas reseñas)</span>
+            }
+            else
+            {
+                <span class="rating-text">Nuevo · Sin reseñas</span>
+            }
         </div>
         <p class="card-text">@Alojamiento.Descripcion.Substring(0, Math.Min(60, Alojamiento.Descripcion.Length))...</p>
         <div class="card-footer">

@@ -14,6 +14,7 @@ import jakarta.ws.rs.core.Response;
 import pe.edu.pe.pucp.proyecto.accomodations.Alojamiento;
 import pe.edu.pe.pucp.proyecto.accomodations.bl.AlojamientoBL;
 import pe.edu.pe.pucp.proyecto.accomodations.implbl.AlojamientoBLImpl;
+import pe.edu.pe.pucp.proyecto.review.implbl.ResenhaBLImpl;
 import pe.edu.pe.pucp.proyecto.users.bl.UsuarioBL;
 import pe.edu.pe.pucp.proyecto.users.implbl.UsuarioBLImpl;
 import pe.edu.pe.pucp.proyecto.web.dto.AlojamientoDTO;
@@ -43,11 +44,12 @@ public class AlojamientoRS {
     @GET
     public List<AlojamientoDTO> listar() {
         Map<Integer, String> cache = new HashMap<>();
+        Map<Integer, double[]> resenasCache = new ResenhaBLImpl().calificacionesPorAlojamiento();
         List<AlojamientoDTO> salida = new ArrayList<>();
         List<Alojamiento> lista = alojamientoBL.listarTodos();
         if (lista != null) {
             for (Alojamiento al : lista) {
-                salida.add(AlojamientoMapper.toDTO(al, usuarioBL, cache));
+                salida.add(AlojamientoMapper.toDTO(al, usuarioBL, cache, resenasCache));
             }
         }
         return salida;
@@ -61,7 +63,8 @@ public class AlojamientoRS {
         if (al == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
-        return Response.ok(AlojamientoMapper.toDTO(al, usuarioBL, new HashMap<>())).build();
+        Map<Integer, double[]> resenasCache = new ResenhaBLImpl().calificacionesPorAlojamiento();
+        return Response.ok(AlojamientoMapper.toDTO(al, usuarioBL, new HashMap<>(), resenasCache)).build();
     }
 
     /**
@@ -73,12 +76,13 @@ public class AlojamientoRS {
     @Path("anfitrion/{id}")
     public List<AlojamientoDTO> listarPorAnfitrion(@PathParam("id") int anfitrionId) {
         Map<Integer, String> cache = new HashMap<>();
+        Map<Integer, double[]> resenasCache = new ResenhaBLImpl().calificacionesPorAlojamiento();
         List<AlojamientoDTO> salida = new ArrayList<>();
         List<Alojamiento> lista = alojamientoBL.listarTodos();
         if (lista != null) {
             for (Alojamiento al : lista) {
                 if (al.getDuenho() != null && al.getDuenho().getIdUsuario() == anfitrionId) {
-                    salida.add(AlojamientoMapper.toDTO(al, usuarioBL, cache));
+                    salida.add(AlojamientoMapper.toDTO(al, usuarioBL, cache, resenasCache));
                 }
             }
         }

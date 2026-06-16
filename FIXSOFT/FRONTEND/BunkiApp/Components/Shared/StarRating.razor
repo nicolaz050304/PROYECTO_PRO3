@@ -1,10 +1,17 @@
 @* Components/Shared/StarRating.razor *@
 
 <div class="rating">
-    <span class="star">@Estrellas</span>
-    @if (MostrarConteo)
+    @if (TotalResenas > 0)
     {
-        <span class="rating-text">(@TotalResenas reseñas)</span>
+        <span class="star">@Estrellas</span>
+        @if (MostrarConteo)
+        {
+            <span class="rating-text">(@TotalResenas reseñas)</span>
+        }
+    }
+    else
+    {
+        <span class="rating-text">Nuevo · Sin reseñas</span>
     }
 </div>
 

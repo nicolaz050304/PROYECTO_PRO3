@@ -11,4 +11,7 @@ public interface ResenhaBL extends IBL<Resenha, Integer> {
     // Moderación admin: todas las reseñas (activas e inactivas) y reactivar una oculta.
     List<Resenha> listarTodasIncluidasInactivas();
     int reactivar(Resenha resenha);
+
+    // Promedio (AVG) y conteo de reseñas ACTIVAS por alojamiento, en UNA query (anti N+1).
+    java.util.Map<Integer, double[]> calificacionesPorAlojamiento();
 }

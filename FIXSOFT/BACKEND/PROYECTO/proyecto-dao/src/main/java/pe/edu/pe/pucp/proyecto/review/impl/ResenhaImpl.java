@@ -233,4 +233,24 @@ public class ResenhaImpl implements ResenhaIDAO {
             System.err.println("ERROR al reactivar reseña: " + ex.getMessage());
         }
     }
+
+    @Override
+    public java.util.Map<Integer, double[]> calificacionesPorAlojamiento() {
+        String sql = "SELECT res.id_alojamiento AS idAloj, AVG(r.calificacion) AS promedio, COUNT(*) AS total "
+                   + "FROM resenha r "
+                   + "INNER JOIN reserva res ON r.id_reserva = res.id_reserva "
+                   + "WHERE r.activo = 1 "
+                   + "GROUP BY res.id_alojamiento";
+        java.util.Map<Integer, double[]> mapa = new java.util.HashMap<>();
+        try (Connection con = DBManager.getInstance().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                mapa.put(rs.getInt("idAloj"), new double[]{ rs.getDouble("promedio"), rs.getInt("total") });
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return mapa;
+    }
 }

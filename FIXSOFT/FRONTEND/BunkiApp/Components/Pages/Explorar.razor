@@ -252,6 +252,8 @@
 
     private List<Alojamiento> AlojamientosPaginados =>
         AlojamientosFiltrados
+            .OrderByDescending(a => a.Rating)
+            .ThenByDescending(a => a.TotalResenas)
             .Skip((PaginaActual - 1) * ElementosPorPagina)
             .Take(ElementosPorPagina)
             .ToList();

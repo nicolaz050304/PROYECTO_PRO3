@@ -25,16 +25,16 @@ namespace BunkiApp.Services
         {
             try
             {
-                var lista = await _rest.ListarPorAlojamientoAsync(alojamientoId);
-                if (lista is not null && lista.Count > 0) return lista;
+                // Una lista vacía del REST es válida (ese alojamiento no tiene reseñas):
+                // se retorna tal cual. Solo se cae al mock ante EXCEPCIÓN (REST caído).
+                return await _rest.ListarPorAlojamientoAsync(alojamientoId) ?? new();
             }
             catch (Exception ex)
             {
                 _log.LogWarning(ex, "REST no disponible (reseñas alojamiento {Id}); usando mock", alojamientoId);
+                // Fallback real: las reseñas embebidas del alojamiento en DataService.
+                return _mock.ObtenerAlojamiento(alojamientoId)?.Resenas ?? new();
             }
-
-            // Fallback real: las reseñas embebidas del alojamiento en DataService.
-            return _mock.ObtenerAlojamiento(alojamientoId)?.Resenas ?? new();
         }
 
         // Moderación admin: lista TODAS (incl. ocultas). Sin fallback a mock; si falla, lista vacía.

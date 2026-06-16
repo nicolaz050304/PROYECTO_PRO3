@@ -16,4 +16,8 @@ public interface ResenhaIDAO extends IDAO<Resenha, Integer> {
     List<Resenha> listarTodasIncluidasInactivas();
     // Moderación admin: reactiva una reseña oculta (activo = 1). Inverso de remove().
     void reactivar(Resenha resenha);
+
+    // Promedio (AVG) y conteo de reseñas ACTIVAS por alojamiento, en UNA query (anti N+1).
+    // Devuelve idAlojamiento -> [promedio, total].
+    java.util.Map<Integer, double[]> calificacionesPorAlojamiento();
 }

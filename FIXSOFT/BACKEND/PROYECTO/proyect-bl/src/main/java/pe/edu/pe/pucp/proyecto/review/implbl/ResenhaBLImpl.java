@@ -82,4 +82,9 @@ public class ResenhaBLImpl implements ResenhaBL {
         daoResenha.reactivar(resenha);
         return 1;
     }
+
+    @Override
+    public java.util.Map<Integer, double[]> calificacionesPorAlojamiento() {
+        return daoResenha.calificacionesPorAlojamiento();
+    }
 }
