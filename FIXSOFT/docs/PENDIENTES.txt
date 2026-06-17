@@ -1,56 +1,147 @@
 ====================================================================
 BUNKI / FIXSOFT — ESTADO DEL PROYECTO Y PENDIENTES
-(actualizado tras: filtrado por usuario, crear/confirmar reserva,
- menú por rol, hashing + login solo-hash, y auth por cookie)
+(actualizado tras la sesión del 16-17 jun: crisis de BD restaurada,
+ RF05/RF07/RF10/RF01 cerrados, nombre de huésped, reserva nace pendiente)
 ====================================================================
 
 ## ✅ LO QUE YA FUNCIONA (end-to-end: frontend -> REST -> MySQL en RDS AWS)
-- LOGIN + AUTH (completo):
+
+- **LOGIN + AUTH (RF04, completo):**
   * Login real contra UsuarioRS/login (valida correo + contraseña contra la BD).
   * Contraseñas con HASH BCrypt: insertar() hashea, todas las de la RDS migradas, y autenticar()
     es SOLO-HASH (se quitó la comparación en texto plano). Verificado: contraseña errada -> 401.
   * Sesión por COOKIE de ASP.NET Core (ClaimsPrincipal + SignInAsync vía /auth/login y /auth/logout).
-    Sobrevive a F5. AppState se hidrata desde los claims, así que EsAdmin()/EsAnfitrion()/EstaAutenticado
-    siguen funcionando. Login.razor es una página estática que postea al endpoint.
-- ALOJAMIENTO: lectura (Explorar, detalle, mapa) + escritura (crear).
-- RESERVA:
-  * Lectura FILTRADA por usuario: Mis Reservas por invitado (ReservaRS/usuario/{id}); Reservas
-    Recibidas por anfitrión (ReservaRS/anfitrion/{id}). Lista vacía es válida (no cae al mock).
-  * Escritura: la reserva se persiste al COMPLETAR el pago en /pagos -> crea (POST) si es nueva, o
-    confirma la existente (PUT) si viene reservaId (evita duplicados al pagar una pendiente).
-- RESEÑA: módulo completo (crear, leer en detalle, vista anfitrión /mis-resenas, moderación admin).
-- MENÚ POR ROL: la sección "Como anfitrión" del menú solo la ve EsAnfitrion(); el bloque Admin solo EsAdmin().
+    Sobrevive a F5. AppState se hidrata desde los claims (EsAdmin()/EsAnfitrion()/EstaAutenticado).
 
-## ❌ PENDIENTES
-- PANEL DE ANFITRIÓN: métricas (ingresos, ocupación) son mock; conectar a datos reales.
-- ADMIN - USUARIOS: la lista es real, pero editar/crear/eliminar son mock (falta POST/PUT/DELETE en
-  UsuarioRS + verificar UsuarioBL).
-- CREAR ALOJAMIENTO (mejoras): no captura campos de subclase ni coordenadas (lat/long en 0 -> sin pin).
-- EDITAR/CANCELAR RESERVA; EDITAR/ELIMINAR ALOJAMIENTO (PUT/DELETE existen, falta UI).
-- IMÁGENES de alojamientos (columna imagen_url -> modelo/DAO/DTO/mapper).
-- Mensaje de huésped en Reservas Recibidas: el DTO no trae nombre del huésped (muestra el del anfitrión);
-  agregar huespedNombre al ReservaDTO + mapearlo.
-- PAGO (transacción) y NOTIFICACIÓN: hoy mock. Baja prioridad.
+- **REGISTRO DE USUARIO (RF01):** ✅ NUEVO
+  * "Crear cuenta" persiste de verdad: POST UsuarioRS -> crea un INVITADO con contraseña HASHEADA (BCrypt).
+  * El usuario nuevo puede loguear. El rol INVITADO se asigna solo (no puede auto-crearse admin/anfitrión).
+  * Verificado en BD: usuario guardado con password $2a$... y tipo INVITADO.
 
-## ⚙️ OPTIMIZACIÓN (pendiente)
-- HIKARI (pool de conexiones): DBManager.getConnection() abre conexión nueva cada vez -> Reserva abre
-  ~13 por petición (~8s). Pool -> <1s. Toca SOLO el DBManager; los DAO no cambian. Con commit de respaldo.
-- REDIS (caché): DESPUÉS de Hikari. Cachear lookups de Reserva y listados.
-- Demo: "calentar" el servidor antes de presentar + timeout 20s en el frontend.
-- NO hacer (sobre-ingeniería): balanceador, microservicios, colas, CQRS.
+- **ALOJAMIENTO — CRUD COMPLETO (RF05, RF06, RF07):** ✅ AMPLIADO
+  * Lectura: Explorar, detalle, mapa.
+  * Crear: con SUBIDA DE IMAGEN real (guarda en wwwroot/uploads).
+  * Editar: reutiliza el form de crear en modo edición (precarga datos, conserva imagen y dueño).
+  * Pausar/Activar: persiste vía PUT (disponibilidad 1/0).
+  * Eliminar: baja lógica (disponibilidad 0), con modal de confirmación.
+  * **Filtro de disponibilidad:** Explorar muestra solo disponibles; Mis Alojamientos muestra todos
+    los del anfitrión (con badge Activo/Pausado).
+  * Cada alojamiento ligado a su anfitrión (RF06).
+
+- **RESERVA — CICLO COMPLETO (RF10, RF11, RF12):** ✅ AMPLIADO
+  * Lectura FILTRADA por usuario: Mis Reservas por invitado; Reservas Recibidas por anfitrión.
+    Lista vacía es válida (no cae al mock).
+  * **Nace PENDIENTE** al reservar (espera aprobación del anfitrión).
+  * **Anfitrión Acepta/Rechaza** (persiste vía PUT): PENDIENTE -> CONFIRMADA / CANCELADA.
+    Flujo verificado entre dos cuentas (huésped reserva -> anfitrión acepta -> huésped la ve confirmada).
+  * **Huésped Cancela** (con modal de confirmación propio, estilo de la app).
+  * Cálculo dinámico del total (noches × tarifa) — RF11.
+  * Historial (huésped y anfitrión) — RF12.
+  * **Nombre del huésped en Reservas Recibidas:** ✅ NUEVO — ReservaDTO trae huespedNombre, mapeado
+    con caché anti-N+1. Antes mostraba el nombre del anfitrión por error.
+
+- **RESEÑA (RF19):** módulo completo (crear, leer en detalle, vista anfitrión /mis-resenas,
+  moderación admin). Rating real por alojamiento (promedio + total desde reseñas activas).
+
+- **IMÁGENES de alojamientos:** ✅ HECHO — columna imagen_url end-to-end (modelo/DAO/DTO/mapper),
+  mostradas en tarjetas y detalle, con subida real al crear.
+
+- **MENÚ POR ROL:** "Como anfitrión" solo la ve EsAnfitrion(); el bloque Admin solo EsAdmin().
+
+- **TOP / MEJORES CALIFICADOS (RF22):** orden por calificación en el catálogo.
+
+### Recuento: ~12-13 RF funcionando (la entrega pedía 8 = 35%).
+RF01, RF04, RF05, RF06, RF07, RF08, RF09, RF10, RF11, RF12, RF19, RF22.
+
+---
+
+## ❌ PENDIENTES (para el trabajo final, ~2 semanas)
+
+### Identidad / usuarios
+- **Documento de validación en registro (mejora RF01):** el form NO pide tipo/número de documento.
+  Agregarlo + setearlo en toEntity (hoy va null). OJO: la BL valida "si DNI -> 8 dígitos".
+- **RF02 — Validación documentaria:** flujo del admin para aprobar/rechazar el documento de un usuario
+  (estado_validacion PENDIENTE -> APROBADO). Backend nuevo.
+- **RF03 — Control de estado de cuenta:** DISPONIBLE/PENDIENTE_VALIDACION/SUSPENDIDO + restringir acceso.
+- **ADMIN - CRUD usuarios:** la lista es real, pero editar/crear/eliminar son mock. El POST de crear ya
+  existe (lo hicimos para el registro); falta exponer PUT/DELETE en UsuarioRS + cablear el frontend.
+
+### Módulo financiero (varios RF juntos)
+- **RF13 — Pagos y comisiones** (PagoRS: monto neto/bruto/comisión). Hoy el pago es mock.
+- **RF14 — Conversión multidivisa** (PEN/USD/EUR).
+- **RF15 — Cuentas bancarias** (saldos, depósitos, retiros).
+- **RF16 — Comprobantes** (representación textual del pago).
+  * Idea del equipo (Estefano): cobro instantáneo + reembolso si el anfitrión rechaza. Encaja aquí.
+
+### Interacción
+- **RF17 — Mensajería interna** (chats huésped↔anfitrión). Hoy mock.
+- **RF18 — Notificaciones** (confirmación de reserva, pago, mensajes). Hoy mock.
+
+### Reportes / analítica
+- **PANEL DE ANFITRIÓN:** métricas (ingresos, ocupación, vistas) son MOCK. Conectar a datos reales.
+- **RF20 — Reporte de rentabilidad** (ingresos brutos/netos por rango de fechas).
+- **RF21 — Analítica de ocupación** (estadísticas por propiedad).
+
+### Arreglos chicos / deuda técnica
+- **Editar reseña (RF19):** el PUT del backend ya existe; falta cablear el botón en el frontend.
+- **CrearAlojamiento (mejoras):** no captura campos de subclase (cocheras, nro piso, baño privado) ni
+  coordenadas (lat/long en 0 -> sin pin en el mapa). Servicios/reglas/tarifa de limpieza tampoco viajan.
+- **Dato sucio:** Surco (id 5) quedó con precio 100 y lat/long en 0 de una prueba — corregir en datos.sql.
+- **Quitar el e.printStackTrace()** del endpoint de registro (se puso para diagnóstico).
+
+---
+
+## ⚙️ OPTIMIZACIÓN
+
+- **HIKARI (pool de conexiones):** ✅ HECHO. DBManager reescrito con HikariCP. Reserva pasó de ~8s a ~0.6s.
+- **REDIS (caché):** pendiente. Cachear lookups de Reserva y listados. Baja prioridad (Hikari ya resolvió
+  la lentitud principal).
+- **Demo:** "calentar" el servidor antes de presentar + timeout en el frontend.
+- **NO hacer (sobre-ingeniería):** balanceador, microservicios, colas, CQRS.
+
+---
 
 ## 🔒 SEGURIDAD (antes de publicar)
-- Regenerar API key de Stadia (en wwwroot/js/mapa.js).
-- docs/usuarios.txt y db.properties tienen credenciales: OK en repo PRIVADO; quitarlas del historial si
-  se hace público. (Nota: las contraseñas en usuarios.txt siguen siendo demo1234 — correcto, ahora se
-  guardan hasheadas.)
-- HASHING de contraseñas: ✅ hecho.
 
-## 🎯 ORDEN SUGERIDO PARA RETOMAR
-1. Hikari (optimización; mejor esfuerzo/impacto, arregla la lentitud de ~8s).
-2. Panel de anfitrión con datos reales (más visible para el jurado).
-3. Redis (después de Hikari).
-4. CRUD de usuarios del admin (necesita endpoints en UsuarioRS).
-5. Imágenes, editar/cancelar reserva, mejoras de crear alojamiento.
-6. Pago, notificaciones.
+- **HASHING de contraseñas:** ✅ HECHO (BCrypt, solo-hash en autenticar, registro hashea).
+- **Regenerar API key de Stadia** (en wwwroot/js/mapa.js) antes de hacer el repo público.
+- **Credenciales en repo:** docs/usuarios.txt y db.properties tienen credenciales -> OK en repo PRIVADO;
+  quitarlas del historial si se hace público. (usuarios.txt sigue con demo1234 — correcto, se guardan hasheadas.)
+- **.gitignore .NET:** pendiente. Hay archivos obj/Debug/*.dll/.vsidx versionados que NO deberían estar
+  (causan conflictos entre los 6). Crear .gitignore que los excluya.
+
+---
+
+## 💾 RESPALDO DE BD (lección aprendida — un compañero borró toda la BD esta sesión)
+
+- **Scripts en Git:** BD/datos.sql (registros) + BD/Dump...sql (dump completo de Workbench).
+- **Para restaurar:** correr datos.sql -> luego el runner MigrarPasswords (hashea), o importar el dump.
+- **Reglas de equipo:** nadie corre DROP/CREATE sobre la BD de AWS compartida sin avisar. Idealmente cada
+  uno con MySQL local. Hacer un dump fresco antes de cada presentación.
+
+---
+
+## 🎯 ORDEN SUGERIDO PARA RETOMAR (trabajo final)
+
+1. **Documento en registro + RF02 (validación) + RF03 (estados)** — bloque de identidad, suma 2-3 RF.
+2. **CRUD usuarios del admin** — el POST ya existe, faltan PUT/DELETE + frontend.
+3. **Panel de anfitrión con datos reales** (RF20/RF21) — visible para el jurado.
+4. **Módulo financiero** (RF13-16) — el más grande; repartir entre el equipo.
+5. **Mensajería y notificaciones** (RF17/RF18).
+6. **Arreglos chicos:** editar reseña, campos de subclase + coordenadas en crear alojamiento, .gitignore.
+7. **Redis** (opcional, Hikari ya resolvió lo urgente).
+
+---
+
+## 👥 NO-CÓDIGO (para la nota)
+
+- **Exposición (3 pts):** los 6 deben saber explicar su parte. Repartir módulos.
+- **Levantamiento de observaciones (3 pts):** mostrar qué corrigieron de lo que marcó el JP.
+- **Material a adjuntar:** catálogo de RF marcado, scripts SQL (estructura + datos), diagrama BD,
+  usuarios+contraseñas (todos demo1234).
+
+## 🚫 NO HACER (al menos no ahora)
+- **Rediseño visual / "más dinámico":** el diseño actual ya se ve profesional y NO da puntos en la
+  rúbrica. Tocarlo arriesga romper lo que funciona. Dejar para el final, solo si todo lo funcional cierra.
+
 ====================================================================

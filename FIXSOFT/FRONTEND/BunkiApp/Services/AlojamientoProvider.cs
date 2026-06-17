@@ -79,6 +79,10 @@ namespace BunkiApp.Services
         // que la UI avise y NO quite la card.
         public async Task EliminarAsync(int alojamientoId) => await _rest.EliminarAsync(alojamientoId);
 
+        // Actualización (escritura) vía REST: PUT AlojamientoRS/{id}. Sin fallback a mock:
+        // si el REST falla, propagamos para que la UI revierta y avise (p.ej. pausar/activar).
+        public async Task ActualizarAsync(Alojamiento a) => await _rest.ActualizarAsync(a);
+
         // El backend no envía datos visuales; los rellenamos para no romper el theme dark luxury.
         private static void AplicarDefaultsVisuales(Alojamiento a)
         {

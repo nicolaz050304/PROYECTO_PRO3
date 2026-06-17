@@ -17,7 +17,7 @@ Contraseña para TODOS: demo1234
 │    │                      │               │                │ Mis Reservas / dejar reseña.│
 │ 5  │ jose@bunki.pe        │ demo1234      │ INVITADO       │ José Castro. Reservas.      │
 └────┴──────────────────────┴───────────────┴────────────────┴─────────────────────────────┘
-
+NUEVO USUARIO CREADOR test@bunki.pe ->>>>>> test1234 invitado
 CASOS DE PRUEBA:
 - Vista de anfitrión (reseñas de mis alojamientos): carlos@bunki.pe (tiene reseñas).
 - Vista de admin (moderar reseñas): admin@bunki.pe.

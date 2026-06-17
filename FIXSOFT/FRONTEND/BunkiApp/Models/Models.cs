@@ -60,9 +60,10 @@ public class Reserva
     public DateTime FechaSalida { get; set; }
     public int NumHuespedes { get; set; }
     public decimal Total { get; set; }
-    public string Estado { get; set; } = "Confirmada";
+    public string Estado { get; set; } = "Pendiente";
     public string AnfitrionNombre { get; set; } = "";
     public int HuespedId { get; set; } = 0;
+    public string HuespedNombre { get; set; } = "";
     public int AlojamientoId { get; set; } = 0;
 
     [JsonIgnore]
@@ -94,6 +95,10 @@ public class Usuario
     // El backend usa "correo"; el resto del front sigue usando .Email sin cambios.
     [JsonPropertyName("correo")]
     public string Email { get; set; } = "";
+    // SOLO de salida->entrada en el REGISTRO: la contraseña en claro que se envía al
+    // crear la cuenta (el backend la hashea). En las respuestas viaja null y no se usa.
+    [JsonPropertyName("password")]
+    public string Password { get; set; } = "";
     public string Telefono { get; set; } = "";
     public string Ciudad { get; set; } = "";
     // El backend manda "pais" (la BD lo guarda como país, no ciudad).

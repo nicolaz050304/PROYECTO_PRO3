@@ -21,6 +21,7 @@ public class ReservaDTO {
     private String estado;
     private String anfitrionNombre;
     private int huespedId;
+    private String huespedNombre;
     private int alojamientoId;
 
     public ReservaDTO() {
@@ -55,6 +56,9 @@ public class ReservaDTO {
 
     public int getHuespedId() { return huespedId; }
     public void setHuespedId(int huespedId) { this.huespedId = huespedId; }
+
+    public String getHuespedNombre() { return huespedNombre; }
+    public void setHuespedNombre(String huespedNombre) { this.huespedNombre = huespedNombre; }
 
     public int getAlojamientoId() { return alojamientoId; }
     public void setAlojamientoId(int alojamientoId) { this.alojamientoId = alojamientoId; }

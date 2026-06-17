@@ -26,6 +26,10 @@ namespace BunkiApp.Services
         public async Task<Usuario?> LoginAsync(string correo, string password)
             => await _rest.LoginAsync(correo, password);
 
+        // Registro (ESCRITURA): POST UsuarioRS. Sin fallback a mock: si el REST falla
+        // (p.ej. correo duplicado, 400/red), propaga para que la UI avise.
+        public async Task RegistrarAsync(Usuario u) => await _rest.RegistrarAsync(u);
+
         public async Task<List<Usuario>> ListarAsync()
         {
             try

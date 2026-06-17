@@ -17,7 +17,7 @@
             <header class="host-head">
                 <div>
                     <span class="host-head-eyebrow">Bunki Host Center</span>
-                    <h1 class="host-head-title">Publica un alojamiento</h1>
+                    <h1 class="host-head-title">@(EsEdicion ? "Edita tu alojamiento" : "Publica un alojamiento")</h1>
                     <p class="host-head-sub">Completa los detalles clave para que los huéspedes descubran tu espacio.</p>
                 </div>
                 <div class="host-head-actions">
@@ -33,7 +33,7 @@
                         {
                             <i class="fas fa-check-circle"></i>
                         }
-                        Publicar alojamiento
+                        @(EsEdicion ? "Guardar cambios" : "Publicar alojamiento")
                     </button>
                 </div>
             </header>
@@ -345,9 +345,48 @@
 </div>
 
 @code {
-    protected override void OnInitialized()
+    [SupplyParameterFromQuery] public int? Id { get; set; }
+    private bool EsEdicion => Id is > 0;
+    private Alojamiento? _original;   // datos que el form no edita y hay que conservar en el PUT
+
+    protected override async Task OnInitializedAsync()
     {
         if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
+
+        if (EsEdicion)
+        {
+            _original = await AlojamientoProvider.ObtenerPorIdAsync(Id!.Value);
+            if (_original is not null)
+            {
+                Formulario.Nombre = _original.Nombre;
+                Formulario.Tipo = _original.Tipo;
+                Formulario.Descripcion = _original.Descripcion;
+                Formulario.Provincia = _original.Provincia;
+                Formulario.PrecioNoche = _original.PrecioNoche;
+                Formulario.TarifaLimpieza = _original.TarifaLimpieza;
+                Formulario.MaxHuespedes = _original.MaxHuespedes;
+                Formulario.Habitaciones = _original.Habitaciones;
+
+                // El backend solo persiste Ubicacion combinada ("Direccion, Distrito"); Distrito no
+                // round-trip por el DTO. Si Distrito viene vacío, lo derivamos del final de Ubicacion
+                // para no perderlo ni duplicarlo al re-guardar (Ubicacion se reconstruye en Publicar).
+                if (!string.IsNullOrWhiteSpace(_original.Distrito))
+                {
+                    Formulario.Distrito = _original.Distrito;
+                    Formulario.Direccion = _original.Ubicacion;
+                }
+                else if (!string.IsNullOrWhiteSpace(_original.Ubicacion) && _original.Ubicacion.Contains(','))
+                {
+                    var idx = _original.Ubicacion.LastIndexOf(',');
+                    Formulario.Direccion = _original.Ubicacion.Substring(0, idx).Trim();
+                    Formulario.Distrito = _original.Ubicacion.Substring(idx + 1).Trim();
+                }
+                else
+                {
+                    Formulario.Direccion = _original.Ubicacion;
+                }
+            }
+        }
     }
 
     private CrearAlojamientoForm Formulario = new();
@@ -478,9 +517,23 @@
                 ImagenUrl = ImagenSubidaUrl   // ruta del archivo subido; "" si no subió ninguna
             };
 
-            await AlojamientoProvider.RegistrarAsync(alojamiento);
+            if (EsEdicion)
+            {
+                // Conserva del original lo que el form no edita, para no perderlo en el PUT.
+                alojamiento.Id = Id!.Value;
+                alojamiento.AnfitrionId = _original?.AnfitrionId ?? alojamiento.AnfitrionId;  // conserva el dueño
+                alojamiento.ImagenUrl = _original?.ImagenUrl ?? "";                            // conserva la imagen actual
+                alojamiento.EstadoPublicacion = _original?.EstadoPublicacion ?? "Activo";      // no lo despublica
+                await AlojamientoProvider.ActualizarAsync(alojamiento);   // PUT
+            }
+            else
+            {
+                await AlojamientoProvider.RegistrarAsync(alojamiento);    // POST
+            }
 
-            MensajeExito = "¡Alojamiento publicado exitosamente! Está en revisión.";
+            MensajeExito = EsEdicion
+                ? "Cambios guardados correctamente."
+                : "¡Alojamiento publicado exitosamente! Está en revisión.";
             await Task.Delay(1500);
             Navigation.NavigateTo("/panel-anfitrion");
         }

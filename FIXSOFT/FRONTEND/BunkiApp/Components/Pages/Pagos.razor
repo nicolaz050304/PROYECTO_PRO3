@@ -357,7 +357,7 @@
                 FechaSalida   = FechaSalida!.Value,
                 NumHuespedes  = Huespedes,                // el backend lo ignora, pero lo enviamos completo
                 Total         = Total,
-                Estado        = "Confirmada"              // el pago se completó
+                Estado        = "Pendiente"               // nace pendiente: el anfitrión la acepta/rechaza
             };
             await ReservaProvider.RegistrarAsync(nueva);
             return true;

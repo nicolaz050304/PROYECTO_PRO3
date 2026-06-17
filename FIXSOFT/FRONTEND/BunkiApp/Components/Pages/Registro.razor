@@ -3,6 +3,7 @@
 @inject NavigationManager Navigation
 @layout EmptyLayout
 @inject BunkiApp.Models.AppState AppState
+@inject Services.UsuarioProvider UsuarioProvider
 <PageTitle>Bunki - Crear Cuenta</PageTitle>
 
 <header>
@@ -22,6 +23,10 @@
         @if (_exito)
         {
             <AlertMessage Tipo="success" Mensaje="¡Cuenta creada! Redirigiendo..." Cerrable="false" />
+        }
+        @if (!string.IsNullOrEmpty(_errorMsg))
+        {
+            <AlertMessage Tipo="danger" Mensaje="@_errorMsg" />
         }
 
         <EditForm Model="_form" OnValidSubmit="Registrar">
@@ -92,21 +97,47 @@
     private bool _cargando    = false;
     private bool _exito       = false;
     private bool _intentoEnviar = false;
+    private string _errorMsg  = "";
 
     private async Task Registrar()
     {
         if (!_form.AceptaTerminos) return;
 
+        _errorMsg = "";
+        if (_form.Password != _form.ConfirmarPassword)
+        {
+            _errorMsg = "Las contraseñas no coinciden.";
+            return;
+        }
+
         _cargando = true;
-        await Task.Delay(500);
+        try
+        {
+            // Crea el usuario REAL en el backend (POST UsuarioRS); el backend lo crea como
+            // INVITADO y hashea la contraseña.
+            var usuario = new Usuario
+            {
+                Nombre      = _form.Nombre,
+                Apellido    = _form.Apellido,   // serializa a "apellidoPaterno"
+                Email       = _form.Email,      // serializa a "correo"
+                Password    = _form.Password,   // serializa a "password"; el backend lo hashea
+                TipoUsuario = "INVITADO"
+            };
+            await UsuarioProvider.RegistrarAsync(usuario);
 
-        // Guardar usuario en AppState — login automático
-        AppState.Login(_form.Nombre, _form.Apellido, _form.Email, "Usuario");
-
-        _exito    = true;
-        _cargando = false;
-        await Task.Delay(800);
-
-        Navigation.NavigateTo("/");   // AppState es estático, sesión persiste
+            // Creado OK: logueamos en AppState para entrar directo (como hacía el mock).
+            AppState.Login(_form.Nombre, _form.Apellido, _form.Email, "Usuario");
+            _exito = true;
+            await Task.Delay(800);
+            Navigation.NavigateTo("/");
+        }
+        catch
+        {
+            _errorMsg = "No se pudo crear la cuenta. ¿Quizás el correo ya está registrado?";
+        }
+        finally
+        {
+            _cargando = false;
+        }
     }
 }

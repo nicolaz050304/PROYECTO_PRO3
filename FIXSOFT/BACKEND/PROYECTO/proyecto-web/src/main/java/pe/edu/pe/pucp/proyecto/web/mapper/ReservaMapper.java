@@ -62,7 +62,9 @@ public final class ReservaMapper {
 
         int alojamientoId = r.getAlojamiento() != null ? r.getAlojamiento().getIdAlojamiento() : 0;
         dto.setAlojamientoId(alojamientoId);
-        dto.setHuespedId(r.getInvitado() != null ? r.getInvitado().getIdUsuario() : 0);
+        int huespedId = r.getInvitado() != null ? r.getInvitado().getIdUsuario() : 0;
+        dto.setHuespedId(huespedId);
+        dto.setHuespedNombre(resolverHuespedNombre(huespedId, usuarioBL, usuarioCache));
 
         // No existe en el backend: default 1.
         dto.setNumHuespedes(1);
@@ -134,6 +136,35 @@ public final class ReservaMapper {
         }
         if (usuarioCache != null) {
             usuarioCache.put(anfitrionId, nombre);
+        }
+        return nombre;
+    }
+
+    /**
+     * Resuelve el nombre del huésped (invitado) por su id, reusando el mismo usuarioCache
+     * (anti-N+1) que el anfitrión. id<=0 o usuarioBL null -> "".
+     */
+    private static String resolverHuespedNombre(int huespedId, UsuarioBL usuarioBL,
+                                                Map<Integer, String> usuarioCache) {
+        if (usuarioBL == null || huespedId <= 0) {
+            return "";
+        }
+        if (usuarioCache != null && usuarioCache.containsKey(huespedId)) {
+            return usuarioCache.get(huespedId);
+        }
+        String nombre = "";
+        try {
+            Usuario u = usuarioBL.obtenerPorId(huespedId);
+            if (u != null) {
+                String n = u.getNombre() != null ? u.getNombre() : "";
+                String ap = u.getApellidoPaterno() != null ? u.getApellidoPaterno() : "";
+                nombre = (n + " " + ap).trim();
+            }
+        } catch (RuntimeException ex) {
+            nombre = "";
+        }
+        if (usuarioCache != null) {
+            usuarioCache.put(huespedId, nombre);
         }
         return nombre;
     }

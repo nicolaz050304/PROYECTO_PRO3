@@ -49,9 +49,9 @@
 
                         <!-- Huésped + alojamiento -->
                         <div class="rr-guest">
-                            <div class="avatar" style="width: 44px; height: 44px;">@Iniciales(r.AnfitrionNombre)</div>
+                            <div class="avatar" style="width: 44px; height: 44px;">@Iniciales(r.HuespedNombre)</div>
                             <div>
-                                <div class="rr-guest-name">@r.AnfitrionNombre</div>
+                                <div class="rr-guest-name">@r.HuespedNombre</div>
                                 <div class="rr-guest-sub"><i class="fas fa-house"></i> @r.AlojamientoNombre</div>
                             </div>
                         </div>
@@ -150,15 +150,35 @@
     private string Iniciales(string nombre) =>
         string.IsNullOrWhiteSpace(nombre) ? "?" : nombre.Trim()[..Math.Min(2, nombre.Trim().Length)].ToUpper();
 
-    private void Confirmar(Reserva r)
+    private async Task Confirmar(Reserva r)
     {
-        r.Estado = "Confirmada";
-        _mensajeAccion = $"Reserva de {r.AnfitrionNombre} confirmada.";
+        var anterior = r.Estado;
+        r.Estado = "Confirmada";                 // optimista
+        try
+        {
+            await ReservaProvider.ActualizarAsync(r);   // PUT -> persiste
+            _mensajeAccion = $"Reserva de {r.HuespedNombre} confirmada.";
+        }
+        catch
+        {
+            r.Estado = anterior;                 // revierte si falla
+            _mensajeAccion = "No se pudo confirmar la reserva. Inténtalo de nuevo.";
+        }
     }
 
-    private void Rechazar(Reserva r)
+    private async Task Rechazar(Reserva r)
     {
-        r.Estado = "Cancelada";
-        _mensajeAccion = $"Reserva de {r.AnfitrionNombre} rechazada.";
+        var anterior = r.Estado;
+        r.Estado = "Cancelada";                  // optimista
+        try
+        {
+            await ReservaProvider.ActualizarAsync(r);   // PUT -> persiste (baja lógica)
+            _mensajeAccion = $"Reserva de {r.HuespedNombre} rechazada.";
+        }
+        catch
+        {
+            r.Estado = anterior;
+            _mensajeAccion = "No se pudo rechazar la reserva. Inténtalo de nuevo.";
+        }
     }
 }

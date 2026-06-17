@@ -58,6 +58,28 @@ public class UsuarioRS {
     }
 
     /**
+     * POST UsuarioRS -> registro de un nuevo usuario (INVITADO). RF01.
+     * Recibe UsuarioDTO con el password EN CLARO (solo de entrada); la BL lo hashea.
+     * Devuelve 201 + UsuarioDTO (sin password) o 400 con el mensaje de error.
+     */
+    @POST
+    public Response crear(UsuarioDTO dto) {
+        try {
+            Usuario u = UsuarioMapper.toEntity(dto);
+            int id = usuarioBL.insertar(u);   // valida y hashea el password
+            u.setIdUsuario(id);
+            return Response.status(Response.Status.CREATED)
+                           .entity(UsuarioMapper.toDTO(u))   // toDTO NO incluye el password
+                           .build();
+        } catch (Exception e) {
+            e.printStackTrace();   // stack trace completo en el log de GlassFish
+            return Response.status(Response.Status.BAD_REQUEST)
+                           .entity("{\"error\":\"" + e.getMessage() + "\"}")
+                           .build();
+        }
+    }
+
+    /**
      * POST UsuarioRS/login -> autenticación plana.
      * Recibe LoginRequest {correo, password} (el password SOLO existe en esta entrada,
      * jamás en una respuesta). Devuelve 200 + UsuarioDTO (sin password) si las

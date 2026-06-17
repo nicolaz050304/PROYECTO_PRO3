@@ -4,6 +4,7 @@ wwwroot\js\bunki-flatpickr.js
 wwwroot\js\mapa.js
 wwwroot\uploads\8436f0a0308640038782cdc600b4bc4f.jpg
 wwwroot\uploads\8c6b63e6449b489e8c1ab81bf0545e03.jpg
+wwwroot\uploads\8d7b5324e4e444588fa5e04f1557fecd.jpg
 C:\Users\a2023\.nuget\packages\microsoft.aspnetcore.app.internal.assets\10.0.5\build\..\_framework\blazor.web.js
 C:\Users\a2023\.nuget\packages\microsoft.aspnetcore.app.internal.assets\10.0.5\build\..\_framework\blazor.server.js
 C:\Users\a2023\OneDrive\Documentos\FixSoft\PROYECTO_PRO3\FIXSOFT\FRONTEND\BunkiApp\wwwroot\js\bunki-flatpickr.js

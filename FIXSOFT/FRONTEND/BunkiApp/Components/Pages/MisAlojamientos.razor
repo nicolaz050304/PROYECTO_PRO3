@@ -92,7 +92,7 @@
                                         <i class="fas fa-eye"></i>
                                     </button>
                                     <button class="btn btn-small btn-secondary" title="Editar"
-                                            @onclick='() => Navigation.NavigateTo("/crear-alojamiento")'>
+                                            @onclick='() => Navigation.NavigateTo($"/crear-alojamiento?id={aloj.Id}")'>
                                         <i class="fas fa-pen"></i>
                                     </button>
                                     <button class="btn btn-small btn-outline" title="@(aloj.EstadoPublicacion == "Activo" ? "Pausar" : "Activar")"
@@ -229,11 +229,22 @@
     private int ReservasMock(Alojamiento a) => 3 + (a.Id * 2) % 9;
     private decimal IngresoMock(Alojamiento a) => a.PrecioNoche * ReservasMock(a);
 
-    // Pausar/Activar es un placeholder visual (mock); en REST persistiría el estado.
-    private void TogglePausa(Alojamiento aloj)
+    // Pausar/Activar: persiste vía PUT (EstadoPublicacion -> disponibilidad 1/0 en el backend).
+    private async Task TogglePausa(Alojamiento aloj)
     {
-        aloj.EstadoPublicacion = aloj.EstadoPublicacion == "Activo" ? "Pausado" : "Activo";
-        _mensajeAccion = $"\"{aloj.Nombre}\" ahora está {(aloj.EstadoPublicacion == "Activo" ? "activo" : "en pausa")}.";
+        var nuevoEstado = aloj.EstadoPublicacion == "Activo" ? "Pausado" : "Activo";
+        var anterior = aloj.EstadoPublicacion;
+        aloj.EstadoPublicacion = nuevoEstado;   // optimista, para que el badge cambie ya
+        try
+        {
+            await AlojamientoProvider.ActualizarAsync(aloj);   // PUT -> persiste disponibilidad
+            _mensajeAccion = $"\"{aloj.Nombre}\" ahora está {(nuevoEstado == "Activo" ? "activo" : "en pausa")}.";
+        }
+        catch
+        {
+            aloj.EstadoPublicacion = anterior;   // revierte si falla
+            _mensajeAccion = "No se pudo actualizar el estado. Inténtalo de nuevo.";
+        }
     }
 
     private void ConfirmarEliminar(Alojamiento aloj) => _alojamientoAEliminar = aloj;
