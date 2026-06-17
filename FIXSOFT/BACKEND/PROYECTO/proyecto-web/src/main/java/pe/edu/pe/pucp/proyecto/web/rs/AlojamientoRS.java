@@ -40,7 +40,7 @@ public class AlojamientoRS {
     private final AlojamientoBL alojamientoBL = new AlojamientoBLImpl();
     private final UsuarioBL usuarioBL = new UsuarioBLImpl();
 
-    /** GET AlojamientoRS -> todos los alojamientos. */
+    /** GET AlojamientoRS -> catálogo público: SOLO alojamientos disponibles (disponibilidad=1). */
     @GET
     public List<AlojamientoDTO> listar() {
         Map<Integer, String> cache = new HashMap<>();
@@ -49,6 +49,11 @@ public class AlojamientoRS {
         List<Alojamiento> lista = alojamientoBL.listarTodos();
         if (lista != null) {
             for (Alojamiento al : lista) {
+                // Excluye los de baja lógica / pausados (disponibilidad=0); el panel del
+                // anfitrión (listarPorAnfitrion) sí los sigue viendo.
+                if (al == null || !al.isDisponibilidad()) {
+                    continue;
+                }
                 salida.add(AlojamientoMapper.toDTO(al, usuarioBL, cache, resenasCache));
             }
         }

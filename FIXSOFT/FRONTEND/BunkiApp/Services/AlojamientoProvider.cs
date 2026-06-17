@@ -74,6 +74,11 @@ namespace BunkiApp.Services
         // UI avise que no se guardó (igual que ResenaProvider.RegistrarAsync).
         public async Task RegistrarAsync(Alojamiento a) => await _rest.RegistrarAsync(a);
 
+        // Eliminación (escritura) vía REST: DELETE AlojamientoRS/{id} -> baja lógica
+        // (disponibilidad 0). Sin fallback a mock: si el REST falla, propagamos para
+        // que la UI avise y NO quite la card.
+        public async Task EliminarAsync(int alojamientoId) => await _rest.EliminarAsync(alojamientoId);
+
         // El backend no envía datos visuales; los rellenamos para no romper el theme dark luxury.
         private static void AplicarDefaultsVisuales(Alojamiento a)
         {

@@ -149,5 +149,17 @@ namespace BunkiApp.Services
                 throw;
             }
         }
+
+        // Cancelación (ESCRITURA): DELETE ReservaRS/{id} -> baja lógica (estado CANCELADA).
+        // Sin fallback a mock: propaga para que la UI avise si no se pudo cancelar.
+        public async Task CancelarAsync(int reservaId)
+        {
+            try { await _rest.EliminarAsync(reservaId); }
+            catch (Exception ex)
+            {
+                _log.LogWarning(ex, "No se pudo cancelar la reserva {Id}", reservaId);
+                throw;
+            }
+        }
     }
 }

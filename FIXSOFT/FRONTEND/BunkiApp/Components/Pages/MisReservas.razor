@@ -19,6 +19,10 @@
         {
             <AlertMessage Tipo="success" Mensaje="@MensajeAccion" />
         }
+        @if (!string.IsNullOrEmpty(MensajeError))
+        {
+            <AlertMessage Tipo="danger" Mensaje="@MensajeError" />
+        }
 
         <!-- TABS -->
         <div class="tabs">
@@ -161,10 +165,38 @@
     </div>
 }
 
+@if (MostrarModalCancelar && ReservaParaCancelar is not null)
+{
+    <div class="modal-overlay" @onclick="CerrarModalCancelar">
+        <div class="modal-panel" style="max-width: 440px; text-align: left;" @onclick:stopPropagation="true">
+            <div class="flex flex-between" style="margin-bottom: 6px;">
+                <h2 style="margin: 0;">Cancelar reserva</h2>
+                <button @onclick="CerrarModalCancelar" aria-label="Cerrar"
+                        style="background:none; border:none; cursor:pointer; font-size:20px; color:var(--ink-faint);">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+            <p class="card-text" style="margin-bottom: 24px;">
+                ¿Seguro que deseas cancelar tu reserva en <strong>@ReservaParaCancelar.AlojamientoNombre</strong>?
+                Esta acción no se puede deshacer.
+            </p>
+            <div style="display:flex; gap:12px;">
+                <button class="btn btn-outline" style="flex:1;" @onclick="CerrarModalCancelar" disabled="@Cancelando">
+                    No, volver
+                </button>
+                <button class="btn btn-primary" style="flex:1;" @onclick="ConfirmarCancelacion" disabled="@Cancelando">
+                    @(Cancelando ? "Cancelando..." : "Sí, cancelar")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private static readonly string[] Tabs = { "Próximas", "Pasadas", "Canceladas" };
     private string TabActiva = "Próximas";
     private string MensajeAccion = "";
+    private string MensajeError = "";
 
     private List<Reserva> Proximas = new();
     private List<Reserva> Pasadas = new();
@@ -177,6 +209,11 @@
     private string ComentarioResena = "";
     private string ErrorResena = "";
     private bool EnviandoResena = false;
+
+    // --- Estado del modal de cancelación ---
+    private bool MostrarModalCancelar = false;
+    private Reserva? ReservaParaCancelar = null;
+    private bool Cancelando = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -209,11 +246,35 @@
 
     private void CancelarReserva(Reserva reserva)
     {
-        Proximas.Remove(reserva);
-        reserva.Estado = "Cancelada";
-        Canceladas.Add(reserva);
-        MensajeAccion = $"Reserva en {reserva.AlojamientoNombre} cancelada correctamente.";
+        // Acción irreversible: abre el modal de confirmación propio (no el confirm nativo).
+        ReservaParaCancelar = reserva;
+        MostrarModalCancelar = true;
     }
+
+    private async Task ConfirmarCancelacion()
+    {
+        if (ReservaParaCancelar is null) return;
+        Cancelando = true;
+        MensajeError = "";
+        MensajeAccion = "";
+        try
+        {
+            // Persiste la baja lógica en el backend (DELETE -> estado CANCELADA).
+            await ReservaProvider.CancelarAsync(ReservaParaCancelar.Id);
+            MensajeAccion = $"Reserva en {ReservaParaCancelar.AlojamientoNombre} cancelada correctamente.";
+            MostrarModalCancelar = false;
+            ReservaParaCancelar = null;
+            // Recarga para que la reserva salga de Próximas y aparezca en Canceladas.
+            await CargarDatosAsync();
+        }
+        catch
+        {
+            MensajeError = "No se pudo cancelar la reserva. Intenta de nuevo.";
+        }
+        finally { Cancelando = false; }
+    }
+
+    private void CerrarModalCancelar() { MostrarModalCancelar = false; ReservaParaCancelar = null; }
 
     private void DejarResena(Reserva reserva)
     {

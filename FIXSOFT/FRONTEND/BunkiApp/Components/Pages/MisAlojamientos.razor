@@ -183,11 +183,19 @@
     </div>
 }
 
+@if (!string.IsNullOrEmpty(_mensajeError))
+{
+    <div style="position: fixed; bottom: 24px; right: 24px; z-index: var(--z-toast);">
+        <AlertMessage Tipo="danger" Mensaje="@_mensajeError" />
+    </div>
+}
+
 @code {
     private List<Alojamiento> _alojamientos = new();
     private List<Reserva> _reservas = new();
     private Alojamiento? _alojamientoAEliminar;
     private string _mensajeAccion = "";
+    private string _mensajeError = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -233,12 +241,26 @@
     private async Task EliminarAlojamiento()
     {
         if (_alojamientoAEliminar is null) return;
-        var nombre = _alojamientoAEliminar.Nombre;
-        _alojamientos.Remove(_alojamientoAEliminar);
-        _alojamientoAEliminar = null;
-        _mensajeAccion = $"Alojamiento \"{nombre}\" eliminado.";
-        await Task.Delay(3000);
-        _mensajeAccion = "";
+        var objetivo = _alojamientoAEliminar;
+        var nombre = objetivo.Nombre;
+        _mensajeError = "";
+        try
+        {
+            // Persiste la baja lógica en el backend (DELETE -> disponibilidad 0).
+            await AlojamientoProvider.EliminarAsync(objetivo.Id);
+            // Solo si el backend confirmó, quitamos la card y cerramos el modal.
+            _alojamientos.Remove(objetivo);
+            _alojamientoAEliminar = null;
+            _mensajeAccion = $"Alojamiento \"{nombre}\" eliminado.";
+            await Task.Delay(3000);
+            _mensajeAccion = "";
+        }
+        catch (Exception)
+        {
+            // No se borró en el backend: NO quitamos la card; avisamos y dejamos el modal cerrable.
+            _alojamientoAEliminar = null;
+            _mensajeError = $"No se pudo eliminar \"{nombre}\". Intenta de nuevo.";
+        }
     }
     private string InicialesReserva(Reserva r)
     {
