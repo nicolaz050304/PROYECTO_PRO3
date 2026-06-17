@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "Dqiyr7H6gPA=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\BunkiApp.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\a2023\\.nuget\\packages\\microsoft.aspnetcore.app.internal.assets\\10.0.5\\microsoft.aspnetcore.app.internal.assets.10.0.5.nupkg.sha512"
+  ],
+  "logs": []
+}
