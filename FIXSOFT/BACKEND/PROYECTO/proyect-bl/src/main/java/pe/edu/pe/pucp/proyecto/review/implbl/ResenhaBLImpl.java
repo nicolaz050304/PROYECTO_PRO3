@@ -87,4 +87,9 @@ public class ResenhaBLImpl implements ResenhaBL {
     public java.util.Map<Integer, double[]> calificacionesPorAlojamiento() {
         return daoResenha.calificacionesPorAlojamiento();
     }
+
+    @Override
+    public List<Resenha> listarRecibidasPorCliente(int idInvitado) {
+        return daoResenha.listarRecibidasPorCliente(idInvitado);
+    }
 }

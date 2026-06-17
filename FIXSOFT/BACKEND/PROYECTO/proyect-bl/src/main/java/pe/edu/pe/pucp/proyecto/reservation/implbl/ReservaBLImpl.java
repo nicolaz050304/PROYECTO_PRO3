@@ -55,6 +55,11 @@ public class ReservaBLImpl implements ReservaBL {
     }
 
     @Override
+    public int finalizarReservasVencidas() {
+        return daoReserva.finalizarReservasVencidas();
+    }
+
+    @Override
     public void marcarReservaComoCalificada(int idReserva, String tipoAutor) {
         // Obtenemos la reserva actual
         Reserva reservaBD = daoReserva.load(idReserva);

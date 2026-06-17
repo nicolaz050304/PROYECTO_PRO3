@@ -78,6 +78,7 @@ public class ReservaRS {
     @GET
     @Path("usuario/{id}")
     public List<ReservaDTO> listarPorUsuario(@PathParam("id") int usuarioId) {
+        reservaBL.finalizarReservasVencidas();
         Map<Integer, Alojamiento> aloCache = new HashMap<>();
         Map<Integer, String> usuarioCache = new HashMap<>();
         List<ReservaDTO> salida = new ArrayList<>();
@@ -100,6 +101,7 @@ public class ReservaRS {
     @GET
     @Path("anfitrion/{id}")
     public List<ReservaDTO> listarPorAnfitrion(@PathParam("id") int anfitrionId) {
+        reservaBL.finalizarReservasVencidas();
         Map<Integer, Alojamiento> aloCache = new HashMap<>();
         Map<Integer, String> usuarioCache = new HashMap<>();
         List<ReservaDTO> salida = new ArrayList<>();

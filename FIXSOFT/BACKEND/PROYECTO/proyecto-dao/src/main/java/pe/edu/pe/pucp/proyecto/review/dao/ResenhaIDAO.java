@@ -9,6 +9,8 @@ public interface ResenhaIDAO extends IDAO<Resenha, Integer> {
     // Si más adelante se necestite listar reseñas por Alojamiento, aqui esta:
     // Ejemplo: List<Resenha> listarPorAlojamiento(int idAlojamiento);
     List<Resenha> listarPorAlojamiento(int idAlojamiento);
+    // Reseñas que recibió un usuario como CLIENTE (tipo_autor='ANFITRION' en sus reservas como invitado).
+    List<Resenha> listarRecibidasPorCliente(int idInvitado);
     // ¡AÑADE ESTA LÍNEA!
     List<Resenha> listAll();
 

@@ -32,7 +32,15 @@
             <StatBox Valor="@AppState.FormatearPrecio(_reservas.Sum(r => r.Total))" Etiqueta="Ingresos totales" Icono="fa-sack-dollar" Tono="dinero" />
         </div>
 
-        @if (!_alojamientos.Any())
+        @if (_cargando)
+        {
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="fas fa-spinner fa-spin"></i></div>
+                <h2>Cargando...</h2>
+                <p>Un momento, estamos obteniendo la información.</p>
+            </div>
+        }
+        else if (!_alojamientos.Any())
         {
             <div class="empty-state">
                 <div class="empty-state-icon"><i class="fas fa-house-chimney"></i></div>
@@ -191,6 +199,7 @@
 }
 
 @code {
+    private bool _cargando = true;
     private List<Alojamiento> _alojamientos = new();
     private List<Reserva> _reservas = new();
     private Alojamiento? _alojamientoAEliminar;
@@ -201,10 +210,19 @@
     {
         if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
         AppState.OnChange += OnMonedaChanged;
-        // Fuente: REST con fallback automático a mock (providers).
-        var anfitrionId = AppState.UsuarioActual?.Id ?? 0;
-        _alojamientos = await AlojamientoProvider.ListarPorAnfitrionAsync(anfitrionId);
-        _reservas = await ReservaProvider.ListarProximasAsync();
+
+        _cargando = true;
+        try
+        {
+            // Fuente: REST con fallback automático a mock (providers).
+            var anfitrionId = AppState.UsuarioActual?.Id ?? 0;
+            _alojamientos = await AlojamientoProvider.ListarPorAnfitrionAsync(anfitrionId);
+            _reservas = await ReservaProvider.ListarProximasAsync();
+        }
+        finally
+        {
+            _cargando = false;
+        }
     }
 
     public void Dispose() => AppState.OnChange -= OnMonedaChanged;

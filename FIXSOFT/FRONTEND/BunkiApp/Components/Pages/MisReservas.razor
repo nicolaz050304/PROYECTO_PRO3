@@ -37,7 +37,15 @@
         </div>
 
         <!-- CONTENIDO -->
-        @if (TabActiva == "Próximas")
+        @if (Cargando)
+        {
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="fas fa-spinner fa-spin"></i></div>
+                <h2>Cargando...</h2>
+                <p>Un momento, estamos obteniendo la información.</p>
+            </div>
+        }
+        else if (TabActiva == "Próximas")
         {
             @if (!Proximas.Any())
             {
@@ -198,6 +206,7 @@
     private string MensajeAccion = "";
     private string MensajeError = "";
 
+    private bool Cargando = true;
     private List<Reserva> Proximas = new();
     private List<Reserva> Pasadas = new();
     private List<Reserva> Canceladas = new();
@@ -219,7 +228,15 @@
     {
         if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
 
-        await CargarDatosAsync();
+        Cargando = true;
+        try
+        {
+            await CargarDatosAsync();
+        }
+        finally
+        {
+            Cargando = false;
+        }
     }
 
     private async Task CargarDatosAsync()

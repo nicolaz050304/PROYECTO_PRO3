@@ -154,6 +154,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xQZXJmaWwucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/a2023/OneDrive/Documentos/FixSoft/PROYECTO_PRO3/FIXSOFT/FRONTEND/BunkiApp/Components/Pages/PerfilPublico.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xQZXJmaWxQdWJsaWNvLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/a2023/OneDrive/Documentos/FixSoft/PROYECTO_PRO3/FIXSOFT/FRONTEND/BunkiApp/Components/Pages/RecuperarPassword.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xSZWN1cGVyYXJQYXNzd29yZC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 

@@ -2,6 +2,8 @@ wwwroot\css\styles.css
 wwwroot\images\premium\hero-bunki-premium.png
 wwwroot\js\bunki-flatpickr.js
 wwwroot\js\mapa.js
+wwwroot\uploads\58ed27221e4349a3b7de77544cc464b2.jpg
+wwwroot\uploads\6906848ddce741d69622885de4f3c6e8.jpg
 wwwroot\uploads\8436f0a0308640038782cdc600b4bc4f.jpg
 wwwroot\uploads\8c6b63e6449b489e8c1ab81bf0545e03.jpg
 wwwroot\uploads\8d7b5324e4e444588fa5e04f1557fecd.jpg

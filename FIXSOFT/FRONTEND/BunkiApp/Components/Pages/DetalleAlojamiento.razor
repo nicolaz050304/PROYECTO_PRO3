@@ -11,7 +11,19 @@
 
 <PageTitle>Bunki - @(Alojamiento?.Nombre ?? "Detalle Alojamiento")</PageTitle>
 
-@if (Alojamiento is null)
+@if (Cargando)
+{
+    <div class="section">
+        <div class="container">
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="fas fa-spinner fa-spin"></i></div>
+                <h2>Cargando...</h2>
+                <p>Un momento, estamos obteniendo la información.</p>
+            </div>
+        </div>
+    </div>
+}
+else if (Alojamiento is null)
 {
     <div class="section">
         <div class="container">
@@ -108,7 +120,8 @@ else
                         <!-- SOBRE EL ANFITRIÓN -->
                         <h3 style="margin-top: 30px; margin-bottom: 15px;">Sobre el Anfitrión</h3>
                         <div class="info-panel flex flex-between" style="align-items: center;">
-                            <div class="flex gap-15 items-center">
+                            <div class="flex gap-15 items-center" style="cursor: pointer;"
+                                 @onclick='() => Navigation.NavigateTo($"/usuario/{Alojamiento.AnfitrionId}")'>
                                 <div class="avatar avatar-large">@Alojamiento.AnfitrionInicial</div>
                                 <div>
                                     <h4>@Alojamiento.AnfitrionNombre</h4>
@@ -242,6 +255,15 @@ else
                                 </div>
                             </div>
                         }
+                        else if (EsMiPropioAlojamiento)
+                        {
+                            <div style="padding: 16px; background: var(--surface-2, rgba(255,255,255,0.05));
+                                        border: 1px solid var(--border); border-radius: 12px; text-align: center;
+                                        color: var(--text-light);">
+                                <i class="fas fa-circle-info" style="margin-right: 6px;"></i>
+                                Este es tu alojamiento. No puedes reservar tu propia propiedad.
+                            </div>
+                        }
                         else
                         {
                             <button class="btn btn-primary btn-large" @onclick="Reservar" disabled="@(Noches == 0)">
@@ -305,6 +327,7 @@ else
     public void Dispose() => AppState.OnChange -= OnMonedaChanged;
     private void OnMonedaChanged() => InvokeAsync(StateHasChanged);
 
+    private bool Cargando = true;
     private Alojamiento? Alojamiento;
     private DateTime? FechaEntrada;
     private DateTime? FechaSalida;
@@ -321,43 +344,57 @@ else
     private decimal Comision => Subtotal * 0.10m;
     private decimal Total => Subtotal + (Alojamiento?.TarifaLimpieza ?? 0) + Comision;
 
+    // El anfitrión no puede reservar su propia propiedad.
+    private bool EsMiPropioAlojamiento =>
+        AppState.EstaAutenticado
+        && Alojamiento is not null
+        && AppState.UsuarioActual!.Id == Alojamiento.AnfitrionId;
+
     protected override async Task OnParametersSetAsync()
     {
-        // Fuente de datos: REST con fallback automático a mock (provider).
-        Alojamiento = await AlojamientoProvider.ObtenerPorIdAsync(Id);
-
-        // Reseñas reales vía REST (GET ResenaRS/alojamiento/{id}); con fallback en el provider.
-        // Si algo falla, la página sigue mostrando el alojamiento, solo sin reseñas.
-        if (Alojamiento is not null)
+        Cargando = true;
+        try
         {
-            try
+            // Fuente de datos: REST con fallback automático a mock (provider).
+            Alojamiento = await AlojamientoProvider.ObtenerPorIdAsync(Id);
+
+            // Reseñas reales vía REST (GET ResenaRS/alojamiento/{id}); con fallback en el provider.
+            // Si algo falla, la página sigue mostrando el alojamiento, solo sin reseñas.
+            if (Alojamiento is not null)
             {
-                var resenas = await ResenaProvider.ListarPorAlojamientoAsync(Id);
-                if (resenas is not null && resenas.Count > 0)
+                try
                 {
-                    Alojamiento.Resenas = resenas;
-                    Alojamiento.TotalResenas = resenas.Count;
-                    Alojamiento.Rating = resenas.Average(r => (double)r.Estrellas);
+                    var resenas = await ResenaProvider.ListarPorAlojamientoAsync(Id);
+                    if (resenas is not null && resenas.Count > 0)
+                    {
+                        Alojamiento.Resenas = resenas;
+                        Alojamiento.TotalResenas = resenas.Count;
+                        Alojamiento.Rating = resenas.Average(r => (double)r.Estrellas);
+                    }
+                }
+                catch (Exception)
+                {
+                    // No rompemos la página si el REST de reseñas falla.
                 }
             }
-            catch (Exception)
+
+            if (!queryAplicada && Alojamiento is not null)
             {
-                // No rompemos la página si el REST de reseñas falla.
+                if (EntradaQuery.HasValue)
+                    FechaEntrada = EntradaQuery.Value;
+
+                if (SalidaQuery.HasValue)
+                    FechaSalida = SalidaQuery.Value;
+
+                if (HuespedesQuery.HasValue)
+                    NumHuespedes = Math.Clamp(HuespedesQuery.Value, 1, Alojamiento.MaxHuespedes);
+
+                queryAplicada = true;
             }
         }
-
-        if (!queryAplicada && Alojamiento is not null)
+        finally
         {
-            if (EntradaQuery.HasValue)
-                FechaEntrada = EntradaQuery.Value;
-
-            if (SalidaQuery.HasValue)
-                FechaSalida = SalidaQuery.Value;
-
-            if (HuespedesQuery.HasValue)
-                NumHuespedes = Math.Clamp(HuespedesQuery.Value, 1, Alojamiento.MaxHuespedes);
-
-            queryAplicada = true;
+            Cargando = false;
         }
     }
     private string GenerarEstrellas(double rating)
@@ -375,6 +412,10 @@ else
             Navigation.NavigateTo("/login");
             return;
         }
+
+        // Seguridad: el anfitrión no puede reservar su propia propiedad,
+        // aunque alguien intente forzar el botón.
+        if (EsMiPropioAlojamiento) return;
 
         if (Alojamiento is null || Noches == 0 || !FechaEntrada.HasValue || !FechaSalida.HasValue)
             return;

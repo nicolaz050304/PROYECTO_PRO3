@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @inject DataService Data
 @inject ReservaProvider ReservaProvider
+@inject ResenaProvider ResenaProvider
 @inject NavigationManager Navigation
 @inject BunkiApp.Models.AppState AppState
 @implements IDisposable
@@ -32,7 +33,15 @@
             }
         </div>
 
-        @if (!_reservasFiltradas.Any())
+        @if (_cargando)
+        {
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="fas fa-spinner fa-spin"></i></div>
+                <h2>Cargando...</h2>
+                <p>Un momento, estamos obteniendo la información.</p>
+            </div>
+        }
+        else if (!_reservasFiltradas.Any())
         {
             <div class="empty-state">
                 <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
@@ -93,6 +102,13 @@
                                     <button class="btn btn-small btn-outline" @onclick='() => Navigation.NavigateTo("/mensajes")'>
                                         <i class="fas fa-comment"></i> Contactar
                                     </button>
+                                    @* Solo en reservas FINALIZADAS (que aquí llegan como "Completada"): el anfitrión reseña al huésped. *@
+                                    @if (r.Estado == "Completada")
+                                    {
+                                        <button class="btn btn-small btn-primary" @onclick="() => ResenarHuesped(r)">
+                                            <i class="fas fa-star"></i> Reseñar al huésped
+                                        </button>
+                                    }
                                 }
                             </div>
                         </div>
@@ -110,11 +126,84 @@
     </div>
 }
 
+@if (MostrarModalResena && ReservaParaResenar is not null)
+{
+    <div class="modal-overlay" @onclick="CerrarModalResena">
+        <div class="modal-panel" style="max-width: 480px; text-align: left;" @onclick:stopPropagation="true">
+            <div class="flex flex-between" style="margin-bottom: 6px;">
+                <h2 style="margin: 0;">Reseñar a @ReservaParaResenar.HuespedNombre</h2>
+                <button @onclick="CerrarModalResena" aria-label="Cerrar"
+                        style="background: none; border: none; cursor: pointer; font-size: 20px; color: var(--ink-faint);">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+            <p class="card-text" style="margin-bottom: 20px;">
+                @ReservaParaResenar.AlojamientoNombre
+            </p>
+
+            <div class="form-group">
+                <label>Tu calificación</label>
+                <div class="rating" style="font-size: 28px; gap: 4px;">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        var estrella = i;
+                        <span class="star"
+                              style="cursor: pointer;"
+                              @onclick="() => EstrellasSeleccionadas = estrella">
+                            @(estrella <= EstrellasSeleccionadas ? "★" : "☆")
+                        </span>
+                    }
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="comentarioResenaAnfitrion">Tu comentario</label>
+                <textarea id="comentarioResenaAnfitrion"
+                          rows="4"
+                          maxlength="500"
+                          placeholder="Cuéntanos cómo fue tu experiencia con este huésped (mínimo 10 caracteres)..."
+                          @bind="ComentarioResena"
+                          @bind:event="oninput"></textarea>
+                <p class="field-help">
+                    @(ComentarioResena?.Trim().Length ?? 0) / 10 caracteres mínimos
+                </p>
+            </div>
+
+            @if (!string.IsNullOrEmpty(ErrorResena))
+            {
+                <div style="margin-top: 14px;">
+                    <AlertMessage Tipo="danger" Mensaje="@ErrorResena" />
+                </div>
+            }
+
+            <div style="display: flex; gap: 12px; margin-top: 24px;">
+                <button class="btn btn-outline" style="flex: 1;"
+                        @onclick="CerrarModalResena" disabled="@EnviandoResena">
+                    Cancelar
+                </button>
+                <button class="btn btn-primary" style="flex: 1;"
+                        @onclick="EnviarResena" disabled="@EnviandoResena">
+                    @(EnviandoResena ? "Enviando..." : "Enviar reseña")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private static readonly string[] _estados = { "Todas", "Pendiente", "Confirmada", "Completada", "Cancelada" };
     private string _estadoActivo = "Todas";
     private List<Reserva> _todasReservas = new();
     private string _mensajeAccion = "";
+    private bool _cargando = true;
+
+    // --- Estado del modal de reseña al huésped (clonado de MisReservas, tipo_autor = ANFITRION) ---
+    private bool MostrarModalResena = false;
+    private Reserva? ReservaParaResenar = null;
+    private int EstrellasSeleccionadas = 0;
+    private string ComentarioResena = "";
+    private string ErrorResena = "";
+    private bool EnviandoResena = false;
 
     private List<Reserva> _reservasFiltradas =>
         _estadoActivo == "Todas"
@@ -126,10 +215,18 @@
         if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
         AppState.OnChange += OnMonedaChanged;
 
-        // Filtra por el ANFITRIÓN logueado (ReservaRS/anfitrion/{id}). Una sola llamada que trae
-        // TODAS sus reservas (incluye Canceladas, que el concat próximas+pasadas se saltaba).
-        var aid = AppState.UsuarioActual!.Id;
-        _todasReservas = await ReservaProvider.ListarPorAnfitrionAsync(aid);
+        _cargando = true;
+        try
+        {
+            // Filtra por el ANFITRIÓN logueado (ReservaRS/anfitrion/{id}). Una sola llamada que trae
+            // TODAS sus reservas (incluye Canceladas, que el concat próximas+pasadas se saltaba).
+            var aid = AppState.UsuarioActual!.Id;
+            _todasReservas = await ReservaProvider.ListarPorAnfitrionAsync(aid);
+        }
+        finally
+        {
+            _cargando = false;
+        }
     }
 
     public void Dispose() => AppState.OnChange -= OnMonedaChanged;
@@ -181,4 +278,47 @@
             _mensajeAccion = "No se pudo rechazar la reserva. Inténtalo de nuevo.";
         }
     }
+
+    private void ResenarHuesped(Reserva r)
+    {
+        ReservaParaResenar = r;
+        EstrellasSeleccionadas = 0;
+        ComentarioResena = "";
+        ErrorResena = "";
+        MostrarModalResena = true;
+    }
+
+    private async Task EnviarResena()
+    {
+        ErrorResena = "";
+        if (EstrellasSeleccionadas < 1 || EstrellasSeleccionadas > 5)
+        { ErrorResena = "Selecciona una calificación de 1 a 5 estrellas."; return; }
+        if (string.IsNullOrWhiteSpace(ComentarioResena) || ComentarioResena.Trim().Length < 10)
+        { ErrorResena = "El comentario debe tener al menos 10 caracteres."; return; }
+        if (ReservaParaResenar is null) return;
+
+        EnviandoResena = true;
+        try
+        {
+            var nueva = new Resena
+            {
+                Estrellas = EstrellasSeleccionadas,
+                Comentario = ComentarioResena.Trim(),
+                ReservaId = ReservaParaResenar.Id,
+                AlojamientoId = ReservaParaResenar.AlojamientoId,
+                TipoAutor = "ANFITRION"            // <-- CLAVE: reseña del anfitrión al huésped
+            };
+            await ResenaProvider.RegistrarAsync(nueva);
+            MostrarModalResena = false;
+            ReservaParaResenar = null;
+            _mensajeAccion = "Reseña enviada al huésped.";
+        }
+        catch
+        {
+            ErrorResena = "No se pudo enviar la reseña. Inténtalo de nuevo.";
+        }
+        finally { EnviandoResena = false; }
+    }
+
+    private void CerrarModalResena() { MostrarModalResena = false; ReservaParaResenar = null; }
 }

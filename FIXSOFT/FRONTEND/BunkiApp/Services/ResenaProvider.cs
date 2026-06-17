@@ -37,6 +37,17 @@ namespace BunkiApp.Services
             }
         }
 
+        // Reseñas que un usuario recibió como cliente (perfil público). Lectura: si falla, lista vacía.
+        public async Task<List<Resena>> ListarRecibidasPorClienteAsync(int usuarioId)
+        {
+            try { return await _rest.ListarRecibidasPorClienteAsync(usuarioId); }
+            catch (Exception ex)
+            {
+                _log.LogWarning(ex, "REST no disponible (reseñas recibidas usuario {Id})", usuarioId);
+                return new();
+            }
+        }
+
         // Moderación admin: lista TODAS (incl. ocultas). Sin fallback a mock; si falla, lista vacía.
         public async Task<List<Resena>> ListarTodasAsync()
         {

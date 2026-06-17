@@ -108,6 +108,31 @@ public class ResenaRS {
     }
 
     /**
+     * GET ResenaRS/usuario/{id}/recibidas -> reseñas que RECIBIÓ un usuario como cliente,
+     * es decir, las que le dejaron los anfitriones (tipo_autor='ANFITRION') en sus reservas
+     * como invitado. Para el perfil público. Reutiliza el mismo toDTO y cachés (anti N+1).
+     */
+    @GET
+    @Path("usuario/{id}/recibidas")
+    public List<ResenaDTO> listarRecibidasPorCliente(@PathParam("id") int idUsuario) {
+        List<ResenaDTO> salida = new ArrayList<>();
+        try {
+            var lista = resenhaBL.listarRecibidasPorCliente(idUsuario);
+            // mismos cachés que usa listarPorAlojamiento:
+            Map<Integer, Reserva> reservaCache = new HashMap<>();
+            Map<Integer, Alojamiento> aloCache = new HashMap<>();
+            Map<Integer, String> usuarioCache = new HashMap<>();
+            for (Resenha r : lista) {
+                salida.add(ResenaMapper.toDTO(r, reservaBL, alojamientoBL, usuarioBL,
+                        reservaCache, aloCache, usuarioCache));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return salida;
+    }
+
+    /**
      * GET ResenaRS/todas -> TODAS las reseñas, incluidas las inactivas (ocultas).
      * Para moderación admin: el ResenaDTO lleva 'activo', así el frontend distingue
      * activas de ocultas. Cachés compartidas (anti N+1), igual que el GET normal.

@@ -36,6 +36,10 @@ namespace BunkiApp.Services
         public async Task<List<Resena>> ListarPorAlojamientoAsync(int alojamientoId)
             => await _http.GetFromJsonAsync<List<Resena>>($"{Endpoint}/alojamiento/{alojamientoId}") ?? new();
 
+        // Reseñas que un usuario RECIBIÓ como cliente (las que le dejaron los anfitriones).
+        public async Task<List<Resena>> ListarRecibidasPorClienteAsync(int usuarioId)
+            => await _http.GetFromJsonAsync<List<Resena>>($"{Endpoint}/usuario/{usuarioId}/recibidas") ?? new();
+
         public async Task RegistrarAsync(Resena r)
             => (await _http.PostAsJsonAsync(Endpoint, r)).EnsureSuccessStatusCode();
 

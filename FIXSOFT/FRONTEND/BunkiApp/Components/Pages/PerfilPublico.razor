@@ -1,0 +1,158 @@
+@page "/usuario/{Id:int}"
+@rendermode InteractiveServer
+@inject Services.UsuarioProvider UsuarioProvider
+@inject Services.ResenaProvider ResenaProvider
+@inject NavigationManager Navigation
+@using System.Globalization
+
+<PageTitle>Bunki - @(_usuario?.NombreCompleto ?? "Perfil de usuario")</PageTitle>
+
+<div class="section">
+    <div class="container">
+
+        @if (_cargando)
+        {
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="fas fa-spinner fa-spin"></i></div>
+                <h2>Cargando perfil...</h2>
+                <p>Un momento, estamos obteniendo la información.</p>
+            </div>
+        }
+        else if (_usuario is null)
+        {
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="fas fa-user-slash"></i></div>
+                <h2>Usuario no encontrado</h2>
+                <p>El perfil que buscas no existe o ya no está disponible.</p>
+                <div class="empty-state-actions">
+                    <button class="btn btn-primary" @onclick="Volver">Volver</button>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- CABECERA DEL PERFIL (solo datos reales) -->
+            <div class="card" style="margin-bottom: 30px;">
+                <div style="padding: 40px; text-align: center;">
+                    <div class="avatar avatar-large" style="margin: 0 auto 20px;">
+                        @_usuario.Iniciales
+                    </div>
+                    <h2 style="margin-bottom: 8px;">@_usuario.NombreCompleto</h2>
+
+                    <p class="card-text" style="margin-bottom: 6px;">
+                        <i class="fas fa-user-tag" style="margin-right: 6px;"></i>@TipoLegible
+                    </p>
+
+                    @if (!string.IsNullOrWhiteSpace(_usuario.Pais))
+                    {
+                        <p class="card-text" style="margin-bottom: 6px;">
+                            <i class="fas fa-location-dot" style="margin-right: 6px;"></i>@_usuario.Pais
+                        </p>
+                    }
+
+                    <p style="margin-top: 12px;">
+                        @if (_resenas.Count > 0)
+                        {
+                            <span class="badge badge-success" style="font-size: 14px;">
+                                <span class="star">★</span> @PromedioRating.ToString("0.0", CultureInfo.InvariantCulture)
+                                (@_resenas.Count @(_resenas.Count == 1 ? "reseña" : "reseñas"))
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="card-text">Sin reseñas todavía</span>
+                        }
+                    </p>
+                </div>
+            </div>
+
+            <!-- RESEÑAS COMO HUÉSPED -->
+            <h3 style="margin-bottom: 15px;">Reseñas como huésped</h3>
+
+            @if (_resenas.Count == 0)
+            {
+                <p class="card-text">Este usuario aún no tiene reseñas como huésped.</p>
+            }
+            else
+            {
+                <div style="border-top: 1px solid var(--border); padding-top: 20px;">
+                    @foreach (var r in _resenas)
+                    {
+                        <div class="card" style="margin-bottom: 16px;">
+                            <div style="padding: 20px;">
+                                <div class="flex flex-between" style="align-items: flex-start;">
+                                    <div>
+                                        <strong>@(string.IsNullOrWhiteSpace(r.AutorNombre) ? "Anfitrión" : r.AutorNombre)</strong>
+                                        <div class="rating" style="margin-top: 5px;">
+                                            <span class="star">@GenerarEstrellas(r.Estrellas)</span>
+                                        </div>
+                                        @if (!string.IsNullOrWhiteSpace(r.AlojamientoNombre))
+                                        {
+                                            <p class="card-text" style="margin-top: 5px;">
+                                                <i class="fas fa-house" style="margin-right: 6px;"></i>@r.AlojamientoNombre
+                                            </p>
+                                        }
+                                    </div>
+                                    <span class="card-text">@(r.FechaPublicacion?.ToString("dd MMM yyyy") ?? "")</span>
+                                </div>
+                                <p class="card-text" style="margin-top: 10px;">@r.Comentario</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            <div style="margin-top: 24px;">
+                <button class="btn btn-outline" @onclick="Volver">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Usuario? _usuario;
+    private List<Resena> _resenas = new();
+    private bool _cargando = true;
+
+    private double PromedioRating =>
+        _resenas.Count == 0 ? 0 : Math.Round(_resenas.Average(r => r.Estrellas), 1);
+
+    // Tipo de usuario legible a partir del rol real del backend (ADMINISTRADOR/ANFITRION/INVITADO).
+    private string TipoLegible
+    {
+        get
+        {
+            var tipo = _usuario?.TipoUsuario ?? "";
+            if (tipo.Equals("ADMINISTRADOR", StringComparison.OrdinalIgnoreCase)) return "Administrador";
+            if (tipo.Equals("ANFITRION", StringComparison.OrdinalIgnoreCase)) return "Anfitrión";
+            if (tipo.Equals("INVITADO", StringComparison.OrdinalIgnoreCase)) return "Invitado";
+            return string.IsNullOrWhiteSpace(tipo) ? "Usuario" : tipo;
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _cargando = true;
+        try
+        {
+            _usuario = await UsuarioProvider.ObtenerPorIdAsync(Id);
+            _resenas = await ResenaProvider.ListarRecibidasPorClienteAsync(Id);
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+
+    private string GenerarEstrellas(int estrellas)
+    {
+        int llenas = Math.Clamp(estrellas, 0, 5);
+        return string.Concat(Enumerable.Range(0, 5).Select(i => i < llenas ? "★" : "☆"));
+    }
+
+    private void Volver() => Navigation.NavigateTo("/explorar");
+}

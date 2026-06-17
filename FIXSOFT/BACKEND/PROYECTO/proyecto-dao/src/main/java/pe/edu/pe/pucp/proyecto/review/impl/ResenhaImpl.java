@@ -134,6 +134,44 @@ public class ResenhaImpl implements ResenhaIDAO {
     }
 
     @Override
+    public List<Resenha> listarRecibidasPorCliente(int idInvitado) {
+        // Reseñas que le dejaron los ANFITRIONES a este usuario en sus reservas como invitado.
+        String sql = "SELECT r.* FROM resenha r " +
+                "INNER JOIN reserva res ON r.id_reserva = res.id_reserva " +
+                "WHERE res.id_invitado = ? AND r.tipo_autor = 'ANFITRION' AND r.activo = 1 " +
+                "ORDER BY r.fecha_publicacion DESC";
+
+        List<Resenha> list = new ArrayList<>();
+
+        try (Connection con = DBManager.getInstance().getConnection();
+             PreparedStatement pst = con.prepareStatement(sql)) {
+
+            pst.setInt(1, idInvitado);
+            try (ResultSet rs = pst.executeQuery()) {
+                while (rs.next()) {
+                    Resenha res = new Resenha();
+                    res.setIdResenha(rs.getInt("id_resenha"));
+                    res.setCalificacion(rs.getInt("calificacion"));
+                    res.setComentario(rs.getString("comentario"));
+                    res.setFechaPublicacion(rs.getDate("fecha_publicacion"));
+                    res.setActivo(rs.getBoolean("activo"));
+                    res.setTipoAutor(rs.getString("tipo_autor"));
+
+                    // Reconstruimos el objeto Reserva para cada reseña (solo el id)
+                    Reserva r = new Reserva();
+                    r.setIdReserva(rs.getInt("id_reserva"));
+                    res.setReserva(r);
+
+                    list.add(res);
+                }
+            }
+        } catch (SQLException ex) {
+            System.err.println("ERROR al listar reseñas recibidas por cliente: " + ex.getMessage());
+        }
+        return list;
+    }
+
+    @Override
     public void remove(Resenha resenha) {
         String sql = "UPDATE resenha SET activo = 0 WHERE id_resenha = ?";
         try (Connection con = DBManager.getInstance().getConnection();

@@ -12,4 +12,5 @@ import java.util.List;
 
 public interface ReservaIDAO extends IDAO<Reserva, Integer> {
     List<Reserva> listAll();
+    int finalizarReservasVencidas();
 }

@@ -163,6 +163,21 @@ public class ReservaImpl implements ReservaIDAO {
     }
 
     @Override
+    public int finalizarReservasVencidas() {
+        // Un solo UPDATE masivo e idempotente: las reservas CONFIRMADAS cuya estadía
+        // ya terminó (fecha_fin estrictamente anterior a hoy) pasan a FINALIZADA.
+        String sql = "UPDATE reserva SET estado = 'FINALIZADA' " +
+                "WHERE estado = 'CONFIRMADA' AND fecha_fin < CURDATE()";
+        try (Connection con = DBManager.getInstance().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            return ps.executeUpdate();   // nº de filas actualizadas
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
+
+    @Override
     public void remove(Reserva reserva) {
         // Eliminación lógica: Marcamos como CANCELADA
         String sql = "UPDATE reserva SET estado = 'CANCELADA' WHERE id_reserva = ?";

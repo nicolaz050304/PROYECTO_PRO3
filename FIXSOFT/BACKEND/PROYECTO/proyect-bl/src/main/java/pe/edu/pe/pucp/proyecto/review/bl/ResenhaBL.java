@@ -8,6 +8,9 @@ import java.util.List;
 public interface ResenhaBL extends IBL<Resenha, Integer> {
     // Aquí puedes agregar métodos como listarResenhasPorAlojamiento si lo necesitas luego
 
+    // Reseñas que recibió un usuario como CLIENTE (las que le dejaron los anfitriones).
+    List<Resenha> listarRecibidasPorCliente(int idInvitado);
+
     // Moderación admin: todas las reseñas (activas e inactivas) y reactivar una oculta.
     List<Resenha> listarTodasIncluidasInactivas();
     int reactivar(Resenha resenha);
