@@ -3,6 +3,7 @@
 @inject NavigationManager Navigation
 @inject BunkiApp.Models.AppState AppState
 @inject Services.AlojamientoProvider AlojamientoProvider
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
 
 <PageTitle>Bunki - Crear Alojamiento</PageTitle>
 
@@ -162,29 +163,29 @@
                         </h2>
                         <p class="section-sub">Sube imágenes atractivas; la primera será la portada.</p>
 
-                        <div class="image-upload" @onclick="SimularSubida">
+                        <label class="image-upload">
                             <i class="fas fa-cloud-upload-alt"></i>
-                            <p class="upload-text">Arrastra fotos aquí o haz clic</p>
-                            <p class="upload-hint">Máximo 10 imágenes • JPG, PNG</p>
-                        </div>
+                            <p class="upload-text">Arrastra una foto aquí o haz clic</p>
+                            <p class="upload-hint">Una imagen principal • JPG, PNG • Máx. 5 MB</p>
+                            <InputFile OnChange="CargarImagen" accept="image/*" style="display: none;" />
+                        </label>
 
-                        @if (ImagenesPreview.Any())
+                        @if (!string.IsNullOrWhiteSpace(MensajeImagen))
+                        {
+                            <p class="validation-message" style="margin-top: 8px;">@MensajeImagen</p>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(ImagenSubidaUrl))
                         {
                             <div class="image-preview">
-                                @for (int i = 0; i < ImagenesPreview.Count; i++)
-                                {
-                                    int idx = i;
-                                    <div class="image-item">
-                                        @if (idx == 0)
-                                        {
-                                            <span class="cover-badge"><i class="fas fa-star"></i> Portada</span>
-                                        }
-                                        <div style="width: 100%; height: 120px; background: @ImagenesPreview[idx]; border-radius: 8px;"></div>
-                                        <button type="button" class="delete-btn" @onclick="() => EliminarImagen(idx)">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                }
+                                <div class="image-item">
+                                    <span class="cover-badge"><i class="fas fa-star"></i> Portada</span>
+                                    <img src="@ImagenSubidaUrl" alt="preview"
+                                         style="width: 100%; height: 160px; object-fit: cover; border-radius: 8px;" />
+                                    <button type="button" class="delete-btn" @onclick="QuitarImagen">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
                             </div>
                         }
                     </div>
@@ -364,7 +365,10 @@
         }
     }
     private HashSet<string> ServiciosSeleccionados = new();
-    private List<string> ImagenesPreview = new();
+
+    // Subida real de UNA imagen principal -> ruta servida desde wwwroot/uploads.
+    private string ImagenSubidaUrl = "";
+    private string MensajeImagen = "";
 
     private record ServicioInfo(string Key, string Nombre, string Icono);
 
@@ -378,13 +382,6 @@
         new("cocina", "Cocina Equipada", "fa-utensils"),
         new("lavanderia", "Lavandería", "fa-tshirt"),
         new("bbq", "Barbacoa", "fa-fire")
-    };
-
-    private static readonly string[] ColoresPreview =
-    {
-        "linear-gradient(135deg, #FF6B6B, #FFB3B3)",
-        "linear-gradient(135deg, #4ECDC4, #8FE7E0)",
-        "linear-gradient(135deg, #FFD43B, #FFE680)"
     };
 
     // Reglas (chips visuales, mock de frontend — no persisten ni tocan el modelo).
@@ -411,19 +408,27 @@
             ServiciosSeleccionados.Add(key);
     }
 
-    private void SimularSubida()
+    private async Task CargarImagen(InputFileChangeEventArgs e)
     {
-        if (ImagenesPreview.Count < 10)
+        var file = e.File;
+        if (file is null) return;
+        if (!file.ContentType.StartsWith("image/")) { MensajeImagen = "El archivo debe ser una imagen."; return; }
+        if (file.Size > 5 * 1024 * 1024) { MensajeImagen = "La imagen no debe pasar de 5 MB."; return; }
+
+        var uploadsDir = System.IO.Path.Combine(Env.WebRootPath, "uploads");
+        System.IO.Directory.CreateDirectory(uploadsDir);
+        var ext = System.IO.Path.GetExtension(file.Name);
+        var nombre = $"{Guid.NewGuid():N}{ext}";
+        var ruta = System.IO.Path.Combine(uploadsDir, nombre);
+        await using (var fs = new System.IO.FileStream(ruta, System.IO.FileMode.Create))
         {
-            ImagenesPreview.Add(ColoresPreview[ImagenesPreview.Count % ColoresPreview.Length]);
+            await file.OpenReadStream(5 * 1024 * 1024).CopyToAsync(fs);
         }
+        ImagenSubidaUrl = $"/uploads/{nombre}";
+        MensajeImagen = "";
     }
 
-    private void EliminarImagen(int idx)
-    {
-        if (idx >= 0 && idx < ImagenesPreview.Count)
-            ImagenesPreview.RemoveAt(idx);
-    }
+    private void QuitarImagen() => ImagenSubidaUrl = "";
 
     private async Task Publicar()
     {
@@ -469,7 +474,8 @@
                 Servicios = serviciosLista,
                 AnfitrionId = AppState.UsuarioActual?.Id ?? 1,  // TEMPORAL: login mock (Id=1); corregir con login real
                 Latitud = 0,    // TODO: el formulario no captura coordenadas todavía; quedará sin pin
-                Longitud = 0    //       en el mapa hasta agregar selección de ubicación.
+                Longitud = 0,   //       en el mapa hasta agregar selección de ubicación.
+                ImagenUrl = ImagenSubidaUrl   // ruta del archivo subido; "" si no subió ninguna
             };
 
             await AlojamientoProvider.RegistrarAsync(alojamiento);
