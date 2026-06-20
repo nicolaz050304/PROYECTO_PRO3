@@ -166,48 +166,107 @@ public class AlojamientoImpl implements AlojamientoIDAO {
              ResultSet rs = stm.executeQuery(sql)) {
 
             while (rs.next()) {
-                String tipo = rs.getString("tipo");
-                Alojamiento al = null;
-
-                // Cargamos al dueño (Anfitrión) - Solo el ID para no sobrecargar
-                Anfitrion duenho = new Anfitrion();
-                duenho.setIdUsuario(rs.getInt("id_duenho"));
-
-                // Instanciación según el tipo
-                if ("CASA".equals(tipo)) {
-                    al = new Casa(rs.getString("nombre"), rs.getString("descripcion"),
-                            rs.getDouble("precio_por_noche"), rs.getString("direccion"),
-                            rs.getInt("capacidad_max"), rs.getDouble("calificacion_promedio"),
-                            rs.getBoolean("disponibilidad"), duenho, rs.getString("pais"),
-                            rs.getInt("num_pisos"), rs.getBoolean("con_patio"),
-                            rs.getInt("num_cocheras"), rs.getInt("num_habitaciones_casa"));
-                } else if ("DEPARTAMENTO".equals(tipo)) {
-                    al = new Departamento(rs.getString("nombre"), rs.getString("descripcion"),
-                            rs.getDouble("precio_por_noche"), rs.getString("direccion"),
-                            rs.getInt("capacidad_max"), rs.getDouble("calificacion_promedio"),
-                            rs.getBoolean("disponibilidad"), duenho, rs.getString("pais"),
-                            rs.getInt("num_piso"), rs.getString("nro_departamento"),
-                            rs.getInt("nro_habitaciones_departamento"));
-                } else if ("HABITACION".equals(tipo)) {
-                    al = new Habitacion(rs.getString("nombre"), rs.getString("descripcion"),
-                            rs.getDouble("precio_por_noche"), rs.getString("direccion"),
-                            rs.getInt("capacidad_max"), rs.getDouble("calificacion_promedio"),
-                            rs.getBoolean("disponibilidad"), duenho, rs.getString("pais"),
-                            rs.getString("nro_habitacion"), rs.getString("tipo_cama"),
-                            rs.getBoolean("con_banho_privado"));
-                }
-
+                Alojamiento al = construirAlojamiento(rs);
                 if (al != null) {
-                    al.setIdAlojamiento(rs.getInt("id_alojamiento"));
-                    al.setLatitud(rs.getDouble("latitud"));
-                    al.setLongitud(rs.getDouble("longitud"));
-                    al.setEstadoValidacion(rs.getString("estado_validacion"));
-                    al.setImagenUrl(rs.getString("imagen_url"));
                     lista.add(al);
                 }
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error al listar alojamientos: " + e.getMessage());
+        }
+        return lista;
+    }
+
+    /**
+     * Mapeo ResultSet -> Alojamiento (Casa/Departamento/Habitacion según 'tipo'). Extraído de
+     * listAll para reutilizarlo también en listarDisponibles sin duplicar la construcción.
+     * El SELECT debe traer las mismas columnas que listAll (se leen por nombre).
+     */
+    private Alojamiento construirAlojamiento(ResultSet rs) throws SQLException {
+        String tipo = rs.getString("tipo");
+        Alojamiento al = null;
+
+        // Cargamos al dueño (Anfitrión) - Solo el ID para no sobrecargar
+        Anfitrion duenho = new Anfitrion();
+        duenho.setIdUsuario(rs.getInt("id_duenho"));
+
+        if ("CASA".equals(tipo)) {
+            al = new Casa(rs.getString("nombre"), rs.getString("descripcion"),
+                    rs.getDouble("precio_por_noche"), rs.getString("direccion"),
+                    rs.getInt("capacidad_max"), rs.getDouble("calificacion_promedio"),
+                    rs.getBoolean("disponibilidad"), duenho, rs.getString("pais"),
+                    rs.getInt("num_pisos"), rs.getBoolean("con_patio"),
+                    rs.getInt("num_cocheras"), rs.getInt("num_habitaciones_casa"));
+        } else if ("DEPARTAMENTO".equals(tipo)) {
+            al = new Departamento(rs.getString("nombre"), rs.getString("descripcion"),
+                    rs.getDouble("precio_por_noche"), rs.getString("direccion"),
+                    rs.getInt("capacidad_max"), rs.getDouble("calificacion_promedio"),
+                    rs.getBoolean("disponibilidad"), duenho, rs.getString("pais"),
+                    rs.getInt("num_piso"), rs.getString("nro_departamento"),
+                    rs.getInt("nro_habitaciones_departamento"));
+        } else if ("HABITACION".equals(tipo)) {
+            al = new Habitacion(rs.getString("nombre"), rs.getString("descripcion"),
+                    rs.getDouble("precio_por_noche"), rs.getString("direccion"),
+                    rs.getInt("capacidad_max"), rs.getDouble("calificacion_promedio"),
+                    rs.getBoolean("disponibilidad"), duenho, rs.getString("pais"),
+                    rs.getString("nro_habitacion"), rs.getString("tipo_cama"),
+                    rs.getBoolean("con_banho_privado"));
+        }
+
+        if (al != null) {
+            al.setIdAlojamiento(rs.getInt("id_alojamiento"));
+            al.setLatitud(rs.getDouble("latitud"));
+            al.setLongitud(rs.getDouble("longitud"));
+            al.setEstadoValidacion(rs.getString("estado_validacion"));
+            al.setImagenUrl(rs.getString("imagen_url"));
+        }
+        return al;
+    }
+
+    /**
+     * Alojamientos DISPONIBLES para el rango [entrada, salida]: excluye los que tengan una
+     * reserva VIVA (PENDIENTE/CONFIRMADA) que se solape con esas fechas.
+     *
+     * Solapamiento: una reserva [inicio, fin] choca con el rango buscado [E, S] si
+     *   inicio < S  AND  fin > E.
+     *   Ej.: buscas 10–15; una reserva 12–14 (12<15 y 14>10) -> solapa, se excluye.
+     *        una reserva 15–18 (15<15 es falso) -> NO solapa (check-out el mismo día del check-in).
+     * Solo bloquean las reservas vivas: CANCELADA y FINALIZADA liberan el alojamiento.
+     * Reutiliza el mismo mapeo (construirAlojamiento) que listAll.
+     */
+    @Override
+    public List<Alojamiento> listarDisponibles(java.time.LocalDate entrada, java.time.LocalDate salida) {
+        List<Alojamiento> lista = new ArrayList<>();
+        String sql = "SELECT id_alojamiento, nombre, descripcion, precio_por_noche, direccion, " +
+                "capacidad_max, calificacion_promedio, disponibilidad, pais, id_duenho, tipo, " +
+                "latitud, longitud, estado_validacion, id_admin_validador, " +
+                "num_pisos, con_patio, num_cocheras, num_habitaciones_casa, " +
+                "num_piso, nro_departamento, nro_habitaciones_departamento, " +
+                "nro_habitacion, tipo_cama, con_banho_privado, imagen_url FROM alojamiento a " +
+                "WHERE a.disponibilidad = 1 " +
+                "AND a.id_alojamiento NOT IN ( " +
+                "    SELECT r.id_alojamiento FROM reserva r " +
+                "    WHERE r.estado IN ('PENDIENTE','CONFIRMADA') " +
+                "      AND r.fecha_inicio < ? " +   // salida buscada (S)
+                "      AND r.fecha_fin > ? )";       // entrada buscada (E)
+
+        try (Connection connection = DBManager.getInstance().getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(sql)) {
+
+            // OJO el orden: 1=salida (S) para fecha_inicio<?, 2=entrada (E) para fecha_fin>?
+            pstmt.setDate(1, java.sql.Date.valueOf(salida));
+            pstmt.setDate(2, java.sql.Date.valueOf(entrada));
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Alojamiento al = construirAlojamiento(rs);
+                    if (al != null) {
+                        lista.add(al);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al listar alojamientos disponibles: " + e.getMessage(), e);
         }
         return lista;
     }

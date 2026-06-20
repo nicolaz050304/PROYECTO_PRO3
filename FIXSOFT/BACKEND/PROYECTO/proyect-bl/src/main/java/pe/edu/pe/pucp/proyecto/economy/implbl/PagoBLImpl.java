@@ -42,6 +42,11 @@ public class PagoBLImpl implements PagoBL {
         }
     }
 
+    @Override
+    public List<Pago> listarPorAnfitrion(int idAnfitrion) {
+        return daoPago.listarPorAnfitrion(idAnfitrion);
+    }
+
     // Implementación de métodos genéricos de IBL
     @Override public List<Pago> listarTodos() { return daoPago.listAll(); }
     @Override public Pago obtenerPorId(Integer id) { return daoPago.load(id); }

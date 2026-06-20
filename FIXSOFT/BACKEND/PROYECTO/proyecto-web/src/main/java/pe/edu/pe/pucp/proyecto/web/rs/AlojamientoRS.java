@@ -8,6 +8,7 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
@@ -20,6 +21,7 @@ import pe.edu.pe.pucp.proyecto.users.implbl.UsuarioBLImpl;
 import pe.edu.pe.pucp.proyecto.web.dto.AlojamientoDTO;
 import pe.edu.pe.pucp.proyecto.web.mapper.AlojamientoMapper;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -58,6 +60,38 @@ public class AlojamientoRS {
             }
         }
         return salida;
+    }
+
+    /**
+     * GET AlojamientoRS/disponibles?entrada=yyyy-MM-dd&salida=yyyy-MM-dd
+     * Catálogo filtrado por fechas: excluye los alojamientos con una reserva viva
+     * (PENDIENTE/CONFIRMADA) que se solape con [entrada, salida]. Si faltan fechas, la BL
+     * devuelve todo (búsqueda sin fechas no filtra). Mismo mapeo/cachés que el catálogo normal.
+     */
+    @GET
+    @Path("disponibles")
+    public List<AlojamientoDTO> listarDisponibles(@QueryParam("entrada") String entrada,
+                                                  @QueryParam("salida") String salida) {
+        List<AlojamientoDTO> salidaDTO = new ArrayList<>();
+        try {
+            LocalDate e = (entrada != null && !entrada.isEmpty()) ? LocalDate.parse(entrada) : null;
+            LocalDate s = (salida != null && !salida.isEmpty()) ? LocalDate.parse(salida) : null;
+
+            Map<Integer, String> cache = new HashMap<>();
+            Map<Integer, double[]> resenasCache = new ResenhaBLImpl().calificacionesPorAlojamiento();
+            List<Alojamiento> lista = alojamientoBL.listarDisponibles(e, s);
+            if (lista != null) {
+                for (Alojamiento al : lista) {
+                    if (al == null || !al.isDisponibilidad()) {
+                        continue;
+                    }
+                    salidaDTO.add(AlojamientoMapper.toDTO(al, usuarioBL, cache, resenasCache));
+                }
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return salidaDTO;
     }
 
     /** GET AlojamientoRS/{id} -> uno; 404 si no existe. */

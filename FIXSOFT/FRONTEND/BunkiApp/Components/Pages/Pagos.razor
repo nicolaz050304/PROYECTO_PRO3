@@ -5,6 +5,7 @@
 @inject BunkiApp.Models.AppState AppState
 @inject DataService Data
 @inject ReservaProvider ReservaProvider
+@inject Services.PagoProvider PagoProvider
 @implements IDisposable
 
 <div class="section">
@@ -359,7 +360,18 @@
                 Total         = Total,
                 Estado        = "Pendiente"               // nace pendiente: el anfitrión la acepta/rechaza
             };
-            await ReservaProvider.RegistrarAsync(nueva);
+
+            // Crear la reserva primero: necesitamos su id para registrar el pago de ESA reserva.
+            int idReserva = await ReservaProvider.RegistrarAsync(nueva);
+
+            // El pago se registra DESPUÉS de crear la reserva, porque referencia a una reserva
+            // existente (el backend la carga por id y calcula comisión 10%, neto/bruto y moneda).
+            // Si el registro del pago falla, NO tumbamos el flujo: la reserva ya quedó creada
+            // (el provider devuelve bool y no propaga).
+            if (idReserva > 0)
+            {
+                await PagoProvider.RegistrarPagoDeReservaAsync(idReserva);
+            }
             return true;
         }
         catch (Exception)

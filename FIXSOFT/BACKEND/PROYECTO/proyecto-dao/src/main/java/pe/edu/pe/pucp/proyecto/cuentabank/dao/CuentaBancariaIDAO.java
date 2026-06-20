@@ -8,5 +8,7 @@ import java.util.List;
 public interface CuentaBancariaIDAO extends IDAO <CuentaBancaria,Integer> {
     List<CuentaBancaria>listarPorVerificacion();
     List<CuentaBancaria>listarTodos();
+    // Cuentas de UN usuario (anfitrión): cada anfitrión gestiona solo SUS cuentas.
+    List<CuentaBancaria> listarPorUsuario(int idUsuario);
 }
 

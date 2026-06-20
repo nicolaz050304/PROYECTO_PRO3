@@ -2,6 +2,7 @@
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
 @inject BunkiApp.Models.AppState AppState
+@inject BunkiApp.Services.TipoCambioServiceRest TipoCambioRest
 
 <header style="position: relative; z-index: 502;">
     <div class="navbar container">
@@ -39,7 +40,7 @@
                 @if (_menuMoneda)
                 {
                     <div class="currency-menu">
-                        @foreach (var m in BunkiApp.Models.AppState.Monedas)
+                        @foreach (var m in AppState.Monedas)
                         {
                             <button type="button"
                                     class="currency-item @(m.Codigo == AppState.MonedaSeleccionada ? "active" : "")"
@@ -95,14 +96,14 @@
                         </div>
                         <div class="nav-dd-divider"></div>
 
-                        <span class="nav-dd-section">Como huésped</span>
+                        <span class="nav-dd-section">Huésped</span>
                         <a href="/perfil" class="nav-dropdown-item" @onclick="CerrarMenus"><i class="fas fa-user"></i> Mi Perfil</a>
                         <a href="/mis-reservas" class="nav-dropdown-item" @onclick="CerrarMenus"><i class="fas fa-calendar-check"></i> Mis Reservas</a>
                         <div class="nav-dd-divider"></div>
 
                         @if (AppState.EsAnfitrion())
                         {
-                            <span class="nav-dd-section">Como anfitrión</span>
+                            <span class="nav-dd-section">Anfitrión</span>
                             <a href="/panel-anfitrion" class="nav-dropdown-item @NavClass("/panel-anfitrion")" @onclick="CerrarMenus">
                                 <i class="fas fa-chart-line"></i> Panel</a>
                             <a href="/mis-alojamientos" class="nav-dropdown-item" @onclick="CerrarMenus"><i class="fas fa-home"></i> Mis Alojamientos</a>
@@ -454,6 +455,15 @@
     {
         Navigation.LocationChanged += OnLocationChanged;
         AppState.OnChange += OnAppStateChanged;
+    }
+
+    // El NavMenu envuelve toda la app y siempre se renderiza, así que es el punto
+    // natural para disparar la carga de tasas UNA vez por usuario. CargarTasasAsync
+    // es idempotente (guarda interna), por lo que reinicializaciones del NavMenu
+    // (prerender + render interactivo) no recargan ni rompen nada si el backend falla.
+    protected override async Task OnInitializedAsync()
+    {
+        await AppState.CargarTasasAsync(TipoCambioRest);
     }
 
     public void Dispose()

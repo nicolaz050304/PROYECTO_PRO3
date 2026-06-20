@@ -46,5 +46,28 @@ namespace BunkiApp.Services
                 return null;
             }
         }
+
+        // Pagos recibidos por un anfitrión (para su panel de ganancias). Lectura: ante fallo, lista vacía.
+        public async Task<List<ResultadoPago>> ListarPorAnfitrionAsync(int idAnfitrion)
+        {
+            try { return await _rest.ListarPorAnfitrionAsync(idAnfitrion); }
+            catch (Exception ex)
+            {
+                _log.LogWarning(ex, "REST no disponible al listar pagos del anfitrión {Id}", idAnfitrion);
+                return new();
+            }
+        }
+
+        // Registra el pago de una reserva ya creada (RF13). Devuelve bool y NO propaga:
+        // si el pago falla, la reserva ya quedó creada, así que no debe tumbar el flujo de la UI.
+        public async Task<bool> RegistrarPagoDeReservaAsync(int idReserva)
+        {
+            try { return await _rest.RegistrarPagoDeReservaAsync(idReserva); }
+            catch (Exception ex)
+            {
+                _log.LogWarning(ex, "Error al registrar pago de reserva {Id}", idReserva);
+                return false;
+            }
+        }
     }
 }

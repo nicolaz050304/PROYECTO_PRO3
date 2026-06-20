@@ -43,9 +43,12 @@
         <div class="rsv-actions">
             @if (Reserva.Estado == "Pendiente")
             {
-                <button class="btn btn-small btn-primary" @onclick="IrAPagar">
-                    <i class="fas fa-credit-card"></i> Pagar Ahora
-                </button>
+                @* Una reserva pendiente YA está pagada (el pago se registra al reservar). La confirmación
+                   la hace el ANFITRIÓN al aceptarla en Reservas Recibidas, no el huésped. Por eso aquí no
+                   hay botón de pagar/confirmar: solo se informa que espera al anfitrión y se permite cancelar. *@
+                <span class="rsv-hint" style="display:inline-flex; align-items:center; gap:6px; color: var(--text-muted, #888); font-size: 0.85rem;">
+                    <i class="fas fa-hourglass-half"></i> Esperando confirmación del anfitrión
+                </span>
                 <button class="btn btn-small btn-outline" @onclick="OnCancelar">Cancelar</button>
             }
             else if (Reserva.Estado == "Completada")
@@ -91,17 +94,6 @@
     // El "> 0 ? ... : 1" es solo una protección mínima; no debería activarse
     // con los datos mock actuales. En REST, AlojamientoId viene del backend.
     private int AlojamientoIdSeguro => Reserva.AlojamientoId > 0 ? Reserva.AlojamientoId : 1;
-
-    private void IrAPagar()
-    {
-        var url = $"/pagos?alojamientoId={AlojamientoIdSeguro}" +
-                  $"&entrada={Reserva.FechaEntrada:yyyy-MM-dd}" +
-                  $"&salida={Reserva.FechaSalida:yyyy-MM-dd}" +
-                  $"&huespedes={Reserva.NumHuespedes}" +
-                  $"&reservaId={Reserva.Id}";
-
-        Navigation.NavigateTo(url);
-    }
 
     private void VerDetalle()
     {

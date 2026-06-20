@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
 @inject BunkiApp.Models.AppState AppState
+@inject Services.CuentaBancariaServiceRest CuentaRest
 
 <PageTitle>Bunki - Métodos de Pago</PageTitle>
 
@@ -87,93 +88,217 @@
                 }
 
                 <!-- ========================================== -->
-                <!-- SECCIÓN 2: CUENTAS BANCARIAS (ANFITRIONES) -->
+                <!-- SECCIÓN 2: CUENTAS BANCARIAS (REALES, RF15) -->
+                <!-- Estas son las cuentas del ANFITRIÓN para RECIBIR sus ganancias (no tarjetas    -->
+                <!-- para pagar). Se listan por el id del usuario logueado: cada quien ve solo las   -->
+                <!-- suyas. Una cuenta nueva nace "Pendiente" (Verificada=false) hasta que se valide.-->
                 <!-- ========================================== -->
                 <h3 style="margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 10px; font-size: 18px;">
-                    <i class="fas fa-university" style="color: var(--primary); margin-right: 10px;"></i> Cuentas Bancarias (Para recibir cobros)
+                    <i class="fas fa-university" style="color: var(--primary); margin-right: 10px;"></i> Mis Cuentas Bancarias (Para recibir ganancias)
                 </h3>
                 <p style="font-size: 14px; margin-bottom: 25px; color: var(--text-light);">
                     Si eres anfitrión, registra tu cuenta bancaria para recibir los depósitos de tus reservas.
                 </p>
 
-                <EditForm Model="FormCuenta" OnValidSubmit="GuardarCuenta">
-                    <DataAnnotationsValidator />
-
-                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                        @foreach (var opcion in new[] { "Yape", "Plin", "Banco" })
-                        {
-                            <label style="flex: 1; text-align: center; padding: 15px; border: 2px solid @(FormCuenta.Banco == opcion ? "var(--primary)" : "var(--border)"); border-radius: 8px; cursor: pointer; transition: 0.2s; background: @(FormCuenta.Banco == opcion ? "rgba(255, 165, 0, 0.1)" : "transparent");">
-                                <input type="radio" checked="@(FormCuenta.Banco == opcion)" @onchange='() => FormCuenta.Banco = opcion' style="display: none;" />
-                                <div style="font-size: 24px; margin-bottom: 5px;">
-                                    <i class="fas @(opcion == "Yape" ? "fa-mobile-alt" : opcion == "Plin" ? "fa-bolt" : "fa-university")"></i>
-                                </div>
-                                <span style="font-weight: 600;">@opcion</span>
-                            </label>
-                        }
+                @if (_error.Length > 0)
+                {
+                    <div style="background: rgba(231, 76, 60, 0.1); color: #e74c3c; padding: 12px 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e74c3c;">
+                        <i class="fas fa-exclamation-circle"></i> @_error
                     </div>
+                }
 
-                    @if (FormCuenta.Banco == "Banco")
+                @if (_cargando)
+                {
+                    <p style="color: var(--text-light); margin-bottom: 25px;">
+                        <i class="fas fa-spinner fa-spin"></i> Cargando cuentas...
+                    </p>
+                }
+                else if (_cuentas.Count == 0)
+                {
+                    <div style="background: var(--light); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px dashed var(--border); text-align: center; color: var(--text-light);">
+                        Aún no tienes cuentas registradas.
+                    </div>
+                }
+                else
+                {
+                    @foreach (var c in _cuentas)
                     {
+                        <div style="background: var(--light); padding: 18px 20px; border-radius: 12px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border);">
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <i class="fas fa-university" style="font-size: 28px; color: var(--primary);"></i>
+                                <div>
+                                    <h4 style="margin: 0; font-size: 16px;">@c.NroBanco · @c.NumeroCuenta</h4>
+                                    <p style="margin: 2px 0 0; font-size: 13px; color: var(--text-light);">
+                                        @c.TipoCuenta · @c.TipoMoneda · @c.Titular
+                                    </p>
+                                </div>
+                            </div>
+                            @if (c.Verificada)
+                            {
+                                <span style="background: rgba(46, 204, 113, 0.15); color: #2ecc71; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">
+                                    <i class="fas fa-check-circle"></i> Verificada
+                                </span>
+                            }
+                            else
+                            {
+                                <span style="background: rgba(243, 156, 18, 0.15); color: #f39c12; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">
+                                    <i class="fas fa-clock"></i> Pendiente
+                                </span>
+                            }
+                        </div>
+                    }
+                }
+
+                @if (!_mostrarForm)
+                {
+                    <button type="button" class="btn btn-outline" style="width: 100%; margin: 10px 0 30px; padding: 12px;" @onclick="() => _mostrarForm = true">
+                        <i class="fas fa-plus"></i> Agregar cuenta
+                    </button>
+                }
+                else
+                {
+                    <div style="background: var(--light); padding: 20px; border-radius: 12px; margin: 10px 0 30px; border: 1px solid var(--border);">
+                        <h4 style="margin-bottom: 15px; font-size: 16px;">Datos de la nueva cuenta</h4>
+
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: bold;">Titular</label>
+                            <input @bind="_nueva.Titular" placeholder="Nombre del titular" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);" />
+                        </div>
+
+                        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                            <div class="form-group" style="flex: 1;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: bold;">Número de cuenta</label>
+                                <input @bind="_nueva.NumeroCuenta" placeholder="191-1234567-0-12" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);" />
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: bold;">CCI (20 dígitos)</label>
+                                <input @bind="_nueva.Cci" placeholder="00219100123456780012" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);" />
+                            </div>
+                        </div>
+
                         <div style="display: flex; gap: 15px; margin-bottom: 15px;">
                             <div class="form-group" style="flex: 1;">
                                 <label style="display: block; margin-bottom: 8px; font-weight: bold;">Banco</label>
-                                <select @bind="FormCuenta.TipoCuenta" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
-                                    <option value="">Selecciona...</option>
-                                    <option value="BCP">BCP</option>
-                                    <option value="Interbank">Interbank</option>
-                                    <option value="BBVA">BBVA</option>
+                                <input @bind="_nueva.NroBanco" placeholder="BCP, Interbank..." style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);" />
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: bold;">Tipo de cuenta</label>
+                                <select @bind="_nueva.TipoCuenta" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+                                    <option value="AHORROS">Ahorros</option>
+                                    <option value="CORRIENTE">Corriente</option>
+                                    <option value="SUELDO">Sueldo</option>
+                                    <option value="INTERBANCARIA">Interbancaria</option>
                                 </select>
                             </div>
                             <div class="form-group" style="flex: 1;">
-                                <label style="display: block; margin-bottom: 8px; font-weight: bold;">Número CCI</label>
-                                <InputText @bind-Value="FormCuenta.CCI" placeholder="000-000..." style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);" />
+                                <label style="display: block; margin-bottom: 8px; font-weight: bold;">Moneda</label>
+                                <select @bind="_nueva.TipoMoneda" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+                                    <option value="PEN">PEN (S/)</option>
+                                    <option value="USD">USD ($)</option>
+                                    <option value="EUR">EUR (€)</option>
+                                </select>
                             </div>
                         </div>
-                    }
-                    else if (!string.IsNullOrEmpty(FormCuenta.Banco))
-                    {
-                        <div class="form-group" style="margin-bottom: 25px;">
-                            <label style="display: block; margin-bottom: 8px; font-weight: bold;">Número de Celular para @FormCuenta.Banco</label>
-                            <InputText @bind-Value="FormCuenta.CCI" placeholder="999 999 999" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);" />
-                        </div>
-                    }
 
-                    <div style="display: flex; gap: 15px; margin-top: 30px;">
-                        <button type="button" class="btn btn-outline" style="flex: 1;" @onclick='() => Navigation.NavigateTo("/perfil")'>Volver</button>
-                        <button type="submit" class="btn btn-primary" style="flex: 1;" disabled="@Guardando">
-                            @(Guardando ? "Guardando..." : "Guardar " + FormCuenta.Banco)
-                        </button>
+                        <div style="display: flex; gap: 15px; margin-top: 20px;">
+                            <button type="button" class="btn btn-outline" style="flex: 1;" @onclick="CancelarCuenta" disabled="@Guardando">Cancelar</button>
+                            <button type="button" class="btn btn-primary" style="flex: 1;" @onclick="GuardarCuenta" disabled="@Guardando">
+                                @(Guardando ? "Guardando..." : "Guardar cuenta")
+                            </button>
+                        </div>
                     </div>
-                </EditForm>
+                }
+
+                <div style="display: flex; gap: 15px;">
+                    <button type="button" class="btn btn-outline" style="flex: 1;" @onclick='() => Navigation.NavigateTo("/perfil")'>Volver</button>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 @code {
-    // Variables para Cuentas Bancarias
-    private CuentaBancariaForm FormCuenta = new();
+    // --- Cuentas bancarias REALES (del backend) ---
+    // Son las cuentas del anfitrión para RECIBIR ganancias; se listan por el id del usuario
+    // logueado (cada quien ve solo las suyas). Una cuenta nueva nace Verificada=false.
+    private List<CuentaBancaria> _cuentas = new();
+    private bool _cargando = true;
+    private CuentaBancaria _nueva = new();
+    private bool _mostrarForm = false;
+    private string _error = "";
+
     private string MensajeExito = "";
     private bool Guardando = false;
 
-    // Variables para Tarjetas (UX visual)
+    // Variables para Tarjetas (UX visual / demostrativa, sin backend)
     private NuevaTarjetaForm FormTarjeta = new();
     private bool MostrarTarjetaVisa = true;
     private bool MostrarFormularioTarjeta = false;
     private bool GuardandoTarjeta = false;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        // if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
+        await CargarCuentasAsync();
+    }
+
+    private async Task CargarCuentasAsync()
+    {
+        // Sin usuario logueado no hay cuentas que pedir (la pantalla queda en "vacío").
+        if (AppState.UsuarioActual is null) { _cargando = false; return; }
+
+        _cargando = true;
+        try
+        {
+            _cuentas = await CuentaRest.ListarPorUsuarioAsync(AppState.UsuarioActual.Id);
+        }
+        catch
+        {
+            // Si el backend no responde, no rompemos la pantalla: lista vacía + aviso.
+            _error = "No se pudieron cargar las cuentas. Intenta más tarde.";
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+
+    private void CancelarCuenta()
+    {
+        _mostrarForm = false;
+        _nueva = new();
+        _error = "";
     }
 
     private async Task GuardarCuenta()
     {
+        _error = "";
         Guardando = true;
-        await Task.Delay(1000);
-        MensajeExito = "¡Cuenta bancaria registrada correctamente para recibir cobros!";
-        FormCuenta = new();
-        Guardando = false;
+        try
+        {
+            // El dueño de la cuenta es el usuario logueado.
+            _nueva.IdUsuario = AppState.UsuarioActual!.Id;
+            var ok = await CuentaRest.RegistrarAsync(_nueva);
+            if (ok)
+            {
+                await CargarCuentasAsync();           // refresca con la cuenta recién creada
+                _mostrarForm = false;
+                _nueva = new();
+                MensajeExito = "Cuenta registrada.";
+            }
+            else
+            {
+                // El backend devolvió 400 (p. ej. CCI inválido); no afirmamos éxito.
+                _error = "No se pudo registrar la cuenta. Revisa los datos (el CCI debe tener 20 dígitos).";
+            }
+        }
+        catch
+        {
+            _error = "No se pudo registrar la cuenta. Intenta de nuevo.";
+        }
+        finally
+        {
+            Guardando = false;
+        }
     }
 
     private async Task GuardarTarjeta()
@@ -186,13 +311,6 @@
         // Restauramos la vista de la tarjeta y limpiamos el formulario visualmente
         MostrarTarjetaVisa = true;
         FormTarjeta = new();
-    }
-
-    public class CuentaBancariaForm
-    {
-        public string Banco { get; set; } = "";
-        public string TipoCuenta { get; set; } = "";
-        public string CCI { get; set; } = "";
     }
 
     public class NuevaTarjetaForm

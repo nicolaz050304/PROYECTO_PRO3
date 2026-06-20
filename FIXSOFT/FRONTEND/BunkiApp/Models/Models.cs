@@ -181,6 +181,17 @@ public class ResultadoPago
     public bool Exitoso { get; set; }
     public string Mensaje { get; set; } = "";
     public string NumeroTransaccion { get; set; } = "";
+
+    // Campos del pago real que devuelve el backend (GET PagoRS y PagoRS/anfitrion/{id}).
+    // System.Text.Json (modo web) mapea el camelCase del JSON -> estas propiedades.
+    // MontoNeto = lo que le queda al anfitrión tras la comisión del 10%.
+    public int IdPago { get; set; }
+    public int IdReserva { get; set; }
+    public double MontoBruto { get; set; }
+    public double MontoNeto { get; set; }
+    public double PorcenComision { get; set; }
+    public string Moneda { get; set; } = "PEN";
+    public string EstadoTransaccion { get; set; } = "";
 }
 
 // =============================================
@@ -334,4 +345,22 @@ public static class AdminEmailValidator
 
     public static string MensajeError
         => $"Los administradores deben usar un correo corporativo (@bunki.pe). Ej: admin@bunki.pe";
+}
+
+// Cuenta bancaria del ANFITRIÓN para RECIBIR sus ganancias (distinto de una tarjeta para pagar).
+// Mapea el JSON del backend (camelCase). System.Text.Json en modo web es case-insensitive, así que
+// "cci"->Cci, "nroBanco"->NroBanco, etc. mapean sin necesidad de [JsonPropertyName].
+// Una cuenta nueva nace Verificada=false hasta que un proceso/admin la valide.
+public class CuentaBancaria
+{
+    public int IdCuenta { get; set; }
+    public int IdUsuario { get; set; }
+    public string NumeroCuenta { get; set; } = "";
+    public string TipoMoneda { get; set; } = "PEN";   // PEN | USD | EUR
+    public string Cci { get; set; } = "";
+    public string NroBanco { get; set; } = "";
+    public string TipoCuenta { get; set; } = "AHORROS"; // AHORROS | CORRIENTE
+    public string Titular { get; set; } = "";
+    public double Saldo { get; set; }
+    public bool Verificada { get; set; }
 }

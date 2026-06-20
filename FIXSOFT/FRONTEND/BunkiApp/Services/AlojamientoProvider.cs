@@ -35,6 +35,24 @@ namespace BunkiApp.Services
             }
         }
 
+        // Disponibles por fecha: el backend excluye los alojamientos con reserva activa solapada.
+        // OJO: aquí una lista VACÍA es un resultado VÁLIDO (no hay nada libre en ese rango), así que
+        // NO caemos al mock por vacío —solo ante caída del REST— para no mostrar disponibles falsos.
+        public async Task<List<Alojamiento>> ListarDisponiblesAsync(DateTime entrada, DateTime salida)
+        {
+            try
+            {
+                var lista = await _rest.ListarDisponiblesAsync(entrada, salida);
+                foreach (var a in lista) AplicarDefaultsVisuales(a);
+                return lista;
+            }
+            catch (Exception ex)
+            {
+                _log.LogWarning(ex, "REST no disponible al listar disponibles; usando mock");
+                return _mock.ObtenerAlojamientos();
+            }
+        }
+
         public async Task<Alojamiento?> ObtenerPorIdAsync(int id)
         {
             try

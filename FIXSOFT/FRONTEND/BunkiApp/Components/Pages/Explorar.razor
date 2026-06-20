@@ -260,12 +260,33 @@
 
     private int TotalPaginas => (int)Math.Ceiling((double)AlojamientosFiltrados.Count / ElementosPorPagina);
 
+    // Carga la lista BASE según haya fechas o no. Cuando el usuario eligió fechas (entrada Y salida
+    // válidas, salida posterior a entrada) consultamos el backend de DISPONIBILIDAD, porque depende
+    // de las reservas (que viven en BD) y no se puede resolver en memoria. Sin fechas, traemos todos.
+    // Los demás filtros (ubicación/huéspedes/precio) se aplican localmente ENCIMA de esta base.
+    private async Task<List<Alojamiento>> CargarBaseSegunFechas()
+    {
+        if (Filtros.FechaEntrada.HasValue && Filtros.FechaSalida.HasValue
+            && Filtros.FechaSalida.Value.Date > Filtros.FechaEntrada.Value.Date)
+        {
+            return await AlojamientoProvider.ListarDisponiblesAsync(
+                Filtros.FechaEntrada.Value, Filtros.FechaSalida.Value);
+        }
+        return await AlojamientoProvider.ListarAsync();
+    }
+
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            // Fuente de datos: REST con fallback automático a mock (provider).
-            _todos = await AlojamientoProvider.ListarAsync();
+            // Las fechas pueden venir por query (Home → Buscar). OnParametersSet también las setea,
+            // pero corre DESPUÉS de OnInitializedAsync; las leemos aquí para que la carga base ya pueda
+            // consultar disponibilidad si hay fechas en el query.
+            if (EntradaQuery.HasValue) Filtros.FechaEntrada = EntradaQuery;
+            if (SalidaQuery.HasValue) Filtros.FechaSalida = SalidaQuery;
+
+            // Fuente de datos: si hay fechas -> disponibles (REST); si no -> todos. Con fallback a mock.
+            _todos = await CargarBaseSegunFechas();
             AlojamientosFiltrados = _todos;
 
             // Los query params los lee OnParametersSet (más fiable ante carrera de render).
@@ -359,10 +380,15 @@
         _mapaInicializado = false;
     }
 
-    private void AplicarFiltros()
+    // async: al confirmar filtros, RE-CONSULTAMOS la disponibilidad si hay fechas (la base puede
+    // cambiar respecto al primer load), y luego aplicamos los filtros locales sobre esa base.
+    private async Task AplicarFiltros()
     {
+        Cargando = true;
+        _todos = await CargarBaseSegunFechas();          // re-consulta disponibilidad si hay fechas
+        AlojamientosFiltrados = FiltrarLocal(Filtros);   // ubicación/huéspedes/precio sobre la base
         PaginaActual = 1;
-        AlojamientosFiltrados = FiltrarLocal(Filtros);
+        Cargando = false;
     }
 
     private void LimpiarFiltros()
@@ -372,9 +398,9 @@
         AlojamientosFiltrados = _todos;
     }
 
-    // Filtrado local sobre la lista del provider. Replica EXACTAMENTE la lógica de
-    // DataService.FiltrarAlojamientos para conservar el mismo comportamiento de filtros,
-    // pero operando sobre la fuente activa (REST o mock) sin modificar DataService.
+    // Filtrado local sobre la lista del provider (ubicación, precio, tipos, rating, huéspedes).
+    // NO filtra por FECHAS: la disponibilidad por fecha ya la resolvió el backend al cargar la base
+    // (CargarBaseSegunFechas -> /disponibles), así que aquí no se filtra fecha en memoria.
     private List<Alojamiento> FiltrarLocal(BusquedaFiltros filtros)
     {
         var lista = _todos.AsEnumerable();

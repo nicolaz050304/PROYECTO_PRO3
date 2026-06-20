@@ -4,6 +4,7 @@
 @inject AlojamientoProvider AlojamientoProvider
 @inject NavigationManager Navigation
 @inject BunkiApp.Models.AppState AppState
+@inject Services.PagoProvider PagoProvider
 @inject IJSRuntime JS
 @using System.Globalization
 @implements IDisposable
@@ -29,9 +30,9 @@
 
             <!-- Spotlight: ingresos + mini bar-chart -->
             <div class="spotlight">
-                <span class="spotlight-label"><i class="fas fa-sack-dollar"></i> Ingresos estimados (mes)</span>
-                <div class="spotlight-value">@AppState.FormatearPrecio(Stats.IngresosEsteMes)</div>
-                <p class="spotlight-sub"><span class="up"><i class="fas fa-arrow-trend-up"></i> +12%</span> vs. mes anterior</p>
+                <span class="spotlight-label"><i class="fas fa-sack-dollar"></i> Ganancias totales (neto)</span>
+                <div class="spotlight-value">@AppState.FormatearPrecio(GananciasReales)</div>
+                <p class="spotlight-sub"><span class="up"><i class="fas fa-receipt"></i> @CantidadPagos</span> pagos recibidos</p>
                 <div class="spark-bars" aria-hidden="true">
                     @foreach (var m in Ingresos6m)
                     {
@@ -104,15 +105,15 @@
                     <div class="host-earnings">
                         <div class="earn-card">
                             <span class="earn-label">Ingresos brutos</span>
-                            <span class="earn-value">@AppState.FormatearPrecio(MontoBrutoAnfitrion)</span>
+                            <span class="earn-value">@AppState.FormatearPrecio(IngresosBrutosReales)</span>
                         </div>
                         <div class="earn-card earn-card--fee">
                             <span class="earn-label">Comisión Bunki (10%)</span>
-                            <span class="earn-value">- @AppState.FormatearPrecio(MontoComisionBunki)</span>
+                            <span class="earn-value">- @AppState.FormatearPrecio(ComisionReal)</span>
                         </div>
                         <div class="earn-card earn-card--net">
                             <span class="earn-label">Ganancia neta</span>
-                            <span class="earn-value">@AppState.FormatearPrecio(MontoNetoAnfitrion)</span>
+                            <span class="earn-value">@AppState.FormatearPrecio(GananciasReales)</span>
                         </div>
                     </div>
                 </div>
@@ -220,6 +221,11 @@
     private List<Alojamiento> Alojamientos = new();
     private (int ReservasActivas, decimal IngresosEsteMes, double RatingPromedio, int TasaOcupacion) Stats;
 
+    // Pagos REALES recibidos por el anfitrión (de las reservas pagadas de SUS alojamientos),
+    // vía GET PagoRS/anfitrion/{id}. Alimentan las ganancias reales (ver más abajo).
+    private List<ResultadoPago> _pagos = new();
+    private int CantidadPagos => _pagos.Count;
+
     private string NombreAnfitrion => AppState.UsuarioActual?.Nombre ?? "anfitrión";
     private int AlojamientosActivos => Alojamientos.Count(a => a.EstadoPublicacion == "Activo");
     private int ReservasPendientes => ReservasRecientes.Count(r => r.Estado == "Pendiente");
@@ -266,6 +272,12 @@
         var anfitrionId = AppState.UsuarioActual?.Id ?? 0;
         Alojamientos = await AlojamientoProvider.ListarPorAnfitrionAsync(anfitrionId);
         Stats = Data.ObtenerEstadisticasAnfitrion();
+
+        // Ganancias REALES: pagos de las reservas pagadas de sus alojamientos (sustituye el mock de ingresos).
+        if (AppState.UsuarioActual != null)
+        {
+            _pagos = await PagoProvider.ListarPorAnfitrionAsync(AppState.UsuarioActual.Id);
+        }
     }
 
     public void Dispose() => AppState.OnChange -= OnMonedaChanged;
@@ -303,13 +315,19 @@
     private void OnInicioChanged(ChangeEventArgs e) => FiltroInicio = ParseFecha(e.Value?.ToString(), FiltroInicio);
     private void OnFinChanged(ChangeEventArgs e) => FiltroFin = ParseFecha(e.Value?.ToString(), FiltroFin);
 
-    // Reporte financiero del anfitrión (mock; se recalcula al filtrar).
+    // Filtro de fechas (visual): el endpoint del backend devuelve TODOS los pagos del anfitrión
+    // sin rango, así que el filtro por fecha aún no está cableado. Se conserva la UI.
     private DateTime FiltroInicio = DateTime.Today.AddDays(-30);
     private DateTime FiltroFin = DateTime.Today;
 
-    private decimal MontoBrutoAnfitrion = 8500;
-    private decimal MontoComisionBunki => MontoBrutoAnfitrion * 0.10m;
-    private decimal MontoNetoAnfitrion => MontoBrutoAnfitrion - MontoComisionBunki;
+    // Ganancias REALES (de _pagos, ver arriba). Reemplazan los montos mock (8500/11400):
+    //   IngresosBrutosReales = total cobrado al huésped (suma de montoBruto)
+    //   ComisionReal         = lo que retiene Bunki (bruto - neto)
+    //   GananciasReales      = lo que recibe el anfitrión tras la comisión del 10% (suma de montoNeto)
+    private decimal IngresosBrutosReales => (decimal)_pagos.Sum(p => p.MontoBruto);
+    private decimal GananciasReales => (decimal)_pagos.Sum(p => p.MontoNeto);
+    private decimal ComisionReal => IngresosBrutosReales - GananciasReales;
 
-    private void RecalcularGananciasAnfitrion() => MontoBrutoAnfitrion = 11400;
+    // El filtro por fecha no está cableado al backend; solo refresca la vista (sin números falsos).
+    private void RecalcularGananciasAnfitrion() => StateHasChanged();
 }

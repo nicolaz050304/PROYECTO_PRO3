@@ -30,8 +30,15 @@ namespace BunkiApp.Services
         public async Task<List<Reserva>> ListarPorAnfitrionAsync(int anfitrionId)
             => await _http.GetFromJsonAsync<List<Reserva>>($"{Endpoint}/anfitrion/{anfitrionId}") ?? new();
 
-        public async Task RegistrarAsync(Reserva r)
-            => (await _http.PostAsJsonAsync(Endpoint, r)).EnsureSuccessStatusCode();
+        // Devuelve el id de la reserva creada (lo necesita el registro de pago, que referencia
+        // a ESA reserva). El backend responde 201 con la reserva creada —incluido su id— en el body.
+        public async Task<int> RegistrarAsync(Reserva r)
+        {
+            var resp = await _http.PostAsJsonAsync(Endpoint, r);
+            resp.EnsureSuccessStatusCode();
+            var creada = await resp.Content.ReadFromJsonAsync<Reserva>();
+            return creada?.Id ?? 0;
+        }
 
         public async Task ActualizarAsync(Reserva r)
             => (await _http.PutAsJsonAsync($"{Endpoint}/{r.Id}", r)).EnsureSuccessStatusCode();

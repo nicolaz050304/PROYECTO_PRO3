@@ -5,6 +5,7 @@ import pe.edu.pe.pucp.proyecto.accomodations.bl.AlojamientoBL;
 import pe.edu.pe.pucp.proyecto.accomodations.dao.AlojamientoIDAO;
 import pe.edu.pe.pucp.proyecto.accomodations.impl.AlojamientoImpl;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public class AlojamientoBLImpl implements AlojamientoBL {
@@ -39,6 +40,16 @@ public class AlojamientoBLImpl implements AlojamientoBL {
     @Override
     public List<Alojamiento> listarTodos() {
         return daoAlojamiento.listAll();
+    }
+
+    @Override
+    public List<Alojamiento> listarDisponibles(LocalDate entrada, LocalDate salida) {
+        // Sin fechas válidas (faltan o salida <= entrada) NO se puede filtrar por disponibilidad:
+        // devolvemos todo, así una búsqueda sin fechas no se rompe ni esconde alojamientos.
+        if (entrada == null || salida == null || !salida.isAfter(entrada)) {
+            return daoAlojamiento.listAll();
+        }
+        return daoAlojamiento.listarDisponibles(entrada, salida);
     }
 
     @Override

@@ -45,16 +45,16 @@ public final class UsuarioMapper {
     }
 
     /**
-     * DTO -> Entidad para el REGISTRO (RF01). Siempre crea un {@link Invitado} (su
-     * constructor ya asigna el rol "INVITADO"), nunca un Anfitrion/Administrador:
-     * un registro público no puede auto-asignarse roles. El password va EN CLARO;
-     * la BL ({@code UsuarioBL.insertar}) lo hashea con PasswordHasher antes de persistir.
+     * DTO -> Entidad para el REGISTRO (RF01). Crea un {@link Anfitrion} (su constructor
+     * ya asigna el rol "ANFITRION") para que todo usuario registrado pueda reservar Y
+     * publicar; nunca un Administrador. El password va EN CLARO; la BL
+     * ({@code UsuarioBL.insertar}) lo hashea con PasswordHasher antes de persistir.
      */
     public static Usuario toEntity(UsuarioDTO dto) {
         if (dto == null) {
             return null;
         }
-        Invitado u = new Invitado();   // el ctor ya hace agregarRol("INVITADO")
+        Anfitrion u = new Anfitrion();   // el ctor ya hace agregarRol("ANFITRION")
         u.setCorreo(dto.getCorreo());
         u.setPassword(dto.getPassword());   // en claro; la BL lo hashea
         u.setNombre(dto.getNombre());

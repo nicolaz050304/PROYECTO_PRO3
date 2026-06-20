@@ -54,6 +54,20 @@ builder.Services.AddHttpClient<ResenaServiceRest>(client =>
 });
 builder.Services.AddScoped<ResenaProvider>();
 
+// --- Integración REST de Tipo de Cambio (tasas de moneda; AppState las carga una vez al inicio) ---
+builder.Services.AddHttpClient<TipoCambioServiceRest>(client =>
+{
+    client.BaseAddress = new Uri("http://localhost:8080/BunkiBackend/webresources/");
+    client.Timeout = TimeSpan.FromSeconds(20);
+});
+
+// --- Integración REST de Cuentas Bancarias del anfitrión (RF15) ---
+builder.Services.AddHttpClient<CuentaBancariaServiceRest>(client =>
+{
+    client.BaseAddress = new Uri("http://localhost:8080/BunkiBackend/webresources/");
+    client.Timeout = TimeSpan.FromSeconds(20);
+});
+
 // --- Autenticación por cookie (ClaimsPrincipal) ---
 builder.Services.AddCookieAuth();
 

@@ -8,4 +8,7 @@ public interface PagoBL extends IBL<Pago, Integer> {
     // Método de negocio extra que no está en el CRUD básico
     int registrarPagoDeReserva(Reserva reserva);
     void procesarEnvioAnfitrion(Pago pago, int idCuentaDestino);
+
+    // Pagos recibidos por un anfitrión (alimenta su panel de ganancias).
+    java.util.List<Pago> listarPorAnfitrion(int idAnfitrion);
 }

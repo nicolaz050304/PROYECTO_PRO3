@@ -27,6 +27,16 @@ namespace BunkiApp.Services
         public async Task<List<Alojamiento>> ListarPorAnfitrionAsync(int anfitrionId)
             => await _http.GetFromJsonAsync<List<Alojamiento>>($"{Endpoint}/anfitrion/{anfitrionId}") ?? new();
 
+        // Lista solo los alojamientos disponibles en el rango de fechas (el backend excluye los que
+        // tienen una reserva activa solapada). Fechas en formato yyyy-MM-dd.
+        public async Task<List<Alojamiento>> ListarDisponiblesAsync(DateTime entrada, DateTime salida)
+        {
+            var e = entrada.ToString("yyyy-MM-dd");
+            var s = salida.ToString("yyyy-MM-dd");
+            return await _http.GetFromJsonAsync<List<Alojamiento>>(
+                $"{Endpoint}/disponibles?entrada={e}&salida={s}") ?? new();
+        }
+
         public async Task RegistrarAsync(Alojamiento a)
             => (await _http.PostAsJsonAsync(Endpoint, a)).EnsureSuccessStatusCode();
 

@@ -35,7 +35,11 @@ public class ResenhaImpl implements ResenhaIDAO {
                 }
             }
         } catch (SQLException ex) {
-            System.err.println("ERROR al guardar reseña: " + ex.getMessage());
+            // Propagamos el error en vez de tragarlo: si una operación de BD falla, el backend debe
+            // enterarse y responder con error, no fingir éxito. Antes estos catch solo imprimían y
+            // devolvían el objeto/null/lista igual, ocultando el fallo y haciendo que el frontend
+            // mostrara "éxito" sin guardar nada. (Mismo estilo que AlojamientoImpl/PagoImpl.)
+            throw new RuntimeException("Error en ResenhaImpl (guardar): " + ex.getMessage(), ex);
         }
         return resenha;
     }
@@ -59,7 +63,8 @@ public class ResenhaImpl implements ResenhaIDAO {
 
             pst.executeUpdate();
         } catch (SQLException ex) {
-            System.err.println("ERROR al actualizar reseña: " + ex.getMessage());
+            // Propagar en vez de ocultar (ver nota en save).
+            throw new RuntimeException("Error en ResenhaImpl (actualizar): " + ex.getMessage(), ex);
         }
         return resenha;
     }
@@ -92,7 +97,8 @@ public class ResenhaImpl implements ResenhaIDAO {
                 }
             }
         } catch (SQLException ex) {
-            System.err.println("ERROR al cargar reseña: " + ex.getMessage());
+            // Propagar en vez de ocultar (ver nota en save).
+            throw new RuntimeException("Error en ResenhaImpl (cargar): " + ex.getMessage(), ex);
         }
         return null;
     }
@@ -128,7 +134,8 @@ public class ResenhaImpl implements ResenhaIDAO {
                 }
             }
         } catch (SQLException ex) {
-            System.err.println("ERROR al listar reseñas: " + ex.getMessage());
+            // Propagar en vez de ocultar (ver nota en save).
+            throw new RuntimeException("Error en ResenhaImpl (listar por alojamiento): " + ex.getMessage(), ex);
         }
         return list;
     }
@@ -166,7 +173,8 @@ public class ResenhaImpl implements ResenhaIDAO {
                 }
             }
         } catch (SQLException ex) {
-            System.err.println("ERROR al listar reseñas recibidas por cliente: " + ex.getMessage());
+            // Propagar en vez de ocultar (ver nota en save).
+            throw new RuntimeException("Error en ResenhaImpl (listar recibidas por cliente): " + ex.getMessage(), ex);
         }
         return list;
     }
@@ -182,7 +190,8 @@ public class ResenhaImpl implements ResenhaIDAO {
             resenha.setActivo(false);
 
         } catch (SQLException ex) {
-            System.err.println("ERROR al eliminar reseña: " + ex.getMessage());
+            // Propagar en vez de ocultar (ver nota en save).
+            throw new RuntimeException("Error en ResenhaImpl (eliminar): " + ex.getMessage(), ex);
         }
     }
 
@@ -214,7 +223,8 @@ public class ResenhaImpl implements ResenhaIDAO {
                 list.add(res);
             }
         } catch (SQLException ex) {
-            System.err.println("ERROR al listar todas las reseñas: " + ex.getMessage());
+            // Propagar en vez de ocultar (ver nota en save).
+            throw new RuntimeException("Error en ResenhaImpl (listar todas): " + ex.getMessage(), ex);
         }
         return list;
     }
@@ -251,7 +261,8 @@ public class ResenhaImpl implements ResenhaIDAO {
                 list.add(res);
             }
         } catch (SQLException ex) {
-            System.err.println("ERROR al listar todas las reseñas (incl. inactivas): " + ex.getMessage());
+            // Propagar en vez de ocultar (ver nota en save).
+            throw new RuntimeException("Error en ResenhaImpl (listar todas incl. inactivas): " + ex.getMessage(), ex);
         }
         return list;
     }
@@ -268,7 +279,8 @@ public class ResenhaImpl implements ResenhaIDAO {
             resenha.setActivo(true);
 
         } catch (SQLException ex) {
-            System.err.println("ERROR al reactivar reseña: " + ex.getMessage());
+            // Propagar en vez de ocultar (ver nota en save).
+            throw new RuntimeException("Error en ResenhaImpl (reactivar): " + ex.getMessage(), ex);
         }
     }
 

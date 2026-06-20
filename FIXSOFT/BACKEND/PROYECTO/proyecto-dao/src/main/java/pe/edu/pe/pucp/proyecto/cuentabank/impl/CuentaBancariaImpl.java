@@ -115,6 +115,29 @@ public class CuentaBancariaImpl implements CuentaBancariaIDAO {
         return cuentas;
     }
 
+    /**
+     * Lista las cuentas bancarias de un usuario (anfitrión) específico. Se filtra por
+     * id_usuario porque cada anfitrión solo debe ver/gestionar SUS propias cuentas.
+     * Reusa el mismo mapeo (extraerCuenta) que el resto de la clase y propaga el error si falla.
+     */
+    @Override
+    public List<CuentaBancaria> listarPorUsuario(int idUsuario) {
+        List<CuentaBancaria> cuentas = new ArrayList<>();
+        String sql = "SELECT * FROM cuenta_bancaria WHERE id_usuario = ?";
+        try (Connection connection = DBManager.getInstance().getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, idUsuario);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    cuentas.add(extraerCuenta(rs));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al listar cuentas por usuario: " + e.getMessage(), e);
+        }
+        return cuentas;
+    }
+
     @Override
     public List<CuentaBancaria> listarPorVerificacion() {
         List<CuentaBancaria> cuentas = new ArrayList<>();

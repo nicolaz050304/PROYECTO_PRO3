@@ -131,6 +131,35 @@ public class PagoImpl implements PagoIDAO {
         }
     }
 
+    /**
+     * Lista los pagos recibidos por un anfitrión. Un pago llega al anfitrión a través de la
+     * cadena pago -> reserva -> alojamiento -> dueño, así que se cruzan las tres tablas y se
+     * filtra por a.id_duenho. De cada pago, monto_neto es lo que le queda al anfitrión tras la
+     * comisión: esto alimenta su panel de ganancias.
+     * El SELECT usa p.* (columnas de pago), así que construirPago(rs) -que lee por nombre- aplica igual.
+     */
+    @Override
+    public List<Pago> listarPorAnfitrion(int idAnfitrion) {
+        String sql = "SELECT p.* FROM pago p " +
+                "INNER JOIN reserva r ON p.id_reserva = r.id_reserva " +
+                "INNER JOIN alojamiento a ON r.id_alojamiento = a.id_alojamiento " +
+                "WHERE a.id_duenho = ? " +
+                "ORDER BY p.id_pago DESC";
+        List<Pago> lista = new ArrayList<>();
+        try (Connection con = DBManager.getInstance().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idAnfitrion);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(construirPago(rs));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al listar pagos por anfitrión: " + e.getMessage(), e);
+        }
+        return lista;
+    }
+
     private Pago construirPago(ResultSet rs) throws SQLException {
         Reserva reservaProxy = new Reserva();
         reservaProxy.setIdReserva(rs.getInt("id_reserva"));

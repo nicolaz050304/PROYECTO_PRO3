@@ -1,4 +1,5 @@
 using System.Globalization;
+using BunkiApp.Services;
 
 namespace BunkiApp.Models;
 
@@ -13,20 +14,34 @@ public class AppState // <-- LE QUITAMOS EL STATIC AQUÍ
     public bool EstaAutenticado => UsuarioActual != null;
 
     // =====================================================================
-    // MONEDA (frontend mock — SIN API de tipo de cambio).
-    // El cobro real siempre es en S/ (PEN). USD/EUR son conversión
-    // REFERENCIAL para presentación; las tasas son temporales y se
-    // reemplazarán por el backend REST cuando exista el endpoint.
+    // MONEDA. El cobro real siempre es en S/ (PEN). USD/EUR son conversión
+    // REFERENCIAL para presentación. La fuente de verdad de las tasas es ahora
+    // el backend (GET TipoCambioRS), pero se cargan UNA sola vez al inicio
+    // (ver CargarTasasAsync) y se guardan en memoria, para que los métodos de
+    // conversión sigan siendo SÍNCRONOS y no haya que volver firmas async las
+    // páginas que ya los usan (Pagos.razor, etc.).
     // =====================================================================
     private static readonly CultureInfo CulturaPe = CultureInfo.GetCultureInfo("es-PE");
 
-    /// <summary>Monedas soportadas: símbolo + tasa referencial relativa a PEN.</summary>
-    public static readonly IReadOnlyList<(string Codigo, string Simbolo, decimal Tasa)> Monedas = new[]
+    /// <summary>
+    /// Monedas soportadas (símbolo + tasa = unidades de esa moneda por 1 PEN).
+    /// Lista de INSTANCIA y mutable: se inicializa con tasas hardcodeadas que sirven
+    /// de RESPALDO si el backend está caído, y se reemplaza por las del backend cuando
+    /// CargarTasasAsync responde. Así la app siempre puede convertir aunque el REST falle.
+    /// </summary>
+    private List<(string Codigo, string Simbolo, decimal Tasa)> _monedas = new()
     {
         ("PEN", "S/", 1.00m),
-        ("USD", "$",  0.27m), // referencial
-        ("EUR", "€",  0.25m), // referencial
+        ("USD", "$",  0.27m), // respaldo referencial
+        ("EUR", "€",  0.25m), // respaldo referencial
     };
+
+    /// <summary>Vista de solo lectura de las monedas, para que la UI (NavMenu) las itere.</summary>
+    public IReadOnlyList<(string Codigo, string Simbolo, decimal Tasa)> Monedas => _monedas;
+
+    // Evita recargar las tasas si CargarTasasAsync se invoca más de una vez
+    // (NavMenu puede inicializarse varias veces: prerender + render interactivo).
+    private bool _tasasCargadas = false;
 
     public string MonedaSeleccionada { get; private set; } = "PEN";
 
@@ -34,7 +49,7 @@ public class AppState // <-- LE QUITAMOS EL STATIC AQUÍ
     public event Action? OnChange;
 
     private (string Codigo, string Simbolo, decimal Tasa) MonedaActual =>
-        Monedas.FirstOrDefault(m => m.Codigo == MonedaSeleccionada, Monedas[0]);
+        _monedas.FirstOrDefault(m => m.Codigo == MonedaSeleccionada, _monedas[0]);
 
     public string SimboloMoneda => MonedaActual.Simbolo;
 
@@ -44,10 +59,48 @@ public class AppState // <-- LE QUITAMOS EL STATIC AQUÍ
     public void SetMoneda(string codigo)
     {
         if (codigo == MonedaSeleccionada) return;
-        if (!Monedas.Any(m => m.Codigo == codigo)) return;
+        if (!_monedas.Any(m => m.Codigo == codigo)) return;
 
         MonedaSeleccionada = codigo;
         OnChange?.Invoke();
+    }
+
+    /// <summary>
+    /// Carga las tasas desde el backend (GET TipoCambioRS) UNA sola vez y las deja en memoria.
+    /// Es asíncrona porque hace una llamada HTTP, pero los métodos de conversión
+    /// (ConvertirPrecio/FormatearPrecio) siguen siendo síncronos: leen la lista ya cargada.
+    /// Si el backend no responde o devuelve vacío, se conservan las tasas de respaldo.
+    /// </summary>
+    public async Task CargarTasasAsync(TipoCambioServiceRest rest)
+    {
+        if (_tasasCargadas) return; // ya se cargaron en este scope/usuario
+
+        try
+        {
+            var lista = await rest.ListarAsync();
+            if (lista is not null && lista.Count > 0)
+            {
+                // El backend da TasaAPen = "cuántos PEN vale 1 unidad de esa moneda" (USD=3.75),
+                // pero el frontend necesita "unidades de esa moneda por 1 PEN" para multiplicar
+                // un monto en PEN. Por eso se INVIERTE (1 / TasaAPen). PEN se fuerza a 1.00 para
+                // evitar redondeos. Ej.: 375 PEN * (1/3.75) = 100 USD.
+                _monedas = lista.Select(t => (
+                    t.Codigo,
+                    t.Simbolo,
+                    t.Codigo == "PEN" ? 1.00m : Math.Round(1m / t.TasaAPen, 6)
+                )).ToList();
+
+                _tasasCargadas = true;
+                OnChange?.Invoke(); // refresca la UI con las tasas reales
+            }
+            // Si viene vacío o null, se quedan las hardcodeadas (respaldo): no marcamos cargado
+            // para permitir reintentar en un siguiente arranque.
+        }
+        catch
+        {
+            // Backend caído -> se mantienen las tasas de respaldo. No relanzamos para no
+            // romper el arranque de la app ni la navegación.
+        }
     }
 
     /// <summary>Convierte un monto en PEN a la moneda seleccionada (referencial).</summary>

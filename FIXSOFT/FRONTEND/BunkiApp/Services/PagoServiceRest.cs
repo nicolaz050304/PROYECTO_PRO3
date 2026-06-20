@@ -24,6 +24,10 @@ namespace BunkiApp.Services
         public async Task<List<ResultadoPago>> ListarAsync()
             => await _http.GetFromJsonAsync<List<ResultadoPago>>(Endpoint) ?? new();
 
+        // Lista los pagos recibidos por un anfitrión (pagos de las reservas de sus alojamientos).
+        public async Task<List<ResultadoPago>> ListarPorAnfitrionAsync(int idAnfitrion)
+            => await _http.GetFromJsonAsync<List<ResultadoPago>>($"{Endpoint}/anfitrion/{idAnfitrion}") ?? new();
+
         public async Task<ResultadoPago?> ObtenerPorIdAsync(int id)
             => await _http.GetFromJsonAsync<ResultadoPago>($"{Endpoint}/{id}");
 
@@ -33,6 +37,15 @@ namespace BunkiApp.Services
             var resp = await _http.PostAsJsonAsync(Endpoint, form);
             resp.EnsureSuccessStatusCode();
             return await resp.Content.ReadFromJsonAsync<ResultadoPago>();
+        }
+
+        // Registra el pago de una reserva YA creada (RF13). El id va en la URL y el backend
+        // calcula comisión (10%), monto neto/bruto y moneda a partir de esa reserva; no hay body.
+        // Solo informamos éxito/fallo (bool); el detalle del PagoDTO no se usa en la UI por ahora.
+        public async Task<bool> RegistrarPagoDeReservaAsync(int idReserva)
+        {
+            var resp = await _http.PostAsync($"{Endpoint}/reserva/{idReserva}", null);
+            return resp.IsSuccessStatusCode;
         }
 
         public async Task EliminarAsync(int id)

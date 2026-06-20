@@ -125,8 +125,15 @@
             };
             await UsuarioProvider.RegistrarAsync(usuario);
 
-            // Creado OK: logueamos en AppState para entrar directo (como hacía el mock).
-            AppState.Login(_form.Nombre, _form.Apellido, _form.Email, "Usuario");
+            // Creado OK: hacemos LOGIN REAL con las credenciales recién registradas para que la
+            // sesión nazca con el TipoUsuario real del backend (ANFITRION) y se vea el menú completo
+            // sin re-login. Mismo patrón que Login.razor.
+            var usuarioLogueado = await UsuarioProvider.LoginAsync(_form.Email, _form.Password);
+            if (usuarioLogueado is not null)
+            {
+                AppState.LoginConUsuario(usuarioLogueado);   // sesión con el TipoUsuario real (ANFITRION)
+            }
+            // (si el login devuelve null, igual continúa al home; el usuario podrá loguear manual)
             _exito = true;
             await Task.Delay(800);
             Navigation.NavigateTo("/");

@@ -129,9 +129,10 @@ namespace BunkiApp.Services
         }
 
         // Registro (ESCRITURA): POST ReservaRS. Sin fallback: propaga para que la UI avise.
-        public async Task RegistrarAsync(Reserva reserva)
+        // Devuelve el id de la reserva creada (necesario para registrar luego su pago).
+        public async Task<int> RegistrarAsync(Reserva reserva)
         {
-            try { await _rest.RegistrarAsync(reserva); }
+            try { return await _rest.RegistrarAsync(reserva); }
             catch (Exception ex)
             {
                 _log.LogWarning(ex, "No se pudo registrar la reserva (alojamiento {Id})", reserva.AlojamientoId);

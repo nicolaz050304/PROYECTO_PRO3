@@ -40,6 +40,11 @@ public class CuentaBancariaBLImpl implements CuentaBancariaBL {
     }
 
     @Override
+    public List<CuentaBancaria> listarPorUsuario(int idUsuario) {
+        return daoCuenta.listarPorUsuario(idUsuario);
+    }
+
+    @Override
     public CuentaBancaria obtenerPorId(Integer id) {
         return daoCuenta.load(id);
     }

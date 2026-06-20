@@ -50,7 +50,11 @@ public class ReservaImpl implements ReservaIDAO {
                 reservas.add(r);
             }
         } catch (SQLException e) {
-            System.err.println("Error al listar: " + e.getMessage());
+            // Propagamos el error en vez de tragarlo: si una operación de BD falla, el backend debe
+            // enterarse y responder con error, no fingir éxito. Antes estos catch solo imprimían y
+            // devolvían el objeto/null/lista igual, lo que hacía que el frontend mostrara "éxito"
+            // (p. ej. "pago completado") sin que se guardara ninguna fila. (Mismo estilo que AlojamientoImpl/PagoImpl.)
+            throw new RuntimeException("Error en ReservaImpl (listar): " + e.getMessage(), e);
         }
         return reservas;
     }
@@ -89,7 +93,8 @@ public class ReservaImpl implements ReservaIDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Error al cargar: " + e.getMessage());
+            // Propagar en vez de ocultar (ver nota en listAll).
+            throw new RuntimeException("Error en ReservaImpl (cargar): " + e.getMessage(), e);
         }
         return null;
     }
@@ -125,7 +130,9 @@ public class ReservaImpl implements ReservaIDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Error al guardar: " + e.getMessage());
+            // Propagar en vez de ocultar (ver nota en listAll). Crítico aquí: antes un INSERT fallido
+            // devolvía la reserva con id=0 y el frontend lo tomaba como reserva creada.
+            throw new RuntimeException("Error en ReservaImpl (guardar): " + e.getMessage(), e);
         }
         return reserva;
     }
@@ -157,7 +164,8 @@ public class ReservaImpl implements ReservaIDAO {
 
             ps.executeUpdate();
         } catch (SQLException e) {
-            System.err.println("Error al actualizar: " + e.getMessage());
+            // Propagar en vez de ocultar (ver nota en listAll).
+            throw new RuntimeException("Error en ReservaImpl (actualizar): " + e.getMessage(), e);
         }
         return reserva;
     }
@@ -187,7 +195,8 @@ public class ReservaImpl implements ReservaIDAO {
             ps.executeUpdate();
             reserva.setEstadoReserva(EstadoReserva.CANCELADA);
         } catch (SQLException e) {
-            System.err.println("Error al eliminar: " + e.getMessage());
+            // Propagar en vez de ocultar (ver nota en listAll).
+            throw new RuntimeException("Error en ReservaImpl (eliminar): " + e.getMessage(), e);
         }
     }
 }
