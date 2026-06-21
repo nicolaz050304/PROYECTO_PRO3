@@ -1,6 +1,7 @@
 @page "/perfil/editar"
 @rendermode InteractiveServer
 @inject DataService Data
+@inject Services.UsuarioProvider UsuarioProvider
 @inject NavigationManager Navigation
 @inject BunkiApp.Models.AppState AppState
 
@@ -22,14 +23,28 @@
                 {
                     <AlertMessage Tipo="success" Mensaje="@MensajeExito" />
                 }
+                @if (!string.IsNullOrEmpty(MensajeError))
+                {
+                    <AlertMessage Tipo="danger" Mensaje="@MensajeError" />
+                }
 
                 <EditForm Model="Formulario" OnValidSubmit="Guardar">
                     <DataAnnotationsValidator />
 
                     <div class="form-group">
-                        <label>Nombre Completo</label>
-                        <InputText @bind-Value="Formulario.NombreCompleto" placeholder="Ingresa tu nombre" />
-                        <ValidationMessage For="() => Formulario.NombreCompleto" class="validation-message" />
+                        <label>Nombre</label>
+                        <InputText @bind-Value="Formulario.Nombre" placeholder="Ingresa tu nombre" />
+                        <ValidationMessage For="() => Formulario.Nombre" class="validation-message" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Apellido paterno</label>
+                        <InputText @bind-Value="Formulario.Apellido" placeholder="Apellido paterno" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Apellido materno</label>
+                        <InputText @bind-Value="Formulario.ApellidoMaterno" placeholder="Apellido materno" />
                     </div>
 
                     <div class="form-group">
@@ -84,6 +99,7 @@
 @code {
     private EditarPerfilForm Formulario = new();
     private string MensajeExito = "";
+    private string MensajeError = "";
     private bool Guardando = false;
     private string Iniciales = "JP";
 
@@ -93,9 +109,12 @@
 
         var usuario = AppState.UsuarioActual ?? new Usuario();
         Iniciales = usuario.Iniciales;
+        // Cargamos nombre y apellidos por SEPARADO (no el nombre completo) para no duplicar el apellido al guardar.
         Formulario = new EditarPerfilForm
         {
-            NombreCompleto = usuario.NombreCompleto,
+            Nombre = usuario.Nombre,
+            Apellido = usuario.Apellido,
+            ApellidoMaterno = usuario.ApellidoMaterno,
             Email = usuario.Email,
             Telefono = usuario.Telefono,
             Ciudad = usuario.Ciudad,
@@ -103,14 +122,41 @@
         };
     }
 
+    // Ahora persiste de verdad: actualiza el perfil vía backend (PUT UsuarioRS/{id}) en lugar del mock.
     private async Task Guardar()
     {
         Guardando = true;
-        await Task.Delay(700);
-        MensajeExito = "¡Perfil actualizado correctamente!";
+        MensajeError = "";
+
+        // Partimos del usuario logueado y le aplicamos los cambios del formulario. Seteamos nombre y
+        // apellidos por SEPARADO (no el nombre completo en Nombre): así el backend recibe nombre /
+        // apellidoPaterno / apellidoMaterno correctos y no se duplica el apellido dentro del nombre.
+        // Ciudad y Bio NO se persisten: el backend no los maneja, son solo de la UI.
+        var u = AppState.UsuarioActual!;
+        u.Nombre = Formulario.Nombre;
+        u.Apellido = Formulario.Apellido;
+        u.ApellidoMaterno = Formulario.ApellidoMaterno;
+        u.Telefono = Formulario.Telefono;
+
+        var ok = await UsuarioProvider.ActualizarAsync(u);
         Guardando = false;
 
-        await Task.Delay(1500);
-        Navigation.NavigateTo("/perfil");
+        if (ok)
+        {
+            // Tras guardar, recargamos el usuario FRESCO desde la BD y reemplazamos la sesión, para que
+            // /perfil muestre lo persistido de inmediato (no la copia mutada en memoria ni la cookie vieja).
+            var refrescado = await UsuarioProvider.ObtenerPorIdAsync(u.Id);
+            if (refrescado != null) AppState.LoginConUsuario(refrescado);
+
+            MensajeExito = "¡Perfil actualizado correctamente!";
+            await Task.Delay(1000);
+            Navigation.NavigateTo("/perfil");
+        }
+        else
+        {
+            // Si el backend falla, avisamos claramente y NO navegamos (el usuario puede reintentar).
+            MensajeExito = "";
+            MensajeError = "No se pudo actualizar el perfil. Intenta de nuevo.";
+        }
     }
 }

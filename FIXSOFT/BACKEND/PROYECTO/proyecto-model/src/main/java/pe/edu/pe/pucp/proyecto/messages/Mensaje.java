@@ -10,6 +10,7 @@ public class Mensaje {
     private Date fechaEnvio;
     private Usuario emisor;     // Ahora es objeto Usuario para sacar su id_usuario
     private Reserva reserva;    // Ahora se llama reserva, no chatOrigen
+    private boolean leido;      // Estado de lectura: un mensaje nace NO leído hasta que el destinatario abre el chat
 
     public Mensaje() {}
 
@@ -28,4 +29,7 @@ public class Mensaje {
 
     public Reserva getReserva() { return reserva; }
     public void setReserva(Reserva reserva) { this.reserva = reserva; }
+
+    public boolean isLeido() { return leido; }
+    public void setLeido(boolean leido) { this.leido = leido; }
 }

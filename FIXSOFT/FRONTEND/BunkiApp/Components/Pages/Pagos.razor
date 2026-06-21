@@ -210,6 +210,18 @@
             <button class="btn btn-primary btn-large" @onclick='() => Navigation.NavigateTo("/mis-reservas")'>
                 Ver Mis Reservas
             </button>
+            @* Comprobante de lo recién pagado: solo si tenemos el id de la reserva creada en este flujo.
+               El enlace abre el endpoint del comprobante por id de reserva; el backend devuelve el PDF con
+               Content-Disposition attachment, por lo que el navegador lo descarga directo (target="_blank"
+               para no perder esta pantalla de confirmación). *@
+            @if (_reservaCreadaId > 0)
+            {
+                <a class="btn btn-outline btn-large"
+                   href="@($"http://localhost:8080/BunkiBackend/webresources/PagoRS/reserva/{_reservaCreadaId}/comprobante")"
+                   target="_blank" style="margin-top: 12px;">
+                    <i class="fas fa-file-pdf"></i> Descargar comprobante
+                </a>
+            }
         </div>
     </div>
 }
@@ -234,6 +246,10 @@
     private bool Procesando = false;
     private bool PagoCompletado = false;
     private string ErrorPago = "";
+
+    // Id de la reserva recién creada: lo guardamos para ofrecer el comprobante PDF de lo que se acaba de pagar
+    // en la pantalla de "¡Pago Completado!". 0 = aún no hay reserva creada en este flujo.
+    private int _reservaCreadaId = 0;
 
     private Alojamiento? Alojamiento;
     private DateTime? FechaEntrada;
@@ -363,6 +379,7 @@
 
             // Crear la reserva primero: necesitamos su id para registrar el pago de ESA reserva.
             int idReserva = await ReservaProvider.RegistrarAsync(nueva);
+            _reservaCreadaId = idReserva;   // lo guardamos para ofrecer el botón de comprobante tras pagar
 
             // El pago se registra DESPUÉS de crear la reserva, porque referencia a una reserva
             // existente (el backend la carga por id y calcula comisión 10%, neto/bruto y moneda).

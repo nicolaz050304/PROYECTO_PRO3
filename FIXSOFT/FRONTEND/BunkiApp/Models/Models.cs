@@ -156,6 +156,42 @@ public class Conversacion
     public List<Mensaje> Mensajes { get; set; } = new();
 }
 
+// DTO de transporte del chat real (RF17), separado del Mensaje de UI para no chocar con él.
+// Refleja el JSON del backend (MensajeRS): el chat va POR RESERVA, por eso lleva IdReserva.
+public class MensajeDto
+{
+    public int IdMensaje { get; set; }
+    public string Texto { get; set; } = "";
+    public string FechaEnvio { get; set; } = "";   // ya viene formateada "yyyy-MM-dd HH:mm"
+    public int IdEmisor { get; set; }
+    public string? NombreEmisor { get; set; }       // puede venir null si el emisor es proxy solo-id
+    public int IdReserva { get; set; }
+}
+
+// Respuesta del conteo de no leídos (RF17): el backend envía {"noLeidos": N}.
+// System.Text.Json mapea "noLeidos" -> NoLeidos por defecto (case-insensitive).
+public class NoLeidosDto
+{
+    public int NoLeidos { get; set; }
+}
+
+// DTO de transporte de Notificación real (RF18), separado del modelo de UI Notificacion.
+// Refleja el JSON del backend (NotificacionRS): { idNotificacion, titulo, mensaje, leido, idUsuario }.
+public class NotificacionDto
+{
+    public int IdNotificacion { get; set; }
+    public string Titulo { get; set; } = "";
+    public string Mensaje { get; set; } = "";
+    public bool Leido { get; set; }
+    public int IdUsuario { get; set; }
+}
+
+// Respuesta del conteo de notificaciones no leídas (RF18): el backend envía {"noLeidas": N}.
+public class NoLeidasDto
+{
+    public int NoLeidas { get; set; }
+}
+
 public class Notificacion
 {
     public int Id { get; set; }
@@ -255,8 +291,13 @@ public class CambiarPasswordForm
 
 public class EditarPerfilForm
 {
+    // Nombre y apellidos SEPARADOS: antes había un solo "Nombre Completo" que al guardar se volcaba
+    // entero en Usuario.Nombre y duplicaba el apellido (NombreCompleto = Nombre + Apellido). Con campos
+    // separados, cada uno va a su propiedad del backend (nombre / apellidoPaterno / apellidoMaterno).
     [Required(ErrorMessage = "El nombre es obligatorio")]
-    public string NombreCompleto { get; set; } = "";
+    public string Nombre { get; set; } = "";
+    public string Apellido { get; set; } = "";          // apellido paterno
+    public string ApellidoMaterno { get; set; } = "";
 
     [Required(ErrorMessage = "El correo es obligatorio")]
     [EmailAddress(ErrorMessage = "Correo inválido")]

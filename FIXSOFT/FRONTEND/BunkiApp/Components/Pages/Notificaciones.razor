@@ -1,6 +1,6 @@
 @page "/notificaciones"
 @rendermode InteractiveServer
-@inject DataService Data
+@inject Services.NotificacionServiceRest NotifRest
 @inject NavigationManager Navigation
 @inject BunkiApp.Models.AppState AppState
 <PageTitle>Bunki - Notificaciones</PageTitle>
@@ -87,11 +87,25 @@
         ? ListaNotificaciones
         : ListaNotificaciones.Where(n => n.Categoria == MapearCategoria(CategoriaActiva)).ToList();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
 
-        ListaNotificaciones = Data.ObtenerNotificaciones();
+        // Ahora las notificaciones vienen del BACKEND (antes era mock). CLAVE: el Id de UI se llena con
+        // dto.IdNotificacion (el id real de BD) para que al marcar como leída se actualice la correcta.
+        var idUsuario = AppState.UsuarioActual?.Id ?? 0;
+        var reales = await NotifRest.ListarPorUsuarioAsync(idUsuario);
+        ListaNotificaciones = reales.Select(n => new Notificacion
+        {
+            Id = n.IdNotificacion,      // id real de BD (clave para marcar leída)
+            Titulo = n.Titulo,
+            Descripcion = n.Mensaje,
+            Leida = n.Leido,
+            Categoria = "General",      // el backend aún no maneja categorías
+            Tiempo = "",                // el backend no envía fecha
+            AccionTexto = "",
+            AccionUrl = ""
+        }).ToList();
     }
 
     private string MapearCategoria(string cat) => cat switch
@@ -110,15 +124,24 @@
         _ => "fa-bell"
     };
 
-    private void AbrirNotificacion(Notificacion notif)
+    // Al abrir, marcamos como leída en el BACKEND (persiste tras F5) usando el id real de BD; solo
+    // reflejamos el cambio en la UI si el backend confirmó.
+    private async Task AbrirNotificacion(Notificacion notif)
     {
-        notif.Leida = true;
+        if (!notif.Leida)
+        {
+            var ok = await NotifRest.MarcarLeidaAsync(notif.Id);
+            if (ok) notif.Leida = true;
+        }
     }
 
-    private void MarcarTodasLeidas()
+    private async Task MarcarTodasLeidas()
     {
-        foreach (var n in ListaNotificaciones)
-            n.Leida = true;
+        foreach (var n in ListaNotificaciones.Where(x => !x.Leida))
+        {
+            var ok = await NotifRest.MarcarLeidaAsync(n.Id);
+            if (ok) n.Leida = true;
+        }
     }
 
     private void IrA(string url) => Navigation.NavigateTo(url);

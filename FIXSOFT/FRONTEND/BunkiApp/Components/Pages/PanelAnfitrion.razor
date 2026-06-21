@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @inject DataService Data
 @inject AlojamientoProvider AlojamientoProvider
+@inject Services.ReservaProvider ReservaProvider
 @inject NavigationManager Navigation
 @inject BunkiApp.Models.AppState AppState
 @inject Services.PagoProvider PagoProvider
@@ -46,11 +47,21 @@
 
             <!-- Anillo de ocupación -->
             <div class="gauge-card">
+                @* Selector de período: la ocupación se PROYECTA hacia adelante (ventana futura desde hoy).
+                   Al cambiar, recalcula con los datos ya cargados, sin volver a pedir al backend. *@
+                <div class="periodo-selector" style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; justify-content:center;">
+                    <button class="@(_diasPeriodo==30 ? "btn btn-small btn-primary" : "btn btn-small btn-outline")"
+                            @onclick="() => CambiarPeriodo(30)">Próximos 30 días</button>
+                    <button class="@(_diasPeriodo==90 ? "btn btn-small btn-primary" : "btn btn-small btn-outline")"
+                            @onclick="() => CambiarPeriodo(90)">Próximos 3 meses</button>
+                    <button class="@(_diasPeriodo==365 ? "btn btn-small btn-primary" : "btn btn-small btn-outline")"
+                            @onclick="() => CambiarPeriodo(365)">Próximos 12 meses</button>
+                </div>
                 <div class="gauge" style="--val:@(Stats.TasaOcupacion)" role="img"
-                     aria-label="Ocupación @(Stats.TasaOcupacion) por ciento">
+                     aria-label="Ocupación proyectada @(Stats.TasaOcupacion) por ciento">
                     <span class="gauge-num">@(Stats.TasaOcupacion)%</span>
                 </div>
-                <span class="gauge-label">Ocupación · últimos 30 días</span>
+                <span class="gauge-label">Ocupación proyectada</span>
             </div>
 
             <!-- Métricas de apoyo -->
@@ -221,6 +232,11 @@
     private List<Alojamiento> Alojamientos = new();
     private (int ReservasActivas, decimal IngresosEsteMes, double RatingPromedio, int TasaOcupacion) Stats;
 
+    // Filtro de período para la ocupación PROYECTADA (en días, ventana hacia adelante desde hoy). 30 por defecto.
+    private int _diasPeriodo = 30;
+    // Reservas del anfitrión ya cargadas: las guardamos para recalcular al cambiar de período sin re-pedir al backend.
+    private List<Reserva> _reservasAnfitrion = new();
+
     // Pagos REALES recibidos por el anfitrión (de las reservas pagadas de SUS alojamientos),
     // vía GET PagoRS/anfitrion/{id}. Alimentan las ganancias reales (ver más abajo).
     private List<ResultadoPago> _pagos = new();
@@ -271,7 +287,11 @@
         // Fuente: REST con fallback automático a mock (provider).
         var anfitrionId = AppState.UsuarioActual?.Id ?? 0;
         Alojamientos = await AlojamientoProvider.ListarPorAnfitrionAsync(anfitrionId);
-        Stats = Data.ObtenerEstadisticasAnfitrion();
+        _reservasAnfitrion = await ReservaProvider.ListarPorAnfitrionAsync(anfitrionId);
+        Stats = Data.ObtenerEstadisticasAnfitrion();   // el resto de métricas siguen mock por ahora
+
+        // Sobrescribimos SOLO la tasa de ocupación con el cálculo real para el período inicial (30 días).
+        RecalcularOcupacion();
 
         // Ganancias REALES: pagos de las reservas pagadas de sus alojamientos (sustituye el mock de ingresos).
         if (AppState.UsuarioActual != null)
@@ -282,6 +302,48 @@
 
     public void Dispose() => AppState.OnChange -= OnMonedaChanged;
     private void OnMonedaChanged() => InvokeAsync(StateHasChanged);
+
+    // Cambia el período de la ocupación y recalcula con los datos YA cargados (sin re-pedir al backend).
+    private void CambiarPeriodo(int dias)
+    {
+        _diasPeriodo = dias;
+        RecalcularOcupacion();
+    }
+
+    // Recalcula la ocupación para la ventana [hoy, hoy + _diasPeriodo) y actualiza Stats.TasaOcupacion.
+    private void RecalcularOcupacion()
+    {
+        int ocup = CalcularOcupacionPeriodo(Alojamientos.Count, _reservasAnfitrion, _diasPeriodo);
+        Stats = (Stats.ReservasActivas, Stats.IngresosEsteMes, Stats.RatingPromedio, ocup);
+    }
+
+    // Ocupación PROYECTADA (RF21): noches reservadas / noches disponibles en los próximos 'dias' días.
+    // Miramos HACIA ADELANTE porque la ocupación futura es la métrica accionable para el anfitrión
+    // (estilo Airbnb/hotelería). Noches disponibles = nº alojamientos * dias. Noches reservadas =
+    // intersección de cada reserva activa (Confirmada/Completada, las que de verdad ocupan) con la
+    // ventana [hoy, hoy+dias): una reserva puede solaparse parcialmente, así que solo cuentan las
+    // noches que caen dentro de la ventana.
+    private int CalcularOcupacionPeriodo(int numAlojamientos, List<Reserva> reservas, int dias)
+    {
+        if (numAlojamientos <= 0 || dias <= 0) return 0;
+        var inicio = DateTime.Today;
+        var fin = inicio.AddDays(dias);            // exclusivo
+        int nochesDisponibles = numAlojamientos * dias;
+        if (nochesDisponibles <= 0) return 0;
+
+        int nochesReservadas = 0;
+        foreach (var r in reservas)
+        {
+            if (r.Estado != "Confirmada" && r.Estado != "Completada") continue;
+            var ini = r.FechaEntrada.Date > inicio ? r.FechaEntrada.Date : inicio;
+            var f   = r.FechaSalida.Date  < fin    ? r.FechaSalida.Date  : fin;
+            int noches = (f - ini).Days;
+            if (noches > 0) nochesReservadas += noches;
+        }
+        // Tope al 100% por robustez (si los datos se solaparan raro).
+        int pct = (int)Math.Round(100.0 * nochesReservadas / nochesDisponibles);
+        return Math.Min(pct, 100);
+    }
 
     private string EstadoState(string estado) => estado switch
     {

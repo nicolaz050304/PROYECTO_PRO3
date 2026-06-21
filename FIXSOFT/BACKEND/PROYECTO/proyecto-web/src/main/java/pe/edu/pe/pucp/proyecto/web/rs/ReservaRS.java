@@ -15,8 +15,11 @@ import pe.edu.pe.pucp.proyecto.accomodations.Alojamiento;
 import pe.edu.pe.pucp.proyecto.accomodations.bl.AlojamientoBL;
 import pe.edu.pe.pucp.proyecto.accomodations.implbl.AlojamientoBLImpl;
 import pe.edu.pe.pucp.proyecto.reservation.Reserva;
+import pe.edu.pe.pucp.proyecto.reservation.EstadoReserva;
 import pe.edu.pe.pucp.proyecto.reservation.bl.ReservaBL;
 import pe.edu.pe.pucp.proyecto.reservation.implbl.ReservaBLImpl;
+import pe.edu.pe.pucp.proyecto.notif.bl.NotificacionBL;
+import pe.edu.pe.pucp.proyecto.notif.implbl.NotificacionBLImpl;
 import pe.edu.pe.pucp.proyecto.users.bl.UsuarioBL;
 import pe.edu.pe.pucp.proyecto.users.implbl.UsuarioBLImpl;
 import pe.edu.pe.pucp.proyecto.web.dto.ReservaDTO;
@@ -43,6 +46,7 @@ public class ReservaRS {
     private final ReservaBL reservaBL = new ReservaBLImpl();
     private final AlojamientoBL alojamientoBL = new AlojamientoBLImpl();
     private final UsuarioBL usuarioBL = new UsuarioBLImpl();
+    private final NotificacionBL notificacionBL = new NotificacionBLImpl();
 
     /** GET ReservaRS -> todas las reservas. */
     @GET
@@ -144,9 +148,30 @@ public class ReservaRS {
     @PUT
     @Path("{id}")
     public Response actualizar(@PathParam("id") int id, ReservaDTO dto) {
+        // Cargamos el estado ANTERIOR antes de modificar, para detectar la transición a CONFIRMADA
+        // (el huésped del id viene poblado en la reserva cargada por la BL).
+        Reserva actual = reservaBL.obtenerPorId(id);
+        EstadoReserva estadoAnterior = actual != null ? actual.getEstadoReserva() : null;
+
         Reserva entidad = ReservaMapper.toEntity(dto);
         entidad.setIdReserva(id);
         reservaBL.modificar(entidad);
+
+        // EVENTO 1 (RF18): si la reserva PASA a CONFIRMADA (antes no lo estaba), notificamos al HUÉSPED.
+        // La notificación es secundaria: va en try/catch para no romper la confirmación si algo falla.
+        if (entidad.getEstadoReserva() == EstadoReserva.CONFIRMADA
+                && estadoAnterior != EstadoReserva.CONFIRMADA && actual != null) {
+            int idHuesped = actual.getInvitado() != null ? actual.getInvitado().getIdUsuario() : 0;
+            if (idHuesped > 0) {
+                try {
+                    notificacionBL.crear("Reserva confirmada",
+                            "Tu reserva ha sido confirmada por el anfitrión.", idHuesped);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+
         ReservaDTO actualizado = ReservaMapper.toDTO(entidad, alojamientoBL, usuarioBL, new HashMap<>(), new HashMap<>());
         return Response.ok(actualizado).build();
     }

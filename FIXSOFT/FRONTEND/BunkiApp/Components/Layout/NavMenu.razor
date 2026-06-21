@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @inject BunkiApp.Models.AppState AppState
 @inject BunkiApp.Services.TipoCambioServiceRest TipoCambioRest
+@inject BunkiApp.Services.NotificacionServiceRest NotifRest
 
 <header style="position: relative; z-index: 502;">
     <div class="navbar container">
@@ -19,6 +20,11 @@
                 <a href="/mensajes" class="@NavClass("/mensajes")">Mensajes</a>
                 <a href="/notificaciones" class="@NavClass("/notificaciones")">
                     <i class="fas fa-bell"></i>
+                    @* Badge con el conteo REAL de no leídas del backend. *@
+                    @if (_noLeidas > 0)
+                    {
+                        <span class="nav-badge" style="background:#e74c3c;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;margin-left:4px;">@_noLeidas</span>
+                    }
                 </a>
                 @if (AppState.EsAdmin() )
                 {
@@ -450,6 +456,7 @@
     private bool _menuVisitante = false;
     private bool _menuUsuario = false;
     private bool _menuMoneda = false;
+    private int _noLeidas = 0;   // conteo real de notificaciones no leídas (badge de la campanita)
 
     protected override void OnInitialized()
     {
@@ -464,6 +471,12 @@
     protected override async Task OnInitializedAsync()
     {
         await AppState.CargarTasasAsync(TipoCambioRest);
+
+        // Conteo real de no leídas para el badge de la campanita (antes no había contador).
+        if (AppState.UsuarioActual != null)
+        {
+            _noLeidas = await NotifRest.ContarNoLeidasAsync(AppState.UsuarioActual.Id);
+        }
     }
 
     public void Dispose()

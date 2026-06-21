@@ -57,15 +57,33 @@
                 <button class="btn btn-small btn-outline" @onclick="OnDejarResena">
                     <i class="fas fa-star"></i> Dejar Reseña
                 </button>
+                @* El enlace apunta al endpoint del comprobante por id de reserva: el backend devuelve el PDF
+                   con Content-Disposition attachment, así que el navegador lo descarga directo al abrir la URL.
+                   Solo aplica a reservas YA pagadas (Confirmada/Completada). target="_blank" para no sacar al
+                   usuario de Mis Reservas. *@
+                <a class="btn btn-small btn-outline"
+                   href="@($"http://localhost:8080/BunkiBackend/webresources/PagoRS/reserva/{Reserva.Id}/comprobante")"
+                   target="_blank">
+                    <i class="fas fa-file-pdf"></i> Comprobante
+                </a>
             }
             else if (Reserva.Estado == "Confirmada")
             {
                 <button class="btn btn-small btn-secondary" @onclick="VerDetalle">Ver Detalles</button>
                 <button class="btn btn-small btn-outline" @onclick='() => Navigation.NavigateTo("/mensajes")'>Contactar</button>
                 <button class="btn btn-small btn-outline" @onclick="OnCancelar">Cancelar</button>
+                @* Comprobante de pago (PDF) de la reserva ya pagada; el header attachment fuerza la descarga. *@
+                <a class="btn btn-small btn-outline"
+                   href="@($"http://localhost:8080/BunkiBackend/webresources/PagoRS/reserva/{Reserva.Id}/comprobante")"
+                   target="_blank">
+                    <i class="fas fa-file-pdf"></i> Comprobante
+                </a>
             }
             else
             {
+                @* Rama por defecto: incluye "Cancelada". Una reserva cancelada NO tiene un comprobante de
+                   pago válido (no hay transacción vigente que respaldar), por eso aquí NO se ofrece el botón
+                   "Comprobante"; el comprobante solo se muestra en las ramas pagadas (Confirmada/Completada). *@
                 <button class="btn btn-small btn-secondary" @onclick="VerDetalle">Ver Detalles</button>
                 <button class="btn btn-small btn-outline" @onclick='() => Navigation.NavigateTo("/mensajes")'>Contactar</button>
             }

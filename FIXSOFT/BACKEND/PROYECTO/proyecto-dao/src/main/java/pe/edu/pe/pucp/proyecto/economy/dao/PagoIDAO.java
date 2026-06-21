@@ -9,4 +9,7 @@ public interface PagoIDAO extends IDAO<Pago,Integer> {
     List <Pago> listAll();
     // Pagos recibidos por un anfitrión (los de las reservas de SUS alojamientos).
     List<Pago> listarPorAnfitrion(int idAnfitrion);
+    // El pago asociado a una reserva (o null). Lo usa el comprobante: el frontend conoce la
+    // reserva pero no el id del pago, así que buscamos el pago a partir de la reserva.
+    Pago buscarPorReserva(int idReserva);
 }

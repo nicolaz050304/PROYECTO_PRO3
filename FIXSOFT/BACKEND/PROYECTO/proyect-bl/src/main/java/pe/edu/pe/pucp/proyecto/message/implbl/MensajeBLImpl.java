@@ -58,4 +58,22 @@ public class MensajeBLImpl implements MensajeBL {
         daoMensaje.remove(mensaje);
         return 1;
     }
+
+    // El chat es POR RESERVA: devolvemos los mensajes de esa reserva (orden cronológico lo da el DAO).
+    @Override
+    public List<Mensaje> listarPorChat(int idReserva) {
+        return daoMensaje.listarPorChat(idReserva);
+    }
+
+    // Al abrir el chat, los mensajes recibidos por el lector pasan a leídos (delega al DAO).
+    @Override
+    public void marcarLeidos(int idReserva, int idUsuarioLector) {
+        daoMensaje.marcarLeidos(idReserva, idUsuarioLector);
+    }
+
+    // Nº de no leídos del usuario en esa reserva (alimenta el badge del frontend).
+    @Override
+    public int contarNoLeidos(int idReserva, int idUsuario) {
+        return daoMensaje.contarNoLeidos(idReserva, idUsuario);
+    }
 }

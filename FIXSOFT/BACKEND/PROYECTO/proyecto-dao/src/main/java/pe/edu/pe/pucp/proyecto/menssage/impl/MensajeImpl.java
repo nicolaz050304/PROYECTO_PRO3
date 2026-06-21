@@ -15,8 +15,8 @@ public class MensajeImpl implements MensajeIDAO {
 
     @Override
     public Mensaje save(Mensaje msj) {
-        // SQL corregido: Solo las 4 columnas existentes en la tabla. id_mensaje es AUTO_INCREMENT.
-        String sql = "INSERT INTO mensaje (texto, fecha_envio, emisor_id, id_reserva) VALUES (?, ?, ?, ?)";
+        // Incluimos 'leido': un mensaje nuevo nace NO leído hasta que el destinatario abre el chat.
+        String sql = "INSERT INTO mensaje (texto, fecha_envio, emisor_id, id_reserva, leido) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection con = DBManager.getInstance().getConnection();
              PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -33,6 +33,9 @@ public class MensajeImpl implements MensajeIDAO {
             } else {
                 ps.setNull(4, Types.INTEGER);
             }
+
+            // Estado de lectura inicial (false por defecto en la entidad).
+            ps.setBoolean(5, msj.isLeido());
 
             ps.executeUpdate();
 
@@ -71,7 +74,7 @@ public class MensajeImpl implements MensajeIDAO {
 
     @Override
     public Mensaje update(Mensaje msj) {
-        String sql = "UPDATE mensaje SET texto = ?, fecha_envio = ?, emisor_id = ?, id_reserva = ? WHERE id_mensaje = ?";
+        String sql = "UPDATE mensaje SET texto = ?, fecha_envio = ?, emisor_id = ?, id_reserva = ?, leido = ? WHERE id_mensaje = ?";
 
         try (Connection con = DBManager.getInstance().getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -80,7 +83,8 @@ public class MensajeImpl implements MensajeIDAO {
             ps.setTimestamp(2, new java.sql.Timestamp(msj.getFechaEnvio().getTime()));
             ps.setInt(3, msj.getEmisor().getIdUsuario());
             ps.setInt(4, msj.getReserva().getIdReserva());
-            ps.setInt(5, msj.getIdMensaje());
+            ps.setBoolean(5, msj.isLeido());
+            ps.setInt(6, msj.getIdMensaje());
 
             ps.executeUpdate();
 
@@ -110,6 +114,46 @@ public class MensajeImpl implements MensajeIDAO {
         }
         return lista;
     }
+    /**
+     * Marca como leídos los mensajes de una reserva dirigidos al lector. "No leído para un usuario"
+     * son los mensajes que le ENVIARON y aún no abrió, por eso excluimos los suyos (emisor_id <> lector):
+     * uno no "lee" sus propios mensajes. Solo tocamos los que estaban en false (idempotente y barato).
+     */
+    @Override
+    public void marcarLeidos(int idReserva, int idUsuarioLector) {
+        String sql = "UPDATE mensaje SET leido = TRUE WHERE id_reserva = ? AND emisor_id <> ? AND leido = FALSE";
+        try (Connection con = DBManager.getInstance().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idReserva);
+            ps.setInt(2, idUsuarioLector);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error al marcar mensajes como leídos: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Cuenta los mensajes no leídos dirigidos al usuario en esa reserva (los que le enviaron y no abrió).
+     * Mismo criterio que marcarLeidos: excluye los mensajes propios del usuario (emisor_id <> usuario).
+     */
+    @Override
+    public int contarNoLeidos(int idReserva, int idUsuario) {
+        String sql = "SELECT COUNT(*) FROM mensaje WHERE id_reserva = ? AND emisor_id <> ? AND leido = FALSE";
+        try (Connection con = DBManager.getInstance().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idReserva);
+            ps.setInt(2, idUsuario);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al contar mensajes no leídos: " + e.getMessage());
+        }
+        return 0;
+    }
+
     // ============================================================
     // NUEVO MÉTODO AÑADIDO: listAll()
     // ============================================================
@@ -148,6 +192,9 @@ public class MensajeImpl implements MensajeIDAO {
         Reserva reserva = new Reserva();
         reserva.setIdReserva(rs.getInt("id_reserva"));
         msj.setReserva(reserva);
+
+        // Estado de lectura (TINYINT(1) en MySQL -> getBoolean lo lee como true/false).
+        msj.setLeido(rs.getBoolean("leido"));
 
         return msj;
     }

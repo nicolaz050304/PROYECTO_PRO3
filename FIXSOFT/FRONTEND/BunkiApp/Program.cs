@@ -68,6 +68,20 @@ builder.Services.AddHttpClient<CuentaBancariaServiceRest>(client =>
     client.Timeout = TimeSpan.FromSeconds(20);
 });
 
+// --- Integración REST de Mensajería (RF17): chat por reserva ---
+builder.Services.AddHttpClient<MensajeServiceRest>(client =>
+{
+    client.BaseAddress = new Uri("http://localhost:8080/BunkiBackend/webresources/");
+    client.Timeout = TimeSpan.FromSeconds(20);
+});
+
+// --- Integración REST de Notificaciones (RF18): feed y badge por usuario ---
+builder.Services.AddHttpClient<NotificacionServiceRest>(client =>
+{
+    client.BaseAddress = new Uri("http://localhost:8080/BunkiBackend/webresources/");
+    client.Timeout = TimeSpan.FromSeconds(20);
+});
+
 // --- Autenticación por cookie (ClaimsPrincipal) ---
 builder.Services.AddCookieAuth();
 

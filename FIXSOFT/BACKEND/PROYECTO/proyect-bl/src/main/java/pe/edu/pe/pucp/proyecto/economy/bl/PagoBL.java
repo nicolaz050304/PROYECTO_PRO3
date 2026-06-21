@@ -11,4 +11,7 @@ public interface PagoBL extends IBL<Pago, Integer> {
 
     // Pagos recibidos por un anfitrión (alimenta su panel de ganancias).
     java.util.List<Pago> listarPorAnfitrion(int idAnfitrion);
+
+    // El pago de una reserva (o null). Lo usa el comprobante por id de reserva.
+    Pago buscarPorReserva(int idReserva);
 }

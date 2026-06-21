@@ -114,6 +114,57 @@ public class NotificacionImpl implements NotificacionIDAO {
         }
     }
 
+    // Notificaciones de un usuario, más recientes primero (id desc): es el feed que ve el usuario.
+    @Override
+    public List<Notificaciones> listarPorUsuario(int idUsuario) {
+        String sql = "SELECT id_notificacion, titulo, mensaje, leido, id_usuario FROM notificaciones " +
+                     "WHERE id_usuario = ? ORDER BY id_notificacion DESC";
+        List<Notificaciones> lista = new ArrayList<>();
+        try (Connection con = DBManager.getInstance().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idUsuario);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(construirNotificacion(rs));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al listar notificaciones del usuario " + idUsuario, e);
+        }
+        return lista;
+    }
+
+    // Marca una notificación como leída (cuando el usuario la abre/ve).
+    @Override
+    public void marcarLeida(int idNotificacion) {
+        String sql = "UPDATE notificaciones SET leido = TRUE WHERE id_notificacion = ?";
+        try (Connection con = DBManager.getInstance().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idNotificacion);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al marcar como leída la notificación " + idNotificacion, e);
+        }
+    }
+
+    // Nº de notificaciones no leídas del usuario (para el badge).
+    @Override
+    public int contarNoLeidas(int idUsuario) {
+        String sql = "SELECT COUNT(*) FROM notificaciones WHERE id_usuario = ? AND leido = FALSE";
+        try (Connection con = DBManager.getInstance().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idUsuario);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al contar notificaciones no leídas del usuario " + idUsuario, e);
+        }
+        return 0;
+    }
+
     /**
      * Método auxiliar para mapear el ResultSet al objeto Notificaciones
      */

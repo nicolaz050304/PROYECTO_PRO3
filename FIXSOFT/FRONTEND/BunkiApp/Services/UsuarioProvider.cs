@@ -30,6 +30,18 @@ namespace BunkiApp.Services
         // (p.ej. correo duplicado, 400/red), propaga para que la UI avise.
         public async Task RegistrarAsync(Usuario u) => await _rest.RegistrarAsync(u);
 
+        // Actualización de perfil (ESCRITURA): PUT UsuarioRS/{id}. Devuelve bool en vez de propagar
+        // para que la página de editar perfil distinga éxito de fallo y muestre el mensaje adecuado.
+        public async Task<bool> ActualizarAsync(Usuario u)
+        {
+            try { await _rest.ActualizarAsync(u); return true; }
+            catch (Exception ex)
+            {
+                _log.LogWarning(ex, "No se pudo actualizar el perfil del usuario {Id}", u.Id);
+                return false;
+            }
+        }
+
         public async Task<List<Usuario>> ListarAsync()
         {
             try

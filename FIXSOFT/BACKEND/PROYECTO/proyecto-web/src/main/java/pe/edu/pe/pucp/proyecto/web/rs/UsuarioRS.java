@@ -1,8 +1,10 @@
 package pe.edu.pe.pucp.proyecto.web.rs;
 
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -96,5 +98,58 @@ public class UsuarioRS {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
         return Response.ok(UsuarioMapper.toDTO(u)).build();
+    }
+
+    /**
+     * PUT UsuarioRS/{id} -> actualiza los datos editables del perfil (RF01).
+     * Cargamos el usuario EXISTENTE por id y seteamos solo los campos editables sobre él, para
+     * NO perder su tipo/subclase, roles ni password al modificar (la BL reescribe todas las
+     * columnas). Aquí no se cambian correo/password/tipo a propósito.
+     */
+    @PUT
+    @Path("{id}")
+    public Response actualizar(@PathParam("id") int id, UsuarioDTO dto) {
+        try {
+            Usuario existente = usuarioBL.obtenerPorId(id);
+            if (existente == null) {
+                return Response.status(Response.Status.NOT_FOUND)
+                               .entity("{\"error\":\"Usuario no encontrado\"}").build();
+            }
+            // Solo los campos editables del perfil (los null del DTO no pisan lo que ya había).
+            if (dto.getNombre() != null)          existente.setNombre(dto.getNombre());
+            if (dto.getApellidoPaterno() != null) existente.setApellidoPaterno(dto.getApellidoPaterno());
+            if (dto.getApellidoMaterno() != null) existente.setApellidoMaterno(dto.getApellidoMaterno());
+            if (dto.getTelefono() != null)        existente.setTelefono(dto.getTelefono());
+            if (dto.getPais() != null)            existente.setPais(dto.getPais());
+
+            usuarioBL.modificar(existente);
+            return Response.ok(UsuarioMapper.toDTO(existente)).build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.status(Response.Status.BAD_REQUEST)
+                           .entity("{\"error\":\"" + e.getMessage() + "\"}").build();
+        }
+    }
+
+    /**
+     * DELETE UsuarioRS/{id} -> baja del usuario, para la gestión del admin.
+     * La BL/DAO hace baja LÓGICA (lo deja SUSPENDIDO, no lo borra físicamente).
+     */
+    @DELETE
+    @Path("{id}")
+    public Response eliminar(@PathParam("id") int id) {
+        try {
+            Usuario existente = usuarioBL.obtenerPorId(id);
+            if (existente == null) {
+                return Response.status(Response.Status.NOT_FOUND)
+                               .entity("{\"error\":\"Usuario no encontrado\"}").build();
+            }
+            usuarioBL.eliminar(existente);
+            return Response.ok("{\"ok\":true}").build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.status(Response.Status.BAD_REQUEST)
+                           .entity("{\"error\":\"" + e.getMessage() + "\"}").build();
+        }
     }
 }

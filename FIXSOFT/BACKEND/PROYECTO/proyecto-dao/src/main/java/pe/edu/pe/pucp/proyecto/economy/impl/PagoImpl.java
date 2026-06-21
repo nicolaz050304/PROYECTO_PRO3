@@ -160,6 +160,26 @@ public class PagoImpl implements PagoIDAO {
         return lista;
     }
 
+    /**
+     * Devuelve el pago de una reserva (o null si no existe). El frontend pide el comprobante por
+     * id de reserva (no conoce el id del pago), así que ubicamos el pago a partir de id_reserva.
+     * SELECT * + construirPago(rs) -que lee por nombre de columna- mantiene el mismo mapeo de la clase.
+     */
+    @Override
+    public Pago buscarPorReserva(int idReserva) {
+        String sql = "SELECT * FROM pago WHERE id_reserva = ? LIMIT 1";
+        try (Connection con = DBManager.getInstance().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idReserva);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return construirPago(rs);
+            }
+            return null;
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al buscar pago por reserva: " + e.getMessage(), e);
+        }
+    }
+
     private Pago construirPago(ResultSet rs) throws SQLException {
         Reserva reservaProxy = new Reserva();
         reservaProxy.setIdReserva(rs.getInt("id_reserva"));

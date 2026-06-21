@@ -1,6 +1,8 @@
 @page "/perfil"
 @rendermode InteractiveServer
+@implements IDisposable
 @inject DataService Data
+@inject Services.UsuarioProvider UsuarioProvider
 @inject NavigationManager Navigation
 @inject BunkiApp.Models.AppState AppState
 <PageTitle>Bunki - Mi Perfil</PageTitle>
@@ -123,10 +125,38 @@
 @code {
     private Usuario? Usuario;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        Usuario = AppState.UsuarioActual;
+        if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
+
+        // Nos suscribimos para re-renderizar si la sesión cambia después del primer render.
+        AppState.OnChange += StateHasChangedHandler;
+
+        var id = AppState.UsuarioActual?.Id ?? 0;
+        if (id > 0)
+        {
+            // Cargamos el usuario FRESCO de BD, no el snapshot de los claims: las claims quedan congeladas
+            // en el login y no reflejan ediciones de perfil. Así /perfil siempre muestra lo persistido.
+            var fresco = await UsuarioProvider.ObtenerPorIdAsync(id);
+            if (fresco != null)
+            {
+                Usuario = fresco;
+                AppState.LoginConUsuario(fresco);   // mantenemos la sesión global en sync con BD
+            }
+            else
+            {
+                Usuario = AppState.UsuarioActual;    // respaldo si el backend no responde
+            }
+        }
+        else
+        {
+            Usuario = AppState.UsuarioActual;
+        }
     }
+
+    private void StateHasChangedHandler() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => AppState.OnChange -= StateHasChangedHandler;
 
     private void CerrarSesion()
     {
