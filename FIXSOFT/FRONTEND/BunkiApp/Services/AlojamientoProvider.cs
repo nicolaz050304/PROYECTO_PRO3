@@ -53,6 +53,23 @@ namespace BunkiApp.Services
             }
         }
 
+        // Top de alojamientos (RF22): el ranking lo calcula el backend (lógica de negocio allá).
+        // Ante caída del REST devolvemos lista vacía (no hay equivalente en el mock para el ranking).
+        public async Task<List<Alojamiento>> TopAsync(string criterio, int limite = 5)
+        {
+            try
+            {
+                var lista = await _rest.TopAsync(criterio, limite);
+                foreach (var a in lista) AplicarDefaultsVisuales(a);
+                return lista;
+            }
+            catch (Exception ex)
+            {
+                _log.LogWarning(ex, "Error al obtener el top de alojamientos; lista vacía");
+                return new();
+            }
+        }
+
         public async Task<Alojamiento?> ObtenerPorIdAsync(int id)
         {
             try

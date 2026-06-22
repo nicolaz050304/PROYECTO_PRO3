@@ -1,58 +1,68 @@
 @page "/admin/analytics"
 @layout AdminLayout
+@rendermode InteractiveServer
 @using System.Globalization
 @using System.Text
+@inject AlojamientoProvider AlojamientoProvider
 
 <PageTitle>Bunki Admin · Analytics</PageTitle>
 
 <h1 class="admin-page-title">Analytics</h1>
 <p class="admin-page-sub">Indicadores de ocupación, calidad y evolución de la plataforma.</p>
 
-<!-- DOS COLUMNAS -->
-<div class="an-grid">
+<!-- RF22 · TOP DE ALOJAMIENTOS (datos REALES del backend) -->
+<div class="admin-card">
+    <h2 class="admin-card-title"><i class="fas fa-award"></i> Top de alojamientos</h2>
+    <p class="an-card-sub">Ranking calculado en el backend según el criterio elegido.</p>
 
-    <!-- RF21 · OCUPACIÓN -->
-    <div class="admin-card">
-        <h2 class="admin-card-title"><i class="fas fa-gauge-high"></i> Mayor nivel de ocupación</h2>
-        <p class="an-card-sub">Top 5 alojamientos por tasa de ocupación.</p>
-
-        <div class="an-bars">
-            @{ int oRank = 0; }
-            @foreach (var o in _ocupacion)
-            {
-                oRank++;
-                <div class="an-bar-row">
-                    <span class="an-rank @(oRank == 1 ? "an-rank--gold" : "")">@oRank</span>
-                    <span class="an-bar-name">@o.Nombre</span>
-                    <span class="an-bar-pct">@(o.Pct)%</span>
-                    <div class="an-bar-track">
-                        <div class="an-bar-fill" style="width:@(o.Pct)%"></div>
-                    </div>
-                </div>
-            }
-        </div>
+    <!-- Selector: cada botón cambia el criterio y re-consulta al backend (el ranking lo calcula allá). -->
+    <div class="criterio-selector" style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+        <button class="@(_criterio == "calificacion" ? "btn btn-small btn-primary" : "btn btn-small btn-outline")"
+                @onclick='() => CambiarCriterio("calificacion")'>Por calificación</button>
+        <button class="@(_criterio == "reservas" ? "btn btn-small btn-primary" : "btn btn-small btn-outline")"
+                @onclick='() => CambiarCriterio("reservas")'>Por reservas</button>
+        <button class="@(_criterio == "resenas" ? "btn btn-small btn-primary" : "btn btn-small btn-outline")"
+                @onclick='() => CambiarCriterio("resenas")'>Por reseñas</button>
     </div>
 
-    <!-- RF22 · CALIDAD -->
-    <div class="admin-card">
-        <h2 class="admin-card-title"><i class="fas fa-award"></i> Ranking de calidad</h2>
-        <p class="an-card-sub">Top 5 alojamientos por puntuación promedio.</p>
-
+    @if (_top.Count == 0)
+    {
+        <p class="an-card-sub">No hay datos para mostrar.</p>
+    }
+    else
+    {
         <div class="an-rank-list">
-            @{ int qRank = 0; }
-            @foreach (var q in _calidad)
+            @{ int rank = 0; }
+            @foreach (var a in _top)
             {
-                qRank++;
+                rank++;
                 <div class="an-rank-item">
-                    <span class="an-rank @(qRank == 1 ? "an-rank--gold" : "")">@qRank</span>
-                    <span class="an-rank-name">@q.Nombre</span>
+                    <span class="an-rank @(rank == 1 ? "an-rank--gold" : "")">@rank</span>
+                    <span class="an-rank-name">
+                        @a.Nombre
+                        <small style="display:block; color:var(--ink-muted); font-weight:500;">@a.Ubicacion</small>
+                    </span>
                     <span class="an-rank-score">
-                        <i class="fas fa-star"></i> @R(q.Score)
+                        @if (_criterio == "calificacion")
+                        {
+                            <i class="fas fa-star"></i>
+                            <span>@R(a.Rating)</span>
+                        }
+                        else if (_criterio == "resenas")
+                        {
+                            <span>@a.TotalResenas reseñas</span>
+                        }
+                        else
+                        {
+                            @* "reservas": el DTO no trae el conteo, pero el ORDEN ya viene del backend;
+                               mostramos la posición (#1, #2...) en vez de un número inventado. *@
+                            <span>#@rank</span>
+                        }
                     </span>
                 </div>
             }
         </div>
-    </div>
+    }
 </div>
 
 <!-- EVOLUCIÓN (LÍNEA SVG) -->
@@ -202,27 +212,9 @@
     private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
     private string R(double v) => v.ToString("0.0", Inv);
 
-    // RF21 · ocupación
-    private record Ocup(string Nombre, int Pct);
-    private readonly Ocup[] _ocupacion =
-    {
-        new("Casa Playa", 94),
-        new("Dpto Lujo", 88),
-        new("Mini-depa", 79),
-        new("Bungalow", 72),
-        new("Habitación Ejecutiva", 65)
-    };
-
-    // RF22 · calidad
-    private record Cal(string Nombre, double Score);
-    private readonly Cal[] _calidad =
-    {
-        new("Dpto Lujo", 5.0),
-        new("Casa Playa", 4.9),
-        new("Bungalow", 4.9),
-        new("Mini-depa", 4.8),
-        new("Villa Campo", 4.8)
-    };
+    // RF22 · TOP real desde el backend. El criterio inicial es "calificacion"; el selector lo cambia.
+    private string _criterio = "calificacion";
+    private List<Alojamiento> _top = new();
 
     // Evolución (6 meses)
     private record Mes(string Nombre, double Val);
@@ -240,7 +232,26 @@
     private List<GridLine> _grid = new();
     private MarkupString _svg;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
+    {
+        ConstruirSvg();          // gráfico de evolución (se conserva)
+        await CargarTop();       // ranking real inicial según el criterio por defecto
+    }
+
+    // Pide el top al backend según el criterio actual (lógica de ranking en el servidor).
+    private async Task CargarTop()
+    {
+        _top = await AlojamientoProvider.TopAsync(_criterio, 5);
+    }
+
+    // El selector llama a este método: cambia el criterio y vuelve a consultar el backend.
+    private async Task CambiarCriterio(string criterio)
+    {
+        _criterio = criterio;
+        await CargarTop();
+    }
+
+    private void ConstruirSvg()
     {
         const int x0 = 40, x1 = 575, y0 = 24, y1 = 175;
         const double vmin = 4.0, vmax = 5.0;

@@ -30,7 +30,7 @@ public class CuentaBancariaImpl implements CuentaBancariaIDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Error al cargar cuenta: " + e.getMessage());
+            throw new RuntimeException("Error al cargar cuenta: " + e.getMessage(), e);
         }
         return null;
     }
@@ -185,7 +185,7 @@ public class CuentaBancariaImpl implements CuentaBancariaIDAO {
             pst.setInt(1, cuentaBancaria.getIdCuenta());
             pst.executeUpdate();
         } catch (SQLException e) {
-            System.err.println("Error al eliminar cuenta: " + e.getMessage());
+            throw new RuntimeException("Error al eliminar cuenta: " + e.getMessage(), e);
         }
     }
 }

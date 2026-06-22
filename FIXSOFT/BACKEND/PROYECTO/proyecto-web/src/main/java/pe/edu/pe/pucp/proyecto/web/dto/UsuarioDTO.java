@@ -24,6 +24,9 @@ public class UsuarioDTO {
     private String tipoUsuario;
     // Todos los roles del usuario (el modelo usa un Set<String>).
     private List<String> roles = new ArrayList<>();
+    // Estado de la cuenta: DISPONIBLE / PENDIENTE_VALIDACION / SUSPENDIDO.
+    // Se expone para que el admin vea el estado real de cada cuenta (antes el frontend asumía "Activo").
+    private String estado;
     // SOLO de ENTRADA (registro): la contraseña en claro que envía el cliente.
     // toDTO (salida) NUNCA lo setea -> en las respuestas viaja null, jamás el hash.
     private String password;
@@ -57,6 +60,9 @@ public class UsuarioDTO {
 
     public List<String> getRoles() { return roles; }
     public void setRoles(List<String> roles) { this.roles = roles; }
+
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
 
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }

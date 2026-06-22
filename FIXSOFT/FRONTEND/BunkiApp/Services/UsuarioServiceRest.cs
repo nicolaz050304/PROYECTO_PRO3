@@ -43,5 +43,17 @@ namespace BunkiApp.Services
 
         public async Task EliminarAsync(int id)
             => (await _http.DeleteAsync($"{Endpoint}/{id}")).EnsureSuccessStatusCode();
+
+        // Cambia el estado de la cuenta de un usuario (DISPONIBLE / SUSPENDIDO). Lo usa el panel admin
+        // para bloquear/desbloquear; PUT UsuarioRS/{id}/estado con {"estado":"..."} -> persiste en BD.
+        public async Task<bool> CambiarEstadoAsync(int id, string estado)
+        {
+            try
+            {
+                var resp = await _http.PutAsJsonAsync($"{Endpoint}/{id}/estado", new { estado });
+                return resp.IsSuccessStatusCode;
+            }
+            catch { return false; }
+        }
     }
 }

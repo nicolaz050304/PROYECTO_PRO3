@@ -58,7 +58,7 @@
                             <td class="adm-muted">@u.Email</td>
                             <td>@u.Rol</td>
                             <td>
-                                <span class="state @(u.Estado == "Activo" ? "state--confirmada" : "state--cancelada")">
+                                <span class="state @EstadoClase(u.Estado)">
                                     <span class="state-dot"></span>@u.Estado
                                 </span>
                             </td>
@@ -261,6 +261,8 @@
 
     private class UsuarioAdmin
     {
+        // Id real del backend: necesario para que bloquear/desbloquear sepan a qué usuario aplicar el cambio.
+        public int Id { get; set; }
         public string Nombre { get; set; } = "";
         public string Email { get; set; } = "";
         public string Rol { get; set; } = "";
@@ -280,20 +282,39 @@
     {
         // Lectura vía provider (REST). Si el backend responde con usuarios, se usan;
         // si no (offline o sin datos), se conserva la lista demo de arriba → idéntico a hoy.
-        // TODO(contrato): el modelo Usuario no trae estado de bloqueo; se asume "Activo".
+        // El estado ahora viene del backend (campo "estado"); antes se asumía "Activo".
         var remotos = await UsuarioProvider.ListarAsync();
         if (remotos.Count > 0)
         {
             _usuarios = remotos.Select(u => new UsuarioAdmin
             {
+                Id = u.Id,
                 Nombre = string.IsNullOrWhiteSpace(u.NombreCompleto) ? u.Email : u.NombreCompleto,
                 Email = u.Email,
                 Rol = u.TipoUsuario,
-                Estado = "Activo",
+                Estado = EstadoLegible(u.EstadoCuenta),   // estado real del backend -> etiqueta de UI
                 Registro = u.MiembroDesde
             }).ToList();
         }
     }
+
+    // Traduce el estado del backend (enum) a la etiqueta legible que muestra la UI.
+    private string EstadoLegible(string estadoBackend) => estadoBackend switch
+    {
+        "DISPONIBLE" => "Activo",
+        "SUSPENDIDO" => "Bloqueado",
+        "PENDIENTE_VALIDACION" => "Pendiente",
+        _ => "Activo"
+    };
+
+    // Color del badge según la etiqueta: Activo=verde, Bloqueado=rojo, Pendiente=ámbar.
+    private string EstadoClase(string estado) => estado switch
+    {
+        "Activo" => "state--confirmada",
+        "Bloqueado" => "state--cancelada",
+        "Pendiente" => "state--pendiente",
+        _ => "state--confirmada"
+    };
 
     private IEnumerable<UsuarioAdmin> Filtrados => _usuarios.Where(u =>
         (_rol == "Todos" || u.Rol == _rol) &&
@@ -330,21 +351,32 @@
     private bool _showBloqueo;
     private UsuarioAdmin? _target;
 
-    private void PedirBloqueo(UsuarioAdmin u)
+    private async Task PedirBloqueo(UsuarioAdmin u)
     {
-        if (u.Estado != "Activo") { u.Estado = "Activo"; _mensaje = $"{u.Nombre} fue desbloqueado."; return; }
+        // Si NO está Activo (bloqueado/pendiente) el clic desbloquea: persiste DISPONIBLE en BD.
+        if (u.Estado != "Activo")
+        {
+            var ok = await UsuarioProvider.CambiarEstadoAsync(u.Id, "DISPONIBLE");
+            if (ok) { u.Estado = "Activo"; _mensaje = $"{u.Nombre} fue desbloqueado."; }
+            else { _mensaje = "No se pudo desbloquear."; }
+            return;
+        }
+        // Está Activo: abrimos el modal para confirmar el bloqueo.
         _target = u;
         _showBloqueo = true;
     }
 
     private void CerrarBloqueo() { _showBloqueo = false; _target = null; }
 
-    private void ConfirmarBloqueo()
+    private async Task ConfirmarBloqueo()
     {
         if (_target is null) return;
-        _target.Estado = "Bloqueado";
-        _mensaje = $"{_target.Nombre} fue bloqueado.";
-        CerrarBloqueo();
+        // Bloquear = persistir SUSPENDIDO en BD vía backend (antes solo cambiaba en memoria).
+        var ok = await UsuarioProvider.CambiarEstadoAsync(_target.Id, "SUSPENDIDO");
+        if (ok) { _target.Estado = "Bloqueado"; _mensaje = $"{_target.Nombre} fue bloqueado."; }
+        else { _mensaje = "No se pudo bloquear el usuario."; }
+        _showBloqueo = false;
+        _target = null;
     }
 
     // ---- Modal crear administrador ----

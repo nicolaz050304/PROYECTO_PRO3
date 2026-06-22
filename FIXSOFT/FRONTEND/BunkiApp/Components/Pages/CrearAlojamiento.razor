@@ -153,6 +153,79 @@
                                 <ValidationMessage For="() => Formulario.Habitaciones" class="validation-message" />
                             </div>
                         </div>
+
+                        @* Detalles propios del tipo (RF05): aparecen SEGÚN el tipo elegido arriba, porque cada
+                           tipo de alojamiento tiene sus propios atributos. Se bindean al Formulario y en Publicar()
+                           se copian al Alojamiento que se envía al backend (los nombres JSON ya calzan con el DTO). *@
+                        @if (Formulario.Tipo == "Casa")
+                        {
+                            <p class="section-sub" style="margin-top: 6px;">Detalles de la casa</p>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Número de pisos</label>
+                                    <InputNumber @bind-Value="Formulario.NumPisos" min="1" max="10" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Número de cocheras</label>
+                                    <InputNumber @bind-Value="Formulario.NumCocheras" min="0" max="10" />
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Número de habitaciones</label>
+                                    <InputNumber @bind-Value="Formulario.NumHabitacionesCasa" min="1" max="20" />
+                                </div>
+                                <div class="form-group">
+                                    <label class="checkbox-label">
+                                        <InputCheckbox @bind-Value="Formulario.ConPatio" /> Tiene patio
+                                    </label>
+                                </div>
+                            </div>
+                        }
+                        else if (Formulario.Tipo == "Departamento")
+                        {
+                            <p class="section-sub" style="margin-top: 6px;">Detalles del departamento</p>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Piso</label>
+                                    <InputNumber @bind-Value="Formulario.NumPiso" min="0" max="50" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Número de departamento</label>
+                                    <InputText @bind-Value="Formulario.NroDepartamento" placeholder="Ej: 402" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Número de habitaciones</label>
+                                <InputNumber @bind-Value="Formulario.NroHabitacionesDepartamento" min="1" max="20" />
+                            </div>
+                        }
+                        else if (Formulario.Tipo == "Habitación")
+                        {
+                            <p class="section-sub" style="margin-top: 6px;">Detalles de la habitación</p>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Número/identificador de habitación</label>
+                                    <InputText @bind-Value="Formulario.NroHabitacion" placeholder="Ej: A-12" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Tipo de cama</label>
+                                    <InputSelect @bind-Value="Formulario.TipoCama">
+                                        <option value="">Selecciona...</option>
+                                        <option>Individual</option>
+                                        <option>Matrimonial</option>
+                                        <option>Queen</option>
+                                        <option>King</option>
+                                        <option>Literas</option>
+                                    </InputSelect>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <InputCheckbox @bind-Value="Formulario.ConBanhoPrivado" /> Baño privado
+                                </label>
+                            </div>
+                        }
                     </div>
 
                     <!-- FOTOS -->
@@ -367,6 +440,19 @@
                 Formulario.MaxHuespedes = _original.MaxHuespedes;
                 Formulario.Habitaciones = _original.Habitaciones;
 
+                // Atributos específicos por tipo (RF05): los cargamos del original para que el form los
+                // muestre al editar (cada tipo trae los suyos desde el backend).
+                Formulario.NumPisos = _original.NumPisos;
+                Formulario.ConPatio = _original.ConPatio;
+                Formulario.NumCocheras = _original.NumCocheras;
+                Formulario.NumHabitacionesCasa = _original.NumHabitacionesCasa;
+                Formulario.NumPiso = _original.NumPiso;
+                Formulario.NroDepartamento = _original.NroDepartamento;
+                Formulario.NroHabitacionesDepartamento = _original.NroHabitacionesDepartamento;
+                Formulario.NroHabitacion = _original.NroHabitacion;
+                Formulario.TipoCama = _original.TipoCama;
+                Formulario.ConBanhoPrivado = _original.ConBanhoPrivado;
+
                 // El backend solo persiste Ubicacion combinada ("Direccion, Distrito"); Distrito no
                 // round-trip por el DTO. Si Distrito viene vacío, lo derivamos del final de Ubicacion
                 // para no perderlo ni duplicarlo al re-guardar (Ubicacion se reconstruye en Publicar).
@@ -514,7 +600,20 @@
                 AnfitrionId = AppState.UsuarioActual?.Id ?? 1,  // TEMPORAL: login mock (Id=1); corregir con login real
                 Latitud = 0,    // TODO: el formulario no captura coordenadas todavía; quedará sin pin
                 Longitud = 0,   //       en el mapa hasta agregar selección de ubicación.
-                ImagenUrl = ImagenSubidaUrl   // ruta del archivo subido; "" si no subió ninguna
+                ImagenUrl = ImagenSubidaUrl,  // ruta del archivo subido; "" si no subió ninguna
+
+                // Atributos específicos por tipo (RF05): se copian del Formulario al objeto que se envía.
+                // El backend solo usa los del tipo correspondiente; los demás van con su valor por defecto.
+                NumPisos = Formulario.NumPisos,
+                ConPatio = Formulario.ConPatio,
+                NumCocheras = Formulario.NumCocheras,
+                NumHabitacionesCasa = Formulario.NumHabitacionesCasa,
+                NumPiso = Formulario.NumPiso,
+                NroDepartamento = Formulario.NroDepartamento,
+                NroHabitacionesDepartamento = Formulario.NroHabitacionesDepartamento,
+                NroHabitacion = Formulario.NroHabitacion,
+                TipoCama = Formulario.TipoCama,
+                ConBanhoPrivado = Formulario.ConBanhoPrivado
             };
 
             if (EsEdicion)

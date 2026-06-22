@@ -42,6 +42,11 @@ namespace BunkiApp.Services
             }
         }
 
+        // Cambio de estado (ESCRITURA) para el panel admin: bloquear (SUSPENDIDO) / desbloquear (DISPONIBLE).
+        // Devuelve bool para que la UI distinga éxito de fallo y muestre el mensaje adecuado.
+        public async Task<bool> CambiarEstadoAsync(int id, string estado)
+            => await _rest.CambiarEstadoAsync(id, estado);
+
         public async Task<List<Usuario>> ListarAsync()
         {
             try

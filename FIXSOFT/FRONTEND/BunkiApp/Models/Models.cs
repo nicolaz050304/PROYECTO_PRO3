@@ -33,6 +33,23 @@ public class Alojamiento
     public double Latitud { get; set; }
     public double Longitud { get; set; }
 
+    // --- Atributos específicos por tipo (RF05) ---
+    // Cada tipo de alojamiento tiene los suyos; los nombres JSON calzan con el AlojamientoDTO del
+    // backend para que viajen en el POST/GET. El objeto Alojamiento que se envía ya los lleva.
+    // Casa
+    [JsonPropertyName("numPisos")] public int NumPisos { get; set; }
+    [JsonPropertyName("conPatio")] public bool ConPatio { get; set; }
+    [JsonPropertyName("numCocheras")] public int NumCocheras { get; set; }
+    [JsonPropertyName("numHabitacionesCasa")] public int NumHabitacionesCasa { get; set; }
+    // Departamento
+    [JsonPropertyName("numPiso")] public int NumPiso { get; set; }
+    [JsonPropertyName("nroDepartamento")] public string NroDepartamento { get; set; } = "";
+    [JsonPropertyName("nroHabitacionesDepartamento")] public int NroHabitacionesDepartamento { get; set; }
+    // Habitación
+    [JsonPropertyName("nroHabitacion")] public string NroHabitacion { get; set; } = "";
+    [JsonPropertyName("tipoCama")] public string TipoCama { get; set; } = "";
+    [JsonPropertyName("conBanhoPrivado")] public bool ConBanhoPrivado { get; set; }
+
     [JsonIgnore]
     public decimal ComisionServicio => PrecioNoche * 0.10m;
 }
@@ -110,6 +127,10 @@ public class Usuario
     public string TipoUsuario { get; set; } = "Usuario";
     // Lista completa de roles que envía el backend.
     public List<string> Roles { get; set; } = new();
+    // Estado real de la cuenta que ahora envía el backend: DISPONIBLE / PENDIENTE_VALIDACION / SUSPENDIDO.
+    // El panel admin lo usa para mostrar el estado real (antes se asumía "Activo").
+    [JsonPropertyName("estado")]
+    public string EstadoCuenta { get; set; } = "DISPONIBLE";
     public bool Verificado { get; set; } = true;
     public string MiembroDesde { get; set; } = "Enero 2024";
     public double Rating { get; set; } = 4.9;
@@ -356,6 +377,23 @@ public class CrearAlojamientoForm
     public bool TienePiscina { get; set; }
     public bool TieneAireAcondicionado { get; set; }
     public bool TieneCocinaEquipada { get; set; }
+
+    // --- Atributos específicos por tipo (RF05) ---
+    // El form bindea a estos campos; en Publicar() se copian al Alojamiento que se envía al backend.
+    // Cada tipo usa solo los suyos (los demás quedan en su valor por defecto).
+    // Casa
+    public int NumPisos { get; set; } = 1;
+    public bool ConPatio { get; set; }
+    public int NumCocheras { get; set; }
+    public int NumHabitacionesCasa { get; set; } = 1;
+    // Departamento
+    public int NumPiso { get; set; }
+    public string NroDepartamento { get; set; } = "";
+    public int NroHabitacionesDepartamento { get; set; } = 1;
+    // Habitación
+    public string NroHabitacion { get; set; } = "";
+    public string TipoCama { get; set; } = "";
+    public bool ConBanhoPrivado { get; set; }
 }
 
 public class PagoForm

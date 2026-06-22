@@ -109,8 +109,10 @@ namespace BunkiApp.Services
             }
             catch (Exception ex)
             {
-                _log.LogWarning(ex, "REST no disponible (reservas del usuario {Id}); usando mock", usuarioId);
-                return _mock.ObtenerTodasLasReservas();
+                _log.LogWarning(ex, "REST no disponible (reservas del usuario {Id}); devolviendo lista vacía", usuarioId);
+                // SEGURIDAD/PRIVACIDAD: NO caer a "todas las reservas" (el mock no distingue por usuario y
+                // expondría reservas ajenas). Mejor lista vacía: el usuario ve "sin reservas" en vez de datos de otros.
+                return new();
             }
         }
 
@@ -123,8 +125,9 @@ namespace BunkiApp.Services
             }
             catch (Exception ex)
             {
-                _log.LogWarning(ex, "REST no disponible (reservas del anfitrión {Id}); usando mock", anfitrionId);
-                return _mock.ObtenerTodasLasReservas();
+                _log.LogWarning(ex, "REST no disponible (reservas del anfitrión {Id}); devolviendo lista vacía", anfitrionId);
+                // SEGURIDAD/PRIVACIDAD: mismo motivo — no exponer reservas de otros anfitriones ante fallo del REST.
+                return new();
             }
         }
 

@@ -332,4 +332,56 @@ public class AlojamientoImpl implements AlojamientoIDAO {
             throw new RuntimeException("Error al actualizar alojamiento: " + e.getMessage());
         }
     }
+
+    /**
+     * TOP de alojamientos (RF22). El ranking se calcula en la BD (GROUP BY + ORDER BY + LIMIT) por
+     * eficiencia: solo viajan los ids del top, no todo el catálogo. Cadena de tablas para llegar a la
+     * calificación/reseña de un alojamiento: resenha -> reserva (id_reserva) -> alojamiento (id_alojamiento).
+     * Criterios:
+     *   - "calificacion": promedio (AVG) de la calificacion de las reseñas ACTIVAS (activo=1).
+     *   - "reservas":     número (COUNT) de reservas del alojamiento.
+     *   - "resenas":      número (COUNT) de reseñas ACTIVAS del alojamiento.
+     * Por los JOIN, solo aparecen alojamientos con reservas/reseñas (sin ellas no hay ranking; es correcto).
+     */
+    @Override
+    public List<int[]> topPorCriterio(String criterio, int limite) {
+        String sql;
+        switch (criterio == null ? "" : criterio) {
+            case "reservas" -> sql =
+                    "SELECT a.id_alojamiento, COUNT(res.id_reserva) AS metrica " +
+                    "FROM alojamiento a " +
+                    "JOIN reserva res ON res.id_alojamiento = a.id_alojamiento " +
+                    "GROUP BY a.id_alojamiento ORDER BY metrica DESC LIMIT ?";
+            case "resenas" -> sql =
+                    "SELECT a.id_alojamiento, COUNT(r.id_resenha) AS metrica " +
+                    "FROM alojamiento a " +
+                    "JOIN reserva res ON res.id_alojamiento = a.id_alojamiento " +
+                    "JOIN resenha r ON r.id_reserva = res.id_reserva AND r.activo = 1 " +
+                    "GROUP BY a.id_alojamiento ORDER BY metrica DESC LIMIT ?";
+            // "calificacion" es el criterio por defecto si llega algo no reconocido.
+            default -> sql =
+                    "SELECT a.id_alojamiento, AVG(r.calificacion) AS metrica " +
+                    "FROM alojamiento a " +
+                    "JOIN reserva res ON res.id_alojamiento = a.id_alojamiento " +
+                    "JOIN resenha r ON r.id_reserva = res.id_reserva AND r.activo = 1 " +
+                    "GROUP BY a.id_alojamiento ORDER BY metrica DESC LIMIT ?";
+        }
+
+        List<int[]> ranking = new ArrayList<>();
+        try (Connection connection = DBManager.getInstance().getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(sql)) {
+
+            pstmt.setInt(1, limite);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    // La métrica solo viaja informativa: el orden ya viene resuelto por el ORDER BY.
+                    // Para "calificacion" (AVG, decimal) la guardamos redondeada a entero.
+                    ranking.add(new int[]{ rs.getInt("id_alojamiento"), (int) Math.round(rs.getDouble("metrica")) });
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al obtener el top de alojamientos: " + e.getMessage(), e);
+        }
+        return ranking;
+    }
 }

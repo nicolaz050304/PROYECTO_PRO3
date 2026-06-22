@@ -41,6 +41,9 @@ public final class UsuarioMapper {
         }
 
         dto.setTipoUsuario(resolverRolPrincipal(u));
+
+        // Estado real de la cuenta (enum -> String) para que el admin lo vea tal cual en el panel.
+        dto.setEstado(u.getEstadoActual() != null ? u.getEstadoActual().name() : "DISPONIBLE");
         return dto;
     }
 

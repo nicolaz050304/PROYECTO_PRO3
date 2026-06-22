@@ -60,7 +60,31 @@ public final class AlojamientoMapper {
         dto.setLatitud(al.getLatitud());
         dto.setLongitud(al.getLongitud());
         dto.setImagenUrl(al.getImagenUrl());
+
+        // Atributos específicos por tipo (RF05): cada subtipo expone los suyos en el DTO.
+        mapearEspecificos(al, dto);
         return dto;
+    }
+
+    /**
+     * Vuelca los atributos ESPECÍFICOS de cada subtipo al DTO (RF05). Se usa una sola cadena
+     * instanceof para no repetir la detección de tipo; cada alojamiento solo llena los suyos.
+     */
+    private static void mapearEspecificos(Alojamiento al, AlojamientoDTO dto) {
+        if (al instanceof Casa c) {
+            dto.setNumPisos(c.getNumPisos());
+            dto.setConPatio(c.isConPatio());
+            dto.setNumCocheras(c.getNumCocheras());
+            dto.setNumHabitacionesCasa(c.getNumHabitaciones());
+        } else if (al instanceof Departamento d) {
+            dto.setNumPiso(d.getNumPiso());
+            dto.setNroDepartamento(d.getNroDepartamento());
+            dto.setNroHabitacionesDepartamento(d.getNroHabitaciones());
+        } else if (al instanceof Habitacion h) {
+            dto.setNroHabitacion(h.getNroHabitacion());
+            dto.setTipoCama(h.getTipoCama());
+            dto.setConBanhoPrivado(h.isConbanhoPrivado());
+        }
     }
 
     /**
@@ -138,10 +162,9 @@ public final class AlojamientoMapper {
      * en el backend. Los campos frontend-only sin destino (tarifaLimpieza, servicios,
      * gradiente, etc.) se ignoran a propósito.
      *
-     * TODO: el DTO no transporta los atributos propios de cada subclase
-     * (numPisos/conPatio/numCocheras de Casa, numPiso/nroDepartamento de Departamento,
-     * tipoCama/conBanhoPrivado/nroHabitacion de Habitacion) salvo "habitaciones".
-     * Quedan en su valor por defecto. Las escrituras aún no se usan desde el frontend.
+     * RF05: el DTO ahora transporta los atributos propios de cada subclase, así que el
+     * formulario los puede enviar y se guardan (el DAO ya los persiste). Cada tipo setea
+     * SOLO los suyos desde sus campos específicos del DTO.
      */
     public static Alojamiento toEntity(AlojamientoDTO dto) {
         if (dto == null) {
@@ -153,19 +176,32 @@ public final class AlojamientoMapper {
         switch (tipo) {
             case "casa" -> {
                 Casa c = new Casa();
-                c.setNumHabitaciones(dto.getHabitaciones());
+                c.setNumPisos(dto.getNumPisos());
+                c.setConPatio(dto.isConPatio());
+                c.setNumCocheras(dto.getNumCocheras());
+                c.setNumHabitaciones(dto.getNumHabitacionesCasa());
                 al = c;
             }
-            case "habitación", "habitacion" -> al = new Habitacion();
+            case "habitación", "habitacion" -> {
+                Habitacion h = new Habitacion();
+                h.setNroHabitacion(dto.getNroHabitacion());
+                h.setTipoCama(dto.getTipoCama());
+                h.setConbanhoPrivado(dto.isConBanhoPrivado());
+                al = h;
+            }
             case "departamento" -> {
                 Departamento d = new Departamento();
-                d.setNroHabitaciones(dto.getHabitaciones());
+                d.setNumPiso(dto.getNumPiso());
+                d.setNroDepartamento(dto.getNroDepartamento());
+                d.setNroHabitaciones(dto.getNroHabitacionesDepartamento());
                 al = d;
             }
             default -> {
                 // Fallback razonable: Departamento (el tipo más común del catálogo).
                 Departamento d = new Departamento();
-                d.setNroHabitaciones(dto.getHabitaciones());
+                d.setNumPiso(dto.getNumPiso());
+                d.setNroDepartamento(dto.getNroDepartamento());
+                d.setNroHabitaciones(dto.getNroHabitacionesDepartamento());
                 al = d;
             }
         }

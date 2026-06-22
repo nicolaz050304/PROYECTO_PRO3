@@ -1,6 +1,7 @@
 package pe.edu.pe.pucp.proyecto.web.rs;
 
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -92,6 +93,29 @@ public class AlojamientoRS {
             ex.printStackTrace();
         }
         return salidaDTO;
+    }
+
+    /**
+     * GET AlojamientoRS/top?criterio=...&limite=5 -> TOP de alojamientos (RF22).
+     * El ranking se calcula en el BACKEND (lógica de negocio + eficiencia: el orden sale del SQL,
+     * no se trae todo al frontend). Criterios: "calificacion" (promedio de calificación de reseñas),
+     * "reservas" (conteo de reservas) o "resenas" (conteo de reseñas activas). El DTO ya trae rating
+     * y totalResenas (calculados desde resenasCache), así que el frontend muestra la métrica relevante.
+     */
+    @GET
+    @Path("top")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<AlojamientoDTO> top(@QueryParam("criterio") @DefaultValue("calificacion") String criterio,
+                                    @QueryParam("limite") @DefaultValue("5") int limite) {
+        Map<Integer, String> cache = new HashMap<>();
+        Map<Integer, double[]> resenasCache = new ResenhaBLImpl().calificacionesPorAlojamiento();
+        List<AlojamientoDTO> salida = new ArrayList<>();
+        List<Alojamiento> top = alojamientoBL.topPorCriterio(criterio, limite);
+        for (Alojamiento al : top) {
+            // Mismo mapeo/caché de reseñas que el catálogo: rating/totalResenas reales para cada alojamiento.
+            salida.add(AlojamientoMapper.toDTO(al, usuarioBL, cache, resenasCache));
+        }
+        return salida;
     }
 
     /** GET AlojamientoRS/{id} -> uno; 404 si no existe. */

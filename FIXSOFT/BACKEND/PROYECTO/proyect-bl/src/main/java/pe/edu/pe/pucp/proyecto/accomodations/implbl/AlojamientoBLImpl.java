@@ -6,6 +6,7 @@ import pe.edu.pe.pucp.proyecto.accomodations.dao.AlojamientoIDAO;
 import pe.edu.pe.pucp.proyecto.accomodations.impl.AlojamientoImpl;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 public class AlojamientoBLImpl implements AlojamientoBL {
@@ -55,6 +56,19 @@ public class AlojamientoBLImpl implements AlojamientoBL {
     @Override
     public Alojamiento obtenerPorId(Integer id) {
         return daoAlojamiento.load(id);
+    }
+
+    @Override
+    public List<Alojamiento> topPorCriterio(String criterio, int limite) {
+        // El DAO devuelve los ids ya rankeados; cargamos el Alojamiento completo de cada uno
+        // RESPETANDO EL ORDEN del ranking (recorremos la lista en orden y vamos agregando).
+        List<int[]> ranking = daoAlojamiento.topPorCriterio(criterio, limite);
+        List<Alojamiento> salida = new ArrayList<>();
+        for (int[] fila : ranking) {
+            Alojamiento a = obtenerPorId(fila[0]);
+            if (a != null) salida.add(a);
+        }
+        return salida;
     }
 
     @Override

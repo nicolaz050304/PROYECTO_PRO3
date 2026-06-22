@@ -18,6 +18,14 @@ public class PagoBLImpl implements PagoBL {
 
     @Override
     public int registrarPagoDeReserva(Reserva reserva) {
+        // Evitar DOBLE PAGO (integridad): si la reserva ya tiene un pago registrado, no creamos otro.
+        // Devolvemos el id del pago existente (idempotente) en vez de duplicar; así no se rompe el flujo
+        // del frontend, que solo espera un id válido.
+        Pago existente = daoPago.buscarPorReserva(reserva.getIdReserva());
+        if (existente != null) {
+            return existente.getIdPago();
+        }
+
         Pago nuevoPago = new Pago();
 
         // --- LÓGICA DE NEGOCIO ---

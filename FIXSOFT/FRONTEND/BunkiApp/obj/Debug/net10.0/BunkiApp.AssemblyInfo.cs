@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BunkiApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a938f3336837743759ae88526ae1275f375f1dbc")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+42cf0df533669edd19c5037f1d94b31628f0dd3c")]
 [assembly: System.Reflection.AssemblyProductAttribute("BunkiApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BunkiApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

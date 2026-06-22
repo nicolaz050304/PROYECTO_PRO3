@@ -28,6 +28,24 @@ public class AlojamientoDTO {
     private double longitud;
     private String imagenUrl;
 
+    // Atributos ESPECÍFICOS por tipo (RF05): el DTO ahora los transporta para que el formulario los
+    // pueda enviar y se guarden (el DAO ya los persiste). Cada alojamiento solo usa los de SU tipo;
+    // los demás quedan en su valor por defecto (0 / null). Nombres numHabitacionesCasa /
+    // nroHabitacionesDepartamento para no chocar con el campo común 'habitaciones'.
+    // Casa
+    private int numPisos;
+    private boolean conPatio;
+    private int numCocheras;
+    private int numHabitacionesCasa;
+    // Departamento
+    private int numPiso;
+    private String nroDepartamento;
+    private int nroHabitacionesDepartamento;
+    // Habitación
+    private String nroHabitacion;
+    private String tipoCama;
+    private boolean conBanhoPrivado;
+
     public AlojamientoDTO() {
     }
 
@@ -81,4 +99,37 @@ public class AlojamientoDTO {
 
     public String getImagenUrl() { return imagenUrl; }
     public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
+
+    // --- Casa ---
+    public int getNumPisos() { return numPisos; }
+    public void setNumPisos(int numPisos) { this.numPisos = numPisos; }
+
+    public boolean isConPatio() { return conPatio; }
+    public void setConPatio(boolean conPatio) { this.conPatio = conPatio; }
+
+    public int getNumCocheras() { return numCocheras; }
+    public void setNumCocheras(int numCocheras) { this.numCocheras = numCocheras; }
+
+    public int getNumHabitacionesCasa() { return numHabitacionesCasa; }
+    public void setNumHabitacionesCasa(int numHabitacionesCasa) { this.numHabitacionesCasa = numHabitacionesCasa; }
+
+    // --- Departamento ---
+    public int getNumPiso() { return numPiso; }
+    public void setNumPiso(int numPiso) { this.numPiso = numPiso; }
+
+    public String getNroDepartamento() { return nroDepartamento; }
+    public void setNroDepartamento(String nroDepartamento) { this.nroDepartamento = nroDepartamento; }
+
+    public int getNroHabitacionesDepartamento() { return nroHabitacionesDepartamento; }
+    public void setNroHabitacionesDepartamento(int nroHabitacionesDepartamento) { this.nroHabitacionesDepartamento = nroHabitacionesDepartamento; }
+
+    // --- Habitación ---
+    public String getNroHabitacion() { return nroHabitacion; }
+    public void setNroHabitacion(String nroHabitacion) { this.nroHabitacion = nroHabitacion; }
+
+    public String getTipoCama() { return tipoCama; }
+    public void setTipoCama(String tipoCama) { this.tipoCama = tipoCama; }
+
+    public boolean isConBanhoPrivado() { return conBanhoPrivado; }
+    public void setConBanhoPrivado(boolean conBanhoPrivado) { this.conBanhoPrivado = conBanhoPrivado; }
 }

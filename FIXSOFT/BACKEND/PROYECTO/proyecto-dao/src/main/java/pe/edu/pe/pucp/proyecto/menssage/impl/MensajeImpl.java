@@ -47,7 +47,9 @@ public class MensajeImpl implements MensajeIDAO {
             }
 
         } catch (SQLException e) {
-            System.err.println("Error al guardar Mensaje: " + e.getMessage());
+            // Propagamos la excepción para no ocultar fallos de BD: antes solo se imprimía
+            // y el método seguía como si nada, dando "éxito falso" al llamador.
+            throw new RuntimeException("Error al guardar Mensaje: " + e.getMessage(), e);
         }
         return msj;
     }
@@ -67,7 +69,7 @@ public class MensajeImpl implements MensajeIDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Error al cargar Mensaje: " + e.getMessage());
+            throw new RuntimeException("Error al cargar Mensaje: " + e.getMessage(), e);
         }
         return null;
     }
@@ -89,7 +91,7 @@ public class MensajeImpl implements MensajeIDAO {
             ps.executeUpdate();
 
         } catch (SQLException e) {
-            System.err.println("Error al actualizar Mensaje: " + e.getMessage());
+            throw new RuntimeException("Error al actualizar Mensaje: " + e.getMessage(), e);
         }
         return msj;
     }
@@ -110,7 +112,7 @@ public class MensajeImpl implements MensajeIDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Error al listar Mensajes: " + e.getMessage());
+            throw new RuntimeException("Error al listar Mensajes: " + e.getMessage(), e);
         }
         return lista;
     }
@@ -128,7 +130,7 @@ public class MensajeImpl implements MensajeIDAO {
             ps.setInt(2, idUsuarioLector);
             ps.executeUpdate();
         } catch (SQLException e) {
-            System.err.println("Error al marcar mensajes como leídos: " + e.getMessage());
+            throw new RuntimeException("Error al marcar mensajes como leídos: " + e.getMessage(), e);
         }
     }
 
@@ -149,7 +151,7 @@ public class MensajeImpl implements MensajeIDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Error al contar mensajes no leídos: " + e.getMessage());
+            throw new RuntimeException("Error al contar mensajes no leídos: " + e.getMessage(), e);
         }
         return 0;
     }
@@ -170,7 +172,7 @@ public class MensajeImpl implements MensajeIDAO {
                 lista.add(construirMensaje(rs));
             }
         } catch (SQLException e) {
-            System.err.println("Error al listar todos los Mensajes: " + e.getMessage());
+            throw new RuntimeException("Error al listar todos los Mensajes: " + e.getMessage(), e);
         }
         return lista;
     }
@@ -207,7 +209,7 @@ public class MensajeImpl implements MensajeIDAO {
             ps.setInt(1, msj.getIdMensaje());
             ps.executeUpdate();
         } catch (SQLException e) {
-            System.err.println("Error al eliminar Mensaje: " + e.getMessage());
+            throw new RuntimeException("Error al eliminar Mensaje: " + e.getMessage(), e);
         }
     }
 }

@@ -11,6 +11,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import pe.edu.pe.pucp.proyecto.users.EstadoUsuario;
 import pe.edu.pe.pucp.proyecto.users.Usuario;
 import pe.edu.pe.pucp.proyecto.users.bl.UsuarioBL;
 import pe.edu.pe.pucp.proyecto.users.implbl.UsuarioBLImpl;
@@ -151,5 +152,43 @@ public class UsuarioRS {
             return Response.status(Response.Status.BAD_REQUEST)
                            .entity("{\"error\":\"" + e.getMessage() + "\"}").build();
         }
+    }
+
+    /**
+     * PUT UsuarioRS/{id}/estado -> el admin cambia el estado de la cuenta (RF01).
+     * Permite BLOQUEAR (SUSPENDIDO) o DESBLOQUEAR (DISPONIBLE) reutilizando modificar
+     * (el UPDATE del DAO ya persiste estado_actual). Recibe { "estado": "SUSPENDIDO" }.
+     */
+    @PUT
+    @Path("{id}/estado")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response cambiarEstado(@PathParam("id") int id, EstadoRequest req) {
+        try {
+            Usuario u = usuarioBL.obtenerPorId(id);
+            if (u == null) {
+                return Response.status(Response.Status.NOT_FOUND)
+                               .entity("{\"error\":\"Usuario no encontrado\"}").build();
+            }
+            // Convertir el string recibido al enum; valida que sea un valor permitido.
+            EstadoUsuario nuevo = EstadoUsuario.valueOf(req.getEstado());
+            u.setEstadoActual(nuevo);
+            usuarioBL.modificar(u);
+            return Response.ok(UsuarioMapper.toDTO(u)).build();
+        } catch (IllegalArgumentException ex) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                           .entity("{\"error\":\"Estado inválido\"}").build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.status(Response.Status.BAD_REQUEST)
+                           .entity("{\"error\":\"" + e.getMessage() + "\"}").build();
+        }
+    }
+
+    /** Body del PUT {id}/estado: { "estado": "SUSPENDIDO" | "DISPONIBLE" | ... }. */
+    public static class EstadoRequest {
+        private String estado;
+        public String getEstado() { return estado; }
+        public void setEstado(String estado) { this.estado = estado; }
     }
 }

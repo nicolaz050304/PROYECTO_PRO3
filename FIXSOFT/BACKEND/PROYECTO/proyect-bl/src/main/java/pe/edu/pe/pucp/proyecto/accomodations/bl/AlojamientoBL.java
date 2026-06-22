@@ -11,4 +11,7 @@ public interface AlojamientoBL extends IBL<Alojamiento, Integer> {
 
     // Alojamientos disponibles para un rango de fechas (excluye reservas vivas solapadas).
     List<Alojamiento> listarDisponibles(LocalDate entrada, LocalDate salida);
+
+    // TOP de alojamientos (RF22) según criterio: "calificacion" / "reservas" / "resenas".
+    List<Alojamiento> topPorCriterio(String criterio, int limite);
 }
