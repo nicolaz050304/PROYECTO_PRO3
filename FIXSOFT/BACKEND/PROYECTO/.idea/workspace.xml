@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ArtifactsWorkspaceSettings">
+    <artifacts-to-build>
+      <artifact name="proyecto-web:war" />
+    </artifacts-to-build>
+  </component>
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="b65f8cba-90fd-4899-aa83-a727a7a560b2" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/.vs/BunkiApp.slnx/FileContentIndex/2036c523-6eed-46e0-8237-963bc5e1f394.vsidx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/.vs/BunkiApp.slnx/FileContentIndex/2ba62635-382a-4a2f-aca5-734276ff9493.vsidx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/.vs/BunkiApp.slnx/v18/.futdcache.v2" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/.vs/BunkiApp.slnx/v18/.futdcache.v2" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/.vs/BunkiApp.slnx/v18/.suo" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/.vs/BunkiApp.slnx/v18/.suo" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/.vs/ProjectEvaluation/bunkiapp.metadata.v10.bin" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/.vs/ProjectEvaluation/bunkiapp.metadata.v10.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/.vs/ProjectEvaluation/bunkiapp.projects.v10.bin" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/.vs/ProjectEvaluation/bunkiapp.projects.v10.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/Components/Pages/AdminModeracion.razor" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/Components/Pages/AdminModeracion.razor" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/Components/Pages/AdminReportesFinancieros.razor" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/Components/Pages/AdminReportesFinancieros.razor" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/Components/Pages/Home.razor" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/Components/Pages/Home.razor" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/Components/Pages/PanelAnfitrion.razor" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/Components/Pages/PanelAnfitrion.razor" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/bin/Debug/net10.0/BunkiApp.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/bin/Debug/net10.0/BunkiApp.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/bin/Debug/net10.0/BunkiApp.exe" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/bin/Debug/net10.0/BunkiApp.exe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/bin/Debug/net10.0/BunkiApp.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/bin/Debug/net10.0/BunkiApp.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/BunkiApp.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/BunkiApp.AssemblyInfo.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/BunkiApp.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/BunkiApp.AssemblyInfoInputs.cache" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/BunkiApp.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/BunkiApp.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/BunkiApp.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/BunkiApp.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/BunkiApp.sourcelink.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/BunkiApp.sourcelink.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/apphost.exe" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/apphost.exe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/ref/BunkiApp.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/ref/BunkiApp.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/refint/BunkiApp.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/refint/BunkiApp.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/rjsmcshtml.dswa.cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/rjsmcshtml.dswa.cache.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/rjsmrazor.dswa.cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/rjsmrazor.dswa.cache.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/rpswa.dswa.cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/rpswa.dswa.cache.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/wwwroot/css/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/wwwroot/css/styles.css" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../../.." />
+  </component>
+  <component name="LogFilters">
+    <option name="FILTER_ERRORS" value="false" />
+    <option name="FILTER_WARNINGS" value="false" />
+    <option name="FILTER_INFO" value="true" />
+    <option name="FILTER_DEBUG" value="true" />
+    <option name="CUSTOM_FILTER" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 6,
+  &quot;fromUser&quot;: false
+}</component>
+  <component name="ProjectId" id="3FA2ULhlNiTV7vXNI5OzssNgrHS" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.MigrarPasswords.executor&quot;: &quot;Run&quot;,
+    &quot;GlassFish Server.GlassFish 8.0.3.executor&quot;: &quot;Run&quot;,
+    &quot;Maven.PROYECTO [package].executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;julio-dev&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/a2023/OneDrive/Documentos/FixSoft/PROYECTO_PRO3/FIXSOFT/BACKEND/PROYECTO&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;configurable.group.appearance&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="RunDashboard">
+    <option name="configurationStatuses">
+      <map>
+        <entry key="GlassfishConfiguration">
+          <value>
+            <map>
+              <entry key="GlassFish 8.0.3" value="STOPPED" />
+            </map>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="RunManager" selected="GlassFish Server.GlassFish 8.0.3">
+    <configuration name="MigrarPasswords" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="pe.edu.pe.pucp.appproyecto.MigrarPasswords" />
+      <module name="AppProyecto" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="pe.edu.pe.pucp.appproyecto.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="GlassFish 8.0.3" type="GlassfishConfiguration" factoryName="Local" APPLICATION_SERVER_NAME="GlassFish 8.0.3" ALTERNATIVE_JRE_ENABLED="true" ALTERNATIVE_JRE_PATH="21" nameIsGenerated="true">
+      <option name="UPDATING_POLICY" value="restart-server" />
+      <deployment>
+        <artifact name="proyecto-web:war">
+          <settings />
+        </artifact>
+      </deployment>
+      <server-settings>
+        <option name="DOMAIN" value="domain1" />
+        <option name="PRESERVE" value="false" />
+        <option name="COMPATIBILITY" value="false" />
+        <option name="VIRTUAL_SERVER" />
+        <option name="USERNAME" value="admin" />
+        <option name="CREDENTIAL_ALIAS" />
+      </server-settings>
+      <predefined_log_file enabled="true" id="GlassFish" />
+      <RunnerSettings RunnerId="Debug">
+        <option name="DEBUG_PORT" value="9009" />
+      </RunnerSettings>
+      <ConfigurationWrapper VM_VAR="JAVA_OPTS" RunnerId="Cover">
+        <option name="USE_ENV_VARIABLES" value="true" />
+        <STARTUP>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </STARTUP>
+        <SHUTDOWN>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </SHUTDOWN>
+      </ConfigurationWrapper>
+      <ConfigurationWrapper VM_VAR="JAVA_OPTS" RunnerId="Debug">
+        <option name="USE_ENV_VARIABLES" value="true" />
+        <STARTUP>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </STARTUP>
+        <SHUTDOWN>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </SHUTDOWN>
+      </ConfigurationWrapper>
+      <ConfigurationWrapper VM_VAR="JAVA_OPTS" RunnerId="Run">
+        <option name="USE_ENV_VARIABLES" value="true" />
+        <STARTUP>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </STARTUP>
+        <SHUTDOWN>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </SHUTDOWN>
+      </ConfigurationWrapper>
+      <method v="2">
+        <option name="Make" enabled="true" />
+        <option name="BuildArtifacts" enabled="true">
+          <artifact name="proyecto-web:war" />
+        </option>
+      </method>
+    </configuration>
+    <list>
+      <item itemvalue="Application.MigrarPasswords" />
+      <item itemvalue="GlassFish Server.GlassFish 8.0.3" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Application.MigrarPasswords" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="b65f8cba-90fd-4899-aa83-a727a7a560b2" name="Changes" comment="" />
+      <created>1781503569294</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1781503569294</updated>
+      <workItem from="1781503569986" duration="11000" />
+      <workItem from="1781503591003" duration="2331000" />
+      <workItem from="1781508502174" duration="810000" />
+      <workItem from="1781509531099" duration="613000" />
+      <workItem from="1781510911655" duration="667000" />
+      <workItem from="1781511945613" duration="2633000" />
+      <workItem from="1781517800746" duration="244000" />
+      <workItem from="1781549720962" duration="6826000" />
+      <workItem from="1781592560126" duration="3557000" />
+      <workItem from="1781597821100" duration="4400000" />
+      <workItem from="1781605021812" duration="7058000" />
+      <workItem from="1781631809066" duration="20196000" />
+      <workItem from="1781674811531" duration="960000" />
+      <workItem from="1781675991912" duration="16000" />
+      <workItem from="1781701536726" duration="6569000" />
+      <workItem from="1781756465252" duration="632000" />
+      <workItem from="1781759885582" duration="688000" />
+      <workItem from="1781890930859" duration="12787000" />
+      <workItem from="1781979654338" duration="15561000" />
+      <workItem from="1782054199853" duration="6878000" />
+      <workItem from="1782142384482" duration="2968000" />
+      <workItem from="1782158441716" duration="5681000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>
