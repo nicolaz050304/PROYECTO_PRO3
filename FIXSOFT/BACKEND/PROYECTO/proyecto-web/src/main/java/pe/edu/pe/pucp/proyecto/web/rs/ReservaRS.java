@@ -22,10 +22,13 @@ import pe.edu.pe.pucp.proyecto.notif.bl.NotificacionBL;
 import pe.edu.pe.pucp.proyecto.notif.implbl.NotificacionBLImpl;
 import pe.edu.pe.pucp.proyecto.users.bl.UsuarioBL;
 import pe.edu.pe.pucp.proyecto.users.implbl.UsuarioBLImpl;
+import pe.edu.pe.pucp.proyecto.web.dto.RangoFechaDTO;
 import pe.edu.pe.pucp.proyecto.web.dto.ReservaDTO;
 import pe.edu.pe.pucp.proyecto.web.mapper.ReservaMapper;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -132,6 +135,36 @@ public class ReservaRS {
             }
         }
         return salida;
+    }
+
+    /**
+     * GET ReservaRS/ocupadas/{idAlojamiento} -> rangos de fechas OCUPADAS de un alojamiento.
+     * Solo cuentan las reservas CONFIRMADA o PENDIENTE (las CANCELADA/FINALIZADA ya no ocupan);
+     * el filtro lo aplica el DAO. Devuelve únicamente las fechas (RangoFechaDTO), sin datos del
+     * huésped: es la info mínima para que el calendario del frontend bloquee esos días.
+     */
+    @GET
+    @Path("ocupadas/{idAlojamiento}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<RangoFechaDTO> listarOcupadas(@PathParam("idAlojamiento") int idAlojamiento) {
+        List<RangoFechaDTO> salida = new ArrayList<>();
+        List<Reserva> ocupadas = reservaBL.listarOcupadasPorAlojamiento(idAlojamiento);
+        if (ocupadas != null) {
+            for (Reserva r : ocupadas) {
+                salida.add(new RangoFechaDTO(
+                        formatearFechaIso(r.getFechaInicio()),
+                        formatearFechaIso(r.getFechaFin())));
+            }
+        }
+        return salida;
+    }
+
+    /** Formatea a ISO "yyyy-MM-dd" (sin hora ni 'Z'), igual que el resto de fechas expuestas; null -> null. */
+    private static String formatearFechaIso(Date fecha) {
+        if (fecha == null) {
+            return null;
+        }
+        return new SimpleDateFormat("yyyy-MM-dd").format(fecha);
     }
 
     /** POST ReservaRS -> crea; devuelve el DTO creado con su id. */

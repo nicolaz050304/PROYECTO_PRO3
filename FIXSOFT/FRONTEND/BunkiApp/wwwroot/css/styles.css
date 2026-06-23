@@ -2537,22 +2537,61 @@ footer a {
         border-color: rgba(232, 201, 138, 0.3) !important;
     }
 
+    /* Inicio y fin del rango: MISMO resaltado fuerte (relleno dorado de marca + sombra suave) y
+       texto oscuro para contraste. Es el "brillo fuerte" tipo Airbnb; inicio y fin se ven iguales. */
     .flatpickr-day.selected,
     .flatpickr-day.startRange,
     .flatpickr-day.endRange {
-        background: #D6A84F !important;
-        border-color: #D6A84F !important;
-        color: #0F1115 !important;
+        background: var(--gold) !important;
+        border-color: var(--gold) !important;
+        color: var(--bg) !important;
+        box-shadow: var(--shadow-gold) !important;
     }
 
-    .flatpickr-day.today {
-        border-color: #E8C98A !important;
+    /* Días intermedios del rango: tinte champagne SUAVE que conecta inicio y fin. border-radius 0
+       (anula el 10px global) para que se lea como una barra continua, no pastillas sueltas. */
+    .flatpickr-day.inRange {
+        background: var(--champagne-tint) !important;
+        border-color: transparent !important;
+        color: var(--ink) !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+    }
+
+    /* Caps del rango: solo redondeamos el extremo exterior para cerrar la barra continua. */
+    .flatpickr-day.startRange {
+        border-radius: 10px 0 0 10px !important;
+    }
+    .flatpickr-day.endRange {
+        border-radius: 0 10px 10px 0 !important;
+    }
+    /* Día único que es inicio y fin a la vez: redondeo completo. */
+    .flatpickr-day.startRange.endRange {
+        border-radius: 10px !important;
+    }
+
+    /* "Hoy" ATENUADO cuando NO es extremo del rango: solo un borde tenue (mucho menos que el relleno
+       dorado de selección) para que no compita cuando ya hay fechas elegidas. Si hoy ES inicio/fin,
+       gana la regla dorada de arriba. */
+    .flatpickr-day.today:not(.selected):not(.startRange):not(.endRange) {
+        background: transparent !important;
+        border-color: var(--hairline-strong) !important;
+        color: var(--ink-muted) !important;
     }
 
     .flatpickr-day.disabled,
     .flatpickr-day.prevMonthDay,
     .flatpickr-day.nextMonthDay {
         color: rgba(245, 242, 234, 0.35) !important;
+    }
+
+    /* Días YA OCUPADOS (deshabilitados vía la opción "disable" de flatpickr): se ven tachados
+       y con cursor bloqueado para que quede claro que esas fechas no se pueden reservar. */
+    .flatpickr-day.flatpickr-disabled,
+    .flatpickr-day.flatpickr-disabled:hover {
+        color: rgba(245, 242, 234, 0.3) !important;
+        text-decoration: line-through;
+        cursor: not-allowed !important;
     }
 
 .flatpickr-time input,

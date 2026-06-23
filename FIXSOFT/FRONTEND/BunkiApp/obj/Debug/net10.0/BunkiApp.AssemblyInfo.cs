@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BunkiApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1978f5308cf059cdb4b0bba10650c2cf0a43dc44")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+25d49d3fd9902ea1ef66967acfbf4a835648e70a")]
 [assembly: System.Reflection.AssemblyProductAttribute("BunkiApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BunkiApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

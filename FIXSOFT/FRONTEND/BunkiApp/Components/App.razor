@@ -14,6 +14,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+    @* rangePlugin: habilita la selección de RANGO (entrada/salida) en un solo calendario tipo Airbnb.
+       Debe cargarse DESPUÉS de flatpickr y ANTES de bunki-flatpickr.js (que lo usa en initDetalleRango). *@
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/rangePlugin.js"></script>
     <script src="/js/bunki-flatpickr.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="css/styles.css" />

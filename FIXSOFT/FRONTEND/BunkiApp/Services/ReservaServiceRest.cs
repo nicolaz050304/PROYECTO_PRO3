@@ -30,6 +30,11 @@ namespace BunkiApp.Services
         public async Task<List<Reserva>> ListarPorAnfitrionAsync(int anfitrionId)
             => await _http.GetFromJsonAsync<List<Reserva>>($"{Endpoint}/anfitrion/{anfitrionId}") ?? new();
 
+        // Fechas OCUPADAS de un alojamiento (reservas CONFIRMADA + PENDIENTE): solo rangos,
+        // sin datos del huésped. Las usa el calendario del detalle para deshabilitar esos días.
+        public async Task<List<RangoFecha>> ListarOcupadasPorAlojamientoAsync(int idAlojamiento)
+            => await _http.GetFromJsonAsync<List<RangoFecha>>($"{Endpoint}/ocupadas/{idAlojamiento}") ?? new();
+
         // Devuelve el id de la reserva creada (lo necesita el registro de pago, que referencia
         // a ESA reserva). El backend responde 201 con la reserva creada —incluido su id— en el body.
         public async Task<int> RegistrarAsync(Reserva r)

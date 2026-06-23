@@ -13,4 +13,8 @@ import java.util.List;
 public interface ReservaIDAO extends IDAO<Reserva, Integer> {
     List<Reserva> listAll();
     int finalizarReservasVencidas();
+
+    // Devuelve las reservas que OCUPAN fechas en un alojamiento: solo las que están
+    // CONFIRMADA o PENDIENTE (las CANCELADA y FINALIZADA ya no bloquean el calendario).
+    List<Reserva> listarOcupadasPorAlojamiento(int idAlojamiento);
 }

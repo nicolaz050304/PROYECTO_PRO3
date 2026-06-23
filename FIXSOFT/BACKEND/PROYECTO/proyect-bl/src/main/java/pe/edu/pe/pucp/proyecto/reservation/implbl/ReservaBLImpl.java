@@ -60,6 +60,15 @@ public class ReservaBLImpl implements ReservaBL {
     }
 
     @Override
+    public List<Reserva> listarOcupadasPorAlojamiento(int idAlojamiento) {
+        // Validación mínima: sin un id de alojamiento válido no hay nada que consultar.
+        if (idAlojamiento <= 0) {
+            throw new RuntimeException("Error: El id de alojamiento debe ser mayor a cero.");
+        }
+        return daoReserva.listarOcupadasPorAlojamiento(idAlojamiento);
+    }
+
+    @Override
     public void marcarReservaComoCalificada(int idReserva, String tipoAutor) {
         // Obtenemos la reserva actual
         Reserva reservaBD = daoReserva.load(idReserva);

@@ -6,6 +6,7 @@
 @inject Services.MapInterop MapInterop
 @inject IJSRuntime JS
 @using System.Globalization
+@implements IDisposable
 
 <PageTitle>Bunki - Explorar Alojamientos</PageTitle>
 
@@ -69,7 +70,7 @@
                                placeholder="Entrada"
                                aria-label="Fecha de entrada"
                                value="@FormatPickerDate(Filtros.FechaEntrada)"
-                               @onchange="OnFechaEntradaChanged"
+                               readonly
                                autocomplete="off" />
 
                         <input id="explorar-fecha-salida"
@@ -78,7 +79,7 @@
                                placeholder="Salida"
                                aria-label="Fecha de salida"
                                value="@FormatPickerDate(Filtros.FechaSalida)"
-                               @onchange="OnFechaSalidaChanged"
+                               readonly
                                autocomplete="off" />
                     </div>
                 </div>
@@ -261,7 +262,12 @@
     private bool _mapaInicializado = false;
     // Hubo query string de búsqueda (Home → Buscar): cubre ambos órdenes init/parámetros.
     private bool _hayQuery = false;
-    private bool _fechasPendientesDePintar = false;
+
+    // Calendario en modo rango (mismo que el detalle) para el filtro de fechas. _ref permite que
+    // flatpickr llame a SetRango (fuente de verdad de las fechas del filtro); _pickerInicializado
+    // evita re-inicializarlo (la precarga ahora la hace initDetalleRango vía setDate, una sola vez).
+    private DotNetObjectReference<Explorar>? _ref;
+    private bool _pickerInicializado = false;
 
     private static readonly string[] TiposAlojamiento = { "Casa", "Departamento", "Habitación" };
     private static readonly string[] RatingsOpciones = { "Cualquiera", "4+ estrellas", "4.5+ estrellas", "5 estrellas" };
@@ -336,37 +342,27 @@
             // Solo si los datos ya cargaron; si no, OnInitializedAsync lo reaplicará al terminar.
             if (_todos.Count > 0) AlojamientosFiltrados = FiltrarLocal(Filtros);
         }
-        if (EntradaQuery.HasValue)
-        {
-            Filtros.FechaEntrada = EntradaQuery;
-            _hayQuery = true;
-            _fechasPendientesDePintar = true;
-        }
-
-        if (SalidaQuery.HasValue)
-        {
-            Filtros.FechaSalida = SalidaQuery;
-            _hayQuery = true;
-            _fechasPendientesDePintar = true;
-        }
+        // La precarga visual del rango (Home → Buscar) la hace initDetalleRango vía setDate al
+        // inicializar el picker; la lectura de EntradaQuery/SalidaQuery hacia Filtros ya quedó arriba.
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender || _fechasPendientesDePintar)
+        if (!_pickerInicializado)
         {
-            string? fe = Filtros.FechaEntrada?.ToString("yyyy-MM-dd");
-            string? fs = Filtros.FechaSalida?.ToString("yyyy-MM-dd");
+            _pickerInicializado = true;
+            _ref ??= DotNetObjectReference.Create(this);
 
-            await JS.InvokeVoidAsync(
-                "bunkiDatePicker.initConFechas",
-                "#explorar-fecha-entrada",
-                "#explorar-fecha-salida",
-                fe,
-                fs
-            );
+            // Mismo calendario de rango que el detalle PERO sin disable: el filtro no apunta a un
+            // alojamiento concreto, así que no se bloquean ocupadas; solo el pasado (minDate hoy).
+            // Las fechas que llegan de Home → Buscar se precargan en ISO (initDetalleRango -> setDate).
+            string? fe = Filtros.FechaEntrada?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            string? fs = Filtros.FechaSalida?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
-            _fechasPendientesDePintar = false;
+            await JS.InvokeVoidAsync("bunkiDatePicker.initDetalleRango",
+                "#explorar-fecha-entrada", "#explorar-fecha-salida",
+                new { minDate = "today", fechaEntrada = fe, fechaSalida = fs },
+                _ref);
         }
 
         // El div #mapaExplorar solo existe cuando Vista=="mapa": inicializar DESPUÉS
@@ -479,9 +475,15 @@
         return fecha?.ToString("yyyy-MM-dd") ?? "";
     }
 
-    private void OnFechaEntradaChanged(ChangeEventArgs e)
+    // [JSInvokable] SetRango: ÚNICA fuente de verdad de las fechas del filtro. Replica EXACTAMENTE lo
+    // que hacían OnFecha*Changed (set + validación fin<=inicio); NO recarga disponibles aquí, igual que
+    // antes: la recarga por fechas la dispara "Aplicar filtros" (AplicarFiltros -> CargarBaseSegunFechas),
+    // así el filtrado por fechas queda idéntico al actual.
+    [JSInvokable]
+    public void SetRango(string? isoInicio, string? isoFin)
     {
-        Filtros.FechaEntrada = ParsePickerDate(e.Value?.ToString());
+        Filtros.FechaEntrada = ParsePickerDate(isoInicio);
+        Filtros.FechaSalida = ParsePickerDate(isoFin);
 
         if (Filtros.FechaEntrada.HasValue &&
             Filtros.FechaSalida.HasValue &&
@@ -489,12 +491,11 @@
         {
             Filtros.FechaSalida = null;
         }
+
+        StateHasChanged();
     }
 
-    private void OnFechaSalidaChanged(ChangeEventArgs e)
-    {
-        Filtros.FechaSalida = ParsePickerDate(e.Value?.ToString());
-    }
+    public void Dispose() => _ref?.Dispose();
 
     private DateTime? ParsePickerDate(string? value)
     {

@@ -5,6 +5,7 @@
 @inject BunkiApp.Models.AppState AppState
 @inject IJSRuntime JS
 @using System.Globalization
+@implements IDisposable
 
 <PageTitle>Bunki - Encuentra estadías extraordinarias en Perú</PageTitle>
 
@@ -28,20 +29,22 @@
             </div>
             <div class="search-field">
                 <label>Entrada</label>
-                <input class="flatpickr-date"
+                <input id="home-fecha-entrada"
+                       class="flatpickr-date"
                        type="text"
                        placeholder="dd/mm/aaaa"
                        value="@FormatPickerDate(FechaEntrada)"
-                       @onchange="OnFechaEntradaChanged"
+                       readonly
                        autocomplete="off" />
             </div>
             <div class="search-field">
                 <label>Salida</label>
-                <input class="flatpickr-date"
+                <input id="home-fecha-salida"
+                       class="flatpickr-date"
                        type="text"
                        placeholder="dd/mm/aaaa"
                        value="@FormatPickerDate(FechaSalida)"
-                       @onchange="OnFechaSalidaChanged"
+                       readonly
                        autocomplete="off" />
             </div>
             <div class="search-field search-field-guests">
@@ -243,6 +246,11 @@
     private DateTime? FechaSalida;
     private int Huespedes = 1;
 
+    // Calendario en modo rango (mismo que el detalle) para el buscador. _ref permite que flatpickr
+    // llame a SetRango (fuente de verdad de las fechas); _pickerInicializado evita instanciarlo dos veces.
+    private DotNetObjectReference<Home>? _ref;
+    private bool _pickerInicializado = false;
+
     // Imagen del hero: tomada de un alojamiento real del catálogo (distinto a los destacados),
     // con respaldo en gradiente si no hubiera imagen. No altera datos ni servicios.
     private string HeroImagen = "";
@@ -289,7 +297,24 @@
     {
         if (firstRender)
         {
-            await JS.InvokeVoidAsync("bunkiDatePicker.init", ".flatpickr-date");
+            if (!_pickerInicializado)
+            {
+                _pickerInicializado = true;
+                _ref ??= DotNetObjectReference.Create(this);
+
+                // Mismo calendario de rango que el detalle PERO sin disable: en el buscador no hay un
+                // alojamiento concreto, así que no se bloquean fechas ocupadas; solo el pasado
+                // (minDate hoy). Si ya hay fechas (no es el caso típico en Home), se precargan en ISO.
+                await JS.InvokeVoidAsync("bunkiDatePicker.initDetalleRango",
+                    "#home-fecha-entrada", "#home-fecha-salida",
+                    new
+                    {
+                        minDate = "today",
+                        fechaEntrada = FechaEntrada?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                        fechaSalida = FechaSalida?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+                    },
+                    _ref);
+            }
             // Mismo patrón de interop que el datepicker: inicializa el carrusel ya renderizado por Blazor.
             await JS.InvokeVoidAsync("bunkiCarrusel.init", "#carruselDestacados");
             // Scroll reveal: DESPUÉS del datepicker y el carrusel (no los toca). Observa los [data-reveal]
@@ -297,26 +322,27 @@
             await JS.InvokeVoidAsync("bunkiReveal.init");
         }
     }
-    private string FormatPickerDate(DateTime? fecha)
-    {
-        return fecha?.ToString("yyyy-MM-dd") ?? "";
-    }
 
-    private void OnFechaEntradaChanged(ChangeEventArgs e)
+    // [JSInvokable] SetRango: ÚNICA fuente de verdad de las fechas del buscador. flatpickr (modo rango)
+    // la llama al cambiar la selección; parseamos el ISO, asignamos y reusamos la validación fin<=inicio.
+    [JSInvokable]
+    public void SetRango(string? isoInicio, string? isoFin)
     {
-        FechaEntrada = ParsePickerDate(e.Value?.ToString());
+        FechaEntrada = ParsePickerDate(isoInicio);
+        FechaSalida = ParsePickerDate(isoFin);
 
-        if (FechaEntrada.HasValue &&
-            FechaSalida.HasValue &&
-            FechaSalida <= FechaEntrada)
+        if (FechaEntrada.HasValue && FechaSalida.HasValue && FechaSalida <= FechaEntrada)
         {
             FechaSalida = null;
         }
+
+        StateHasChanged();
     }
 
-    private void OnFechaSalidaChanged(ChangeEventArgs e)
+    public void Dispose() => _ref?.Dispose();
+    private string FormatPickerDate(DateTime? fecha)
     {
-        FechaSalida = ParsePickerDate(e.Value?.ToString());
+        return fecha?.ToString("yyyy-MM-dd") ?? "";
     }
 
     private DateTime? ParsePickerDate(string? value)

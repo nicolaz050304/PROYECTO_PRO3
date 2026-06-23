@@ -3,6 +3,7 @@
 @inject DataService Data
 @inject AlojamientoProvider AlojamientoProvider
 @inject ResenaProvider ResenaProvider
+@inject ReservaProvider ReservaProvider
 @inject NavigationManager Navigation
 @inject BunkiApp.Models.AppState AppState
 @using System.Globalization
@@ -179,7 +180,7 @@ else
                                    class="detalle-flatpickr"
                                    placeholder="dd/mm/aaaa"
                                    value="@FormatPickerDate(FechaEntrada)"
-                                   @onchange="OnFechaEntradaChanged"
+                                   readonly
                                    autocomplete="off" />
                         </div>
 
@@ -190,7 +191,7 @@ else
                                    class="detalle-flatpickr"
                                    placeholder="dd/mm/aaaa"
                                    value="@FormatPickerDate(FechaSalida)"
-                                   @onchange="OnFechaSalidaChanged"
+                                   readonly
                                    autocomplete="off" />
                         </div>
 
@@ -324,8 +325,17 @@ else
     private bool queryAplicada = false;
 
     protected override void OnInitialized() => AppState.OnChange += OnMonedaChanged;
-    public void Dispose() => AppState.OnChange -= OnMonedaChanged;
+
+    public void Dispose()
+    {
+        AppState.OnChange -= OnMonedaChanged;
+        _ref?.Dispose();   // liberamos la referencia usada por flatpickr para llamar a SetRango
+    }
+
     private void OnMonedaChanged() => InvokeAsync(StateHasChanged);
+
+    // Referencia a este componente que flatpickr usa para llamar a SetRango (modo rango).
+    private DotNetObjectReference<DetalleAlojamiento>? _ref;
 
     private bool Cargando = true;
     private Alojamiento? Alojamiento;
@@ -335,6 +345,11 @@ else
     private bool EsFavorito = false;
     private int FotoActiva = 0;
     private bool _pickerInicializado = false;
+
+    // Fechas ya ocupadas del alojamiento (reservas CONFIRMADA + PENDIENTE). Se piden al backend
+    // al cargar el detalle y se deshabilitan en el calendario para que el huésped solo pueda elegir
+    // días libres. Si la petición falla, queda vacía y el calendario no bloquea nada (no rompe la reserva).
+    private List<RangoFecha> FechasOcupadas = new();
 
     private string FechaMinima => DateTime.Today.ToString("yyyy-MM-dd");
     private int Noches => (FechaSalida.HasValue && FechaEntrada.HasValue && FechaSalida > FechaEntrada)
@@ -376,6 +391,12 @@ else
                 {
                     // No rompemos la página si el REST de reseñas falla.
                 }
+
+                // Fechas ocupadas (CONFIRMADA + PENDIENTE) para bloquearlas en el calendario.
+                // Se piden AQUÍ (antes del primer render del picker en OnAfterRenderAsync) para tenerlas
+                // listas al inicializar flatpickr. El provider ya devuelve lista vacía si el REST falla,
+                // así que esto nunca rompe la reserva: a lo sumo no se bloquea ningún día.
+                FechasOcupadas = await ReservaProvider.ObtenerFechasOcupadasAsync(Id);
             }
 
             if (!queryAplicada && Alojamiento is not null)
@@ -443,32 +464,58 @@ else
         if (Alojamiento is not null && !_pickerInicializado)
         {
             _pickerInicializado = true;
-            await JS.InvokeVoidAsync("bunkiDatePicker.initDetalle", "#detalle-fecha-entrada",
-                new { minDate = MinDateFor(FechaEntrada) });
-            await JS.InvokeVoidAsync("bunkiDatePicker.initDetalle", "#detalle-fecha-salida",
-                new { minDate = MinDateFor(FechaSalida) });
+
+            // Referencia para que flatpickr (modo rango) pueda llamar a SetRango en este componente.
+            _ref ??= DotNetObjectReference.Create(this);
+
+            // Fechas ocupadas como rangos { from, to } para que flatpickr las deshabilite (opción
+            // "disable"); si la lista está vacía, no se bloquea nada. Las precargas (Explorar / Mis
+            // Reservas) se pasan en ISO para mostrar el rango ya seleccionado al abrir el detalle.
+            var ocupadas = RangosOcupadosParaFlatpickr();
+
+            // UNA sola inicialización tipo Airbnb: un calendario en modo rango sobre ambos inputs.
+            await JS.InvokeVoidAsync("bunkiDatePicker.initDetalleRango",
+                "#detalle-fecha-entrada", "#detalle-fecha-salida",
+                new
+                {
+                    minDate = MinDateFor(FechaEntrada),
+                    disable = ocupadas,
+                    fechaEntrada = FechaEntrada?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                    fechaSalida = FechaSalida?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+                },
+                _ref);
         }
     }
 
-    private string FormatPickerDate(DateTime? fecha)
+    // [JSInvokable] SetRango: ÚNICA fuente de verdad de las fechas. flatpickr (modo rango) la llama
+    // cada vez que cambia la selección; parseamos el ISO y reusamos la validación existente
+    // (si fin <= inicio, se descarta fin). Noches/Subtotal/Total se recalculan solos al renderizar.
+    [JSInvokable]
+    public void SetRango(string? isoInicio, string? isoFin)
     {
-        // Formato visible del input de Detalle (coincide con dateFormat "d/m/Y").
-        return fecha?.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) ?? "";
-    }
-
-    private void OnFechaEntradaChanged(ChangeEventArgs e)
-    {
-        FechaEntrada = ParsePickerDate(e.Value?.ToString());
+        FechaEntrada = ParsePickerDate(isoInicio);
+        FechaSalida = ParsePickerDate(isoFin);
 
         if (FechaEntrada.HasValue && FechaSalida.HasValue && FechaSalida <= FechaEntrada)
         {
             FechaSalida = null;
         }
+
+        StateHasChanged();
     }
 
-    private void OnFechaSalidaChanged(ChangeEventArgs e)
+    // Convierte las fechas ocupadas al formato que flatpickr espera en "disable":
+    // un array de { from: "yyyy-MM-dd", to: "yyyy-MM-dd" }. El JS las pasa a Date locales.
+    private object[] RangosOcupadosParaFlatpickr() =>
+        FechasOcupadas
+            .Where(r => !string.IsNullOrWhiteSpace(r.FechaInicio) && !string.IsNullOrWhiteSpace(r.FechaFin))
+            .Select(r => (object)new { from = r.FechaInicio, to = r.FechaFin })
+            .ToArray();
+
+    private string FormatPickerDate(DateTime? fecha)
     {
-        FechaSalida = ParsePickerDate(e.Value?.ToString());
+        // Formato visible del input de Detalle (coincide con dateFormat "d/m/Y").
+        return fecha?.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) ?? "";
     }
 
     private DateTime? ParsePickerDate(string? value)

@@ -131,6 +131,22 @@ namespace BunkiApp.Services
             }
         }
 
+        // Fechas OCUPADAS (CONFIRMADA + PENDIENTE) de un alojamiento, para bloquearlas en el
+        // calendario y que el huésped solo elija días libres. Si el REST falla, devolvemos lista
+        // vacía: el calendario simplemente no bloquea nada y la reserva NO se rompe.
+        public async Task<List<RangoFecha>> ObtenerFechasOcupadasAsync(int idAlojamiento)
+        {
+            try
+            {
+                return await _rest.ListarOcupadasPorAlojamientoAsync(idAlojamiento) ?? new();
+            }
+            catch (Exception ex)
+            {
+                _log.LogWarning(ex, "REST no disponible (fechas ocupadas del alojamiento {Id}); sin bloqueo de fechas", idAlojamiento);
+                return new();
+            }
+        }
+
         // Registro (ESCRITURA): POST ReservaRS. Sin fallback: propaga para que la UI avise.
         // Devuelve el id de la reserva creada (necesario para registrar luego su pago).
         public async Task<int> RegistrarAsync(Reserva reserva)

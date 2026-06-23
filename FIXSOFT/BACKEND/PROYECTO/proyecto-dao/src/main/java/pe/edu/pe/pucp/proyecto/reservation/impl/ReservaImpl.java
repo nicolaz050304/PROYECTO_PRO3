@@ -171,6 +171,51 @@ public class ReservaImpl implements ReservaIDAO {
     }
 
     @Override
+    public List<Reserva> listarOcupadasPorAlojamiento(int idAlojamiento) {
+        List<Reserva> reservas = new ArrayList<>();
+        // Solo CONFIRMADA y PENDIENTE ocupan fechas: una reserva confirmada o aún por
+        // confirmar bloquea el calendario; las CANCELADA y FINALIZADA ya no lo hacen.
+        String sql = "SELECT id_reserva, fecha_inicio, fecha_fin, monto_total, id_invitado, " +
+                "id_alojamiento, fecha_contacto, estado, moneda, calificado_por_invitado, calificado_por_anfitrion " +
+                "FROM reserva WHERE id_alojamiento = ? AND estado IN ('CONFIRMADA','PENDIENTE')";
+
+        try (Connection con = DBManager.getInstance().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, idAlojamiento);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Invitado inv = new Invitado();
+                    inv.setIdUsuario(rs.getInt("id_invitado"));
+
+                    Alojamiento alo = new Casa();
+                    alo.setIdAlojamiento(rs.getInt("id_alojamiento"));
+
+                    // Mismo patrón de construcción que load/listAll (constructor de 9 parámetros).
+                    Reserva r = new Reserva(
+                            rs.getInt("id_reserva"),
+                            rs.getDate("fecha_inicio"),
+                            rs.getDate("fecha_fin"),
+                            rs.getDouble("monto_total"),
+                            inv,
+                            alo,
+                            rs.getDate("fecha_contacto"),
+                            EstadoReserva.valueOf(rs.getString("estado")),
+                            TipoMoneda.valueOf(rs.getString("moneda"))
+                    );
+                    r.setCalificadoPorInvitado(rs.getBoolean("calificado_por_invitado"));
+                    r.setCalificadoPorAnfitrion(rs.getBoolean("calificado_por_anfitrion"));
+                    reservas.add(r);
+                }
+            }
+        } catch (SQLException e) {
+            // Propagar en vez de ocultar (ver nota en listAll).
+            throw new RuntimeException("Error en ReservaImpl (ocupadas por alojamiento): " + e.getMessage(), e);
+        }
+        return reservas;
+    }
+
+    @Override
     public int finalizarReservasVencidas() {
         // Un solo UPDATE masivo e idempotente: las reservas CONFIRMADAS cuya estadía
         // ya terminó (fecha_fin estrictamente anterior a hoy) pasan a FINALIZADA.
