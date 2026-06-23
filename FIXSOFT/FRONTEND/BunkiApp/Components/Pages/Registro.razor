@@ -6,91 +6,111 @@
 @inject Services.UsuarioProvider UsuarioProvider
 <PageTitle>Bunki - Crear Cuenta</PageTitle>
 
-<header>
-    <div class="navbar container">
+@* Split-layout: panel de marca + formulario. El EditForm, sus binds, validaciones y Registrar() quedan
+   EXACTAMENTE iguales; solo cambia la composición visual y se añaden los toggles de contraseña. *@
+<div class="auth-split">
+
+    <!-- Panel visual de marca -->
+    <aside class="auth-visual">
         <a href="/" class="logo"><i class="fas fa-home"></i> Bunki</a>
-    </div>
-</header>
+        <div class="auth-visual-content">
+            <span class="auth-visual-eyebrow">Una cuenta, dos formas de viajar</span>
+            <h2 class="auth-visual-title">Encuentra estadías <span class="editorial-accent">extraordinarias</span> en Perú</h2>
+            <p class="auth-visual-sub">Con una sola cuenta reservas alojamientos y publicas los tuyos.</p>
+        </div>
+    </aside>
 
-<div class="section">
-    <div class="container" style="max-width:520px;">
-        <h2 class="section-title">Crea tu Cuenta</h2>
+    <!-- Formulario -->
+    <main class="auth-form-side">
+        <div class="auth-form">
+            <a href="/" class="logo auth-mini-logo"><i class="fas fa-home"></i> Bunki</a>
 
-        <p class="card-text text-center" style="margin-bottom:28px;">
-            Con una sola cuenta puedes buscar alojamientos <strong>y</strong> publicar los tuyos.
-        </p>
+            <h1 class="auth-title">Crea tu cuenta</h1>
+            <p class="auth-sub">Empieza a reservar y a publicar en minutos.</p>
 
-        @if (_exito)
-        {
-            <AlertMessage Tipo="success" Mensaje="¡Cuenta creada! Redirigiendo..." Cerrable="false" />
-        }
-        @if (!string.IsNullOrEmpty(_errorMsg))
-        {
-            <AlertMessage Tipo="danger" Mensaje="@_errorMsg" />
-        }
-
-        <EditForm Model="_form" OnValidSubmit="Registrar">
-            <DataAnnotationsValidator />
-            <ValidationSummary class="validation-message" style="margin-bottom:16px;" />
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Nombre</label>
-                    <InputText @bind-Value="_form.Nombre" placeholder="Juan" />
-                    <ValidationMessage For="() => _form.Nombre" class="validation-message" />
-                </div>
-                <div class="form-group">
-                    <label>Apellido</label>
-                    <InputText @bind-Value="_form.Apellido" placeholder="Pérez" />
-                    <ValidationMessage For="() => _form.Apellido" class="validation-message" />
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Correo Electrónico</label>
-                <InputText @bind-Value="_form.Email" type="email" placeholder="tu@ejemplo.com" />
-                <ValidationMessage For="() => _form.Email" class="validation-message" />
-            </div>
-
-            <div class="form-group">
-                <label>Contraseña</label>
-                <InputText @bind-Value="_form.Password" type="password" placeholder="••••••••" />
-                <ValidationMessage For="() => _form.Password" class="validation-message" />
-            </div>
-
-            <div class="form-group">
-                <label>Confirmar Contraseña</label>
-                <InputText @bind-Value="_form.ConfirmarPassword" type="password" placeholder="••••••••" />
-                <ValidationMessage For="() => _form.ConfirmarPassword" class="validation-message" />
-            </div>
-
-            <div class="form-group" style="display:flex;align-items:center;gap:10px;">
-                <InputCheckbox @bind-Value="_form.AceptaTerminos" id="terms" />
-                <label for="terms" style="display:inline;margin:0;font-weight:normal;">
-                    Acepto los <a href="#" style="color:var(--gold);">términos y condiciones</a>
-                </label>
-            </div>
-
-            @if (!_form.AceptaTerminos && _intentoEnviar)
+            @if (_exito)
             {
-                <p class="validation-message">Debes aceptar los términos y condiciones.</p>
+                <AlertMessage Tipo="success" Mensaje="¡Cuenta creada! Redirigiendo..." Cerrable="false" />
+            }
+            @if (!string.IsNullOrEmpty(_errorMsg))
+            {
+                <AlertMessage Tipo="danger" Mensaje="@_errorMsg" />
             }
 
-            <button type="submit" class="btn btn-primary btn-large"
-                    @onclick="() => _intentoEnviar = true" disabled="@_cargando">
-                @if (_cargando) { <i class="fas fa-spinner fa-spin"></i> }
-                Crear Cuenta
-            </button>
-        </EditForm>
+            <EditForm Model="_form" OnValidSubmit="Registrar">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="validation-message" style="margin-bottom:16px;" />
 
-        <p style="text-align:center;margin-top:20px;color:var(--text-light);">
-            ¿Ya tienes cuenta?
-            <a href="/login" style="color:var(--gold);text-decoration:none;">Inicia sesión</a>
-        </p>
-    </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombre</label>
+                        <InputText @bind-Value="_form.Nombre" placeholder="Juan" />
+                        <ValidationMessage For="() => _form.Nombre" class="validation-message" />
+                    </div>
+                    <div class="form-group">
+                        <label>Apellido</label>
+                        <InputText @bind-Value="_form.Apellido" placeholder="Pérez" />
+                        <ValidationMessage For="() => _form.Apellido" class="validation-message" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Correo electrónico</label>
+                    <InputText @bind-Value="_form.Email" type="email" placeholder="tu@ejemplo.com" />
+                    <ValidationMessage For="() => _form.Email" class="validation-message" />
+                </div>
+
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    @* Toggle mostrar/ocultar con estado Blazor (no toca el bind ni la validación). *@
+                    <div class="pw-field">
+                        <InputText @bind-Value="_form.Password" type="@(_verPassword ? "text" : "password")" placeholder="••••••••" />
+                        <button type="button" class="pw-toggle" aria-label="Mostrar contraseña"
+                                @onclick="() => _verPassword = !_verPassword">
+                            <i class="fas @(_verPassword ? "fa-eye-slash" : "fa-eye")"></i>
+                        </button>
+                    </div>
+                    <ValidationMessage For="() => _form.Password" class="validation-message" />
+                </div>
+
+                <div class="form-group">
+                    <label>Confirmar contraseña</label>
+                    @* Confirmar contraseña SE CONSERVA: quitarla tocaría el modelo y la validación; se pule
+                       visualmente y se le añade su propio toggle. *@
+                    <div class="pw-field">
+                        <InputText @bind-Value="_form.ConfirmarPassword" type="@(_verConfirm ? "text" : "password")" placeholder="••••••••" />
+                        <button type="button" class="pw-toggle" aria-label="Mostrar contraseña"
+                                @onclick="() => _verConfirm = !_verConfirm">
+                            <i class="fas @(_verConfirm ? "fa-eye-slash" : "fa-eye")"></i>
+                        </button>
+                    </div>
+                    <ValidationMessage For="() => _form.ConfirmarPassword" class="validation-message" />
+                </div>
+
+                @* Checkbox + etiqueta alineados via .auth-terms (antes el reset global input{width:100%}
+                   deformaba el checkbox). *@
+                <div class="auth-terms">
+                    <InputCheckbox @bind-Value="_form.AceptaTerminos" id="terms" />
+                    <label for="terms">Acepto los <a href="#">términos y condiciones</a></label>
+                </div>
+
+                @if (!_form.AceptaTerminos && _intentoEnviar)
+                {
+                    <p class="validation-message">Debes aceptar los términos y condiciones.</p>
+                }
+
+                <button type="submit" class="btn btn-primary btn-large auth-submit"
+                        @onclick="() => _intentoEnviar = true" disabled="@_cargando">
+                    @if (_cargando) { <i class="fas fa-spinner fa-spin"></i> }
+                    Crear cuenta
+                </button>
+            </EditForm>
+
+            <p class="auth-alt">¿Ya tienes cuenta? <a href="/login">Inicia sesión</a></p>
+            <p class="auth-foot">© 2026 Bunki. Todos los derechos reservados.</p>
+        </div>
+    </main>
 </div>
-
-<footer><div class="container"><p>&copy; 2026 Bunki. Todos los derechos reservados.</p></div></footer>
 
 @code {
     private readonly RegistroForm _form = new();
@@ -98,6 +118,10 @@
     private bool _exito       = false;
     private bool _intentoEnviar = false;
     private string _errorMsg  = "";
+
+    // Estado SOLO de presentación para los toggles de ojo (no afecta binds ni validación).
+    private bool _verPassword = false;
+    private bool _verConfirm  = false;
 
     private async Task Registrar()
     {

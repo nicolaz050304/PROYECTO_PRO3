@@ -286,10 +286,13 @@ public class ResenhaImpl implements ResenhaIDAO {
 
     @Override
     public java.util.Map<Integer, double[]> calificacionesPorAlojamiento() {
+        // El rating de un ALOJAMIENTO solo cuenta reseñas SOBRE el alojamiento (tipo_autor = 'INVITADO',
+        // las deja quien se hospedó). Las reseñas 'ANFITRION' son sobre el HUÉSPED (la persona), no sobre
+        // el lugar, así que no deben mezclarse con la calificación del alojamiento.
         String sql = "SELECT res.id_alojamiento AS idAloj, AVG(r.calificacion) AS promedio, COUNT(*) AS total "
                    + "FROM resenha r "
                    + "INNER JOIN reserva res ON r.id_reserva = res.id_reserva "
-                   + "WHERE r.activo = 1 "
+                   + "WHERE r.activo = 1 AND r.tipo_autor = 'INVITADO' "
                    + "GROUP BY res.id_alojamiento";
         java.util.Map<Integer, double[]> mapa = new java.util.HashMap<>();
         try (Connection con = DBManager.getInstance().getConnection();

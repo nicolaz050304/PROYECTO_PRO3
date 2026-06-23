@@ -9,7 +9,7 @@
 
 <PageTitle>Bunki Admin · Reportes financieros</PageTitle>
 
-<h1 class="admin-page-title">Reportes financieros</h1>
+@* Título quitado: ya lo muestra el topbar del AdminLayout (evitamos el doble título). *@
 <p class="admin-page-sub">Ingresos, comisiones y movimientos de la plataforma.</p>
 
 <!-- TOOLBAR · rango de fechas con Flatpickr dark (no picker nativo) -->
@@ -53,8 +53,9 @@
     </div>
 </div>
 
-<!-- GRÁFICO · mock visual temporal: no hay serie histórica mensual en el mock,
-     se mantiene como referencia visual hasta que exista un origen de datos por mes. -->
+@* GRÁFICO OCULTO: era una serie MOCK ("Referencia (mock)") sin origen de datos real por mes. En una
+   pantalla financiera, mostrar un gráfico de datos falsos resta credibilidad. Se oculta hasta que exista
+   una serie histórica real; las cifras reales por rango (arriba y en la tabla) se conservan.
 <div class="admin-card fin-chart-card">
     <div class="fin-chart-head">
         <h2 class="admin-card-title"><i class="fas fa-chart-column"></i> Tendencia de ingresos</h2>
@@ -74,6 +75,7 @@
         }
     </div>
 </div>
+*@
 
 <!-- TRANSACCIONES · reservas cobradas dentro del rango seleccionado -->
 <div class="admin-card fin-tx-card">
@@ -173,7 +175,8 @@
 
     .fin-kpi-sub { font-size: 12.5px; color: var(--ink-faint); }
 
-    .fin-kpi--fee .fin-kpi-value { color: var(--danger); }
+    /* La comisión es INGRESO de la plataforma, no una pérdida → color neutral, no rojo de peligro. */
+    .fin-kpi--fee .fin-kpi-value { color: var(--ink-muted); }
     .fin-kpi--net { border-color: rgba(214, 168, 79, 0.30); background: var(--gold-tint); }
     .fin-kpi--net .fin-kpi-value { color: var(--champagne); }
 
@@ -253,7 +256,8 @@
     /* Transacciones */
     .fin-scroll { overflow-x: auto; }
     .fin-muted { color: var(--ink-muted); font-variant-numeric: tabular-nums; }
-    .fin-fee { color: var(--danger); font-weight: 600; font-variant-numeric: tabular-nums; }
+    /* Comisión = ingreso de la plataforma, no pérdida → neutral en vez de rojo. */
+    .fin-fee { color: var(--ink-muted); font-weight: 600; font-variant-numeric: tabular-nums; }
     .fin-tx-card .admin-card-title { margin-bottom: 18px; }
     .fin-tx-card { padding-bottom: 6px; }
 

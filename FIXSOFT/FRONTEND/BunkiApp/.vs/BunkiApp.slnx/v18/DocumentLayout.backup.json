@@ -3,6 +3,30 @@
   "WorkspaceRootPath": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\a2023\\onedrive\\documentos\\fixsoft\\proyecto_pro3\\fixsoft\\frontend\\bunkiapp\\wwwroot\\css\\styles.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:wwwroot\\css\\styles.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\a2023\\onedrive\\documentos\\fixsoft\\proyecto_pro3\\fixsoft\\frontend\\bunkiapp\\components\\app.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\app.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\a2023\\onedrive\\documentos\\fixsoft\\proyecto_pro3\\fixsoft\\frontend\\bunkiapp\\components\\pages\\explorar.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\pages\\explorar.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\a2023\\onedrive\\documentos\\fixsoft\\proyecto_pro3\\fixsoft\\frontend\\bunkiapp\\components\\_imports.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\_imports.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\a2023\\onedrive\\documentos\\fixsoft\\proyecto_pro3\\fixsoft\\frontend\\bunkiapp\\components\\routes.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\routes.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\a2023\\onedrive\\documentos\\fixsoft\\proyecto_pro3\\fixsoft\\frontend\\bunkiapp\\components\\pages\\home.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\pages\\home.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\a2023\\onedrive\\documentos\\fixsoft\\proyecto_pro3\\fixsoft\\frontend\\bunkiapp\\components\\layout\\navmenu.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
       "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\layout\\navmenu.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
@@ -54,8 +78,21 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 7,
           "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "App.razor",
+              "DocumentMoniker": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Components\\App.razor",
+              "RelativeDocumentMoniker": "Components\\App.razor",
+              "ToolTip": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Components\\App.razor",
+              "RelativeToolTip": "Components\\App.razor",
+              "ViewState": "AgIAABgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-23T03:34:39.092Z",
+              "EditorCaption": ""
+            },
             {
               "$type": "Bookmark",
               "Name": "ST:1:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
@@ -67,6 +104,70 @@
             {
               "$type": "Document",
               "DocumentIndex": 2,
+              "Title": "Explorar.razor",
+              "DocumentMoniker": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Components\\Pages\\Explorar.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Explorar.razor",
+              "ToolTip": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Components\\Pages\\Explorar.razor",
+              "RelativeToolTip": "Components\\Pages\\Explorar.razor",
+              "ViewState": "AgIAAJ4BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-23T03:40:37.871Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "_Imports.razor",
+              "DocumentMoniker": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Components\\_Imports.razor",
+              "RelativeDocumentMoniker": "Components\\_Imports.razor",
+              "ToolTip": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Components\\_Imports.razor",
+              "RelativeToolTip": "Components\\_Imports.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-23T03:34:34.563Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Routes.razor",
+              "DocumentMoniker": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Components\\Routes.razor",
+              "RelativeDocumentMoniker": "Components\\Routes.razor",
+              "ToolTip": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Components\\Routes.razor",
+              "RelativeToolTip": "Components\\Routes.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-23T03:34:31.42Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "Home.razor",
+              "DocumentMoniker": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Components\\Pages\\Home.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Home.razor",
+              "ToolTip": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Components\\Pages\\Home.razor",
+              "RelativeToolTip": "Components\\Pages\\Home.razor",
+              "ViewState": "AgIAAOgAAAAAAAAAAAAQwPoAAABPAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-22T21:38:08.386Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "styles.css",
+              "DocumentMoniker": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\wwwroot\\css\\styles.css",
+              "RelativeDocumentMoniker": "wwwroot\\css\\styles.css",
+              "ToolTip": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\wwwroot\\css\\styles.css",
+              "RelativeToolTip": "wwwroot\\css\\styles.css",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAARAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003000|",
+              "WhenOpened": "2026-06-22T20:15:08.558Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
               "Title": "PerfilPublico.razor",
               "DocumentMoniker": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Components\\Pages\\PerfilPublico.razor",
               "RelativeDocumentMoniker": "Components\\Pages\\PerfilPublico.razor",
@@ -78,7 +179,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 6,
               "Title": "NavMenu.razor",
               "DocumentMoniker": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Components\\Layout\\NavMenu.razor",
               "RelativeDocumentMoniker": "Components\\Layout\\NavMenu.razor",
@@ -86,12 +187,11 @@
               "RelativeToolTip": "Components\\Layout\\NavMenu.razor",
               "ViewState": "AgIAAF0AAAAAAAAAAAAAAGUAAAAeAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-06-19T07:05:06.047Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-19T07:05:06.047Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 7,
               "Title": "MainLayout.razor",
               "DocumentMoniker": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Components\\Layout\\MainLayout.razor",
               "RelativeDocumentMoniker": "Components\\Layout\\MainLayout.razor",
@@ -103,7 +203,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 10,
               "Title": "ReservaServiceRest.cs",
               "DocumentMoniker": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Services\\ReservaServiceRest.cs",
               "RelativeDocumentMoniker": "Services\\ReservaServiceRest.cs",
@@ -115,7 +215,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 9,
               "Title": "Perfil.razor",
               "DocumentMoniker": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Components\\Pages\\Perfil.razor",
               "RelativeDocumentMoniker": "Components\\Pages\\Perfil.razor",
@@ -127,7 +227,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 11,
               "Title": "EditarPerfil.razor",
               "DocumentMoniker": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Components\\Pages\\EditarPerfil.razor",
               "RelativeDocumentMoniker": "Components\\Pages\\EditarPerfil.razor",
@@ -139,7 +239,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 12,
               "Title": "Models.cs",
               "DocumentMoniker": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Models\\Models.cs",
               "RelativeDocumentMoniker": "Models\\Models.cs",
@@ -151,7 +251,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 13,
               "Title": "AppState.cs",
               "DocumentMoniker": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Models\\AppState.cs",
               "RelativeDocumentMoniker": "Models\\AppState.cs",
@@ -163,7 +263,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 14,
               "Title": "ReservaProvider.cs",
               "DocumentMoniker": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Services\\ReservaProvider.cs",
               "RelativeDocumentMoniker": "Services\\ReservaProvider.cs",
@@ -175,7 +275,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 15,
               "Title": "MisReservas.razor",
               "DocumentMoniker": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Components\\Pages\\MisReservas.razor",
               "RelativeDocumentMoniker": "Components\\Pages\\MisReservas.razor",
@@ -187,7 +287,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 16,
               "Title": "AlojamientoProvider.cs",
               "DocumentMoniker": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Services\\AlojamientoProvider.cs",
               "RelativeDocumentMoniker": "Services\\AlojamientoProvider.cs",

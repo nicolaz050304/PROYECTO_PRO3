@@ -84,16 +84,18 @@
                         <!-- Total + estado + acciones -->
                         <div class="rr-aside">
                             <div class="rr-aside-top">
-                                <span class="state @EstadoState(r.Estado)"><span class="state-dot"></span>@r.Estado</span>
+                                <StatusBadge Estado="@r.Estado" />
                                 <span class="price price-lg">@AppState.FormatearPrecio(r.Total)</span>
                             </div>
                             <div class="rr-actions">
                                 @if (r.Estado == "Pendiente")
                                 {
-                                    <button class="btn btn-small btn-success" @onclick="() => Confirmar(r)">
+                                    @* Acción primaria = botón de marca (dorado); verde/rojo solo para badges
+                                       de estado, no para botones de acción. *@
+                                    <button class="btn btn-small btn-primary" @onclick="() => Confirmar(r)">
                                         <i class="fas fa-check"></i> Aceptar
                                     </button>
-                                    <button class="btn btn-small btn-soft-danger" @onclick="() => Rechazar(r)">
+                                    <button class="btn btn-small btn-secondary" @onclick="() => Rechazar(r)">
                                         Rechazar
                                     </button>
                                 }
@@ -235,14 +237,7 @@
     private int ContarPorEstado(string estado) =>
         estado == "Todas" ? _todasReservas.Count : _todasReservas.Count(r => r.Estado == estado);
 
-    private string EstadoState(string estado) => estado switch
-    {
-        "Pendiente"  => "state--pendiente",
-        "Confirmada" => "state--confirmada",
-        "Completada" => "state--completada",
-        "Cancelada"  => "state--cancelada",
-        _            => "state--completada"
-    };
+    // (El mapeo estado→clase del badge ahora vive en <StatusBadge>, fuente única de verdad.)
 
     private string Iniciales(string nombre) =>
         string.IsNullOrWhiteSpace(nombre) ? "?" : nombre.Trim()[..Math.Min(2, nombre.Trim().Length)].ToUpper();

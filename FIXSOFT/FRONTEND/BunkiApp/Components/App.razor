@@ -4,6 +4,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
+    @* Splash de intro: se carga en el <head> A PROPÓSITO (no al final del body) para ejecutarse ANTES
+       del primer paint y ocultar el overlay si ya se vio / hay reduced-motion → evita el parpadeo en F5. *@
+    <script src="/js/intro.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -17,10 +20,35 @@
     <HeadOutlet />
 </head>
 <body>
+    @* Overlay del splash "BUNKI" como HTML estático (primer hijo del body, visible por defecto): aparece
+       antes de que Blazor hidrate, sin flash del Home. /js/intro.js (en el <head>) lo oculta si ya se vio
+       en esta sesión (sessionStorage) o si se pide menos movimiento; en sesión nueva corre la secuencia y
+       se auto-descarta por CSS.
+       Secuencia: las letras aparecen UNA A UNA (cada <span> con su --i para el stagger) mientras la barra
+       de abajo se llena; sostén; palabra+barra se desvanecen; el fondo hace fade-out y revela el Home. *@
+    <div id="bunki-intro" class="bunki-intro" aria-hidden="true">
+        <div class="bunki-intro-content">
+            <div class="bunki-intro-word">
+                <span class="bunki-intro-letter" style="--i:0">B</span>
+                <span class="bunki-intro-letter" style="--i:1">U</span>
+                <span class="bunki-intro-letter" style="--i:2">N</span>
+                <span class="bunki-intro-letter" style="--i:3">K</span>
+                <span class="bunki-intro-letter" style="--i:4">I</span>
+            </div>
+            <div class="bunki-intro-bar">
+                <span class="bunki-intro-bar-fill"></span>
+            </div>
+        </div>
+    </div>
+
     <Routes @rendermode="InteractiveServer" />
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="/js/mapa.js"></script>
+    <script src="/js/carrusel.js"></script>
+    <script src="/js/scroll-reveal.js"></script>
+    <script src="/js/countup.js"></script>
+    <script src="/js/pw.js"></script>
     <script src="_framework/blazor.web.js"></script>
 </body>
 </html>

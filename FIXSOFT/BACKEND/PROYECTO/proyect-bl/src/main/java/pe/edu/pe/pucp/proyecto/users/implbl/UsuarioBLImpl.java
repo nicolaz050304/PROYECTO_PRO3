@@ -3,6 +3,7 @@ package pe.edu.pe.pucp.proyecto.users.implbl;
 
 import pe.edu.pe.pucp.proyecto.security.PasswordHasher;
 import pe.edu.pe.pucp.proyecto.tipoDoc.TipoDocumento;
+import pe.edu.pe.pucp.proyecto.users.EstadoUsuario;
 import pe.edu.pe.pucp.proyecto.users.Usuario;
 import pe.edu.pe.pucp.proyecto.users.bl.UsuarioBL;
 import pe.edu.pe.pucp.proyecto.users.dao.UsuarioIDAO;
@@ -76,6 +77,14 @@ public class UsuarioBLImpl implements UsuarioBL {
             return null; // no existe ese correo
         }
         // Solo-hash: cualquier valor que no sea un hash BCrypt válido no autentica.
-        return PasswordHasher.verify(password, usuario.getPassword()) ? usuario : null;
+        if (!PasswordHasher.verify(password, usuario.getPassword())) {
+            return null; // contraseña incorrecta
+        }
+        // RF03: un usuario SUSPENDIDO no puede iniciar sesión, aunque la contraseña sea correcta.
+        // El estado de la cuenta restringe el acceso por encima de las credenciales.
+        if (usuario.getEstadoActual() == EstadoUsuario.SUSPENDIDO) {
+            return null; // credenciales válidas, pero la cuenta está bloqueada
+        }
+        return usuario;
     }
 }

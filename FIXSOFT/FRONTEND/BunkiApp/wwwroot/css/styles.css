@@ -5,48 +5,60 @@
 
 /* ===== TOKENS ===== */
 :root {
-    /* Superficies (cálidas y neutras) */
-    --bg: #0F1115;
-    --surface: #171A21;
-    --surface-2: #1F2430;
-    --surface-3: #272C38;
-    --hairline: rgba(168, 162, 158, 0.12);
+    /* Superficies (neutras, oscuro premium).
+       Subidas un par de pasos respecto a --bg para que las TARJETAS se DEFINAN sobre el fondo (antes
+       --surface #171A21 casi se fundía con --bg y "flotaban sin contorno"). Se mantiene la progresión
+       --bg < --surface < --surface-2 < --surface-3 y el carácter oscuro (siguen lejos del gris claro). */
+    --bg: #0e0d12;
+    --surface: #1C1B24;      /* antes #171A21 — claramente por encima de --bg */
+    --surface-2: #26252F;    /* antes #1F2430 */
+    --surface-3: #302F3B;    /* antes #272C38 */
+    /* Hairline un punto más marcado para que el CONTORNO de la tarjeta se lea nítido ahora que la
+       superficie es más clara (mismo matiz cálido-neutro, sigue siendo un hilo sutil, sin ruido). */
+    --hairline: rgba(168, 162, 158, 0.14);
     --hairline-strong: rgba(168, 162, 158, 0.20);
-
     /* Texto (blanco cálido / piedra) */
     --ink: #F5F2EA;
     --ink-muted: #A8A29E;
-    --ink-faint: #7A746E;
-
+    --ink-faint: #938D87; /* subido desde #7A746E: ~4.6:1 sobre el fondo oscuro → cumple WCAG AA */
     /* Acento cálido — dorado / champagne / cobre */
     --gold: #D6A84F;
     --champagne: #E8C98A;
     --copper: #C87533;
     --warm-gradient: linear-gradient(135deg, var(--gold), var(--copper));
-
     /* Funcionales (uso puntual) */
     --blue: #2563EB;
     --blue-strong: #3B82F6;
-    --success: #16A34A;
-    --warning: #D97706;
-    --danger: #DC2626;
-
-    /* Tints (fondos suaves de badges / estados) */
+    /* Semánticos DESATURADOS — "lujo que no grita".
+       Antes eran verde/rojo/ámbar saturados tipo Bootstrap (#16A34A / #DC2626 / #D97706) que
+       gritaban y se veían genéricos junto a la paleta cálida dorada. Ahora son apagados (saturación
+       ~20-49%, bien por debajo de 70%) para que conversen con el dorado/champagne/cobre y se mezclen
+       con los neutros en vez de saltar. Contraste verificado (WCAG) — ver notas por color. */
+    --success: #679A75; /* verde salvia. Texto: 5.76:1 sobre --bg, 4.74:1 sobre --success-tint ✓ */
+    --warning: #C0903E; /* ámbar apagado que conversa con el dorado. 6.64:1 / 5.31:1 ✓ */
+    /* --danger se DIVIDE en dos roles: un tono medio no puede ser a la vez fondo de botón con texto
+       blanco (necesita ser oscuro) y texto legible sobre el fondo oscuro (necesita ser claro).
+       - --danger: terracota apagado para FONDOS/botones/bordes (texto blanco encima = 4.69:1 ✓).
+       - --danger-text: terracota más claro SOLO para el rol TEXTO sobre --bg / sobre el tint
+         (5.61:1 sobre --bg, 4.85:1 sobre --danger-tint ✓). Antes el rojo #DC2626 servía ambos por
+         ser muy saturado; al desaturar hay que separarlos para no perder legibilidad. */
+    --danger: #B85850;
+    --danger-text: #C9756A;
+    /* Tints (fondos suaves de badges / estados) — recalculados desde los nuevos RGB, opacidad 0.16,
+       en sincronía con su color base (no dejar tints del rojo/verde viejo). */
     --gold-tint: rgba(214, 168, 79, 0.12);
     --champagne-tint: rgba(232, 201, 138, 0.14);
     --copper-tint: rgba(200, 117, 51, 0.12);
     --blue-tint: rgba(37, 99, 235, 0.16);
-    --success-tint: rgba(22, 163, 74, 0.14);
-    --warning-tint: rgba(217, 119, 6, 0.14);
-    --danger-tint: rgba(220, 38, 38, 0.14);
-
+    --success-tint: rgba(103, 154, 117, 0.16);
+    --warning-tint: rgba(192, 144, 62, 0.16);
+    --danger-tint: rgba(184, 88, 80, 0.16);
     /* Radios */
     --radius-sm: 8px;
     --radius: 12px;
     --radius-lg: 16px;
     --radius-xl: 20px;
     --radius-pill: 999px;
-
     /* Espaciado */
     --space-1: 4px;
     --space-2: 8px;
@@ -56,35 +68,29 @@
     --space-6: 32px;
     --space-7: 48px;
     --space-8: 64px;
-
     /* Sombras (teñidas cálidas, no negro puro) */
     --shadow-xs: 0 1px 2px rgba(10, 8, 5, 0.45);
     --shadow-sm: 0 4px 14px rgba(10, 8, 5, 0.42);
     --shadow: 0 12px 32px rgba(10, 8, 5, 0.52);
     --shadow-lg: 0 24px 60px rgba(10, 8, 5, 0.60);
     --shadow-gold: 0 12px 30px rgba(214, 168, 79, 0.22);
-
     /* Transiciones */
     --ease: cubic-bezier(0.22, 1, 0.36, 1);
     --t-fast: 130ms var(--ease);
     --t: 200ms var(--ease);
     --t-slow: 320ms var(--ease);
-
     /* Foco accesible */
     --ring: 0 0 0 3px rgba(214, 168, 79, 0.42);
-
     /* Z-index (escala semántica) */
     --z-sticky: 100;
     --z-overlay: 490;
     --z-dropdown: 500;
     --z-modal: 600;
     --z-toast: 700;
-
     /* Tipografía */
     --font-display: 'Sora', 'Segoe UI', system-ui, -apple-system, sans-serif;
     --font-body: 'Plus Jakarta Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
     --font-serif: 'Fraunces', Georgia, 'Times New Roman', serif;
-
     /* ----- ALIAS DE COMPATIBILIDAD (no romper inline-styles existentes) ----- */
     --orange: var(--copper);
     --orange-tint: var(--copper-tint);
@@ -129,7 +135,18 @@ body {
     font-feature-settings: "ss01";
 }
 
-h1, h2, h3, h4, h5, h6 {
+/* Títulos de jerarquía alta (h1-h3) en serif Fraunces → look editorial/premium tipo revista.
+   Los subtítulos (h4-h6) quedan en sans (Sora) para mantener jerarquía y legibilidad por contraste. */
+h1, h2, h3 {
+    font-family: var(--font-serif);
+    color: var(--ink);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+}
+
+h4, h5, h6 {
     font-family: var(--font-display);
     color: var(--ink);
     font-weight: 700;
@@ -357,7 +374,9 @@ nav {
 }
 
     .btn-danger:hover {
-        background: #DC2626;
+        /* Hover sincronizado con la paleta apagada: terracota un punto más oscuro que --danger #B85850
+           (antes era el rojo Bootstrap viejo #DC2626). Texto blanco encima = 5.3:1 ✓. */
+        background: #A9514A;
         transform: translateY(-2px);
         box-shadow: var(--shadow-sm);
     }
@@ -368,8 +387,11 @@ nav {
 }
 
     .btn-success:hover {
-        background: #059669;
-        color: #fff;
+        /* Hover sincronizado: salvia un punto más claro que --success #679A75 (antes el esmeralda viejo
+           #059669, fuera de paleta). Mantengo el texto oscuro #06281E = 5.6:1 ✓ (no blanco, que sobre el
+           verde claro sería ilegible). */
+        background: #73A57F;
+        color: #06281E;
         transform: translateY(-2px);
         box-shadow: var(--shadow-sm);
     }
@@ -394,6 +416,10 @@ nav {
 }
 
 /* ===== SECCIONES ===== */
+/* La entrada de las secciones ahora la dispara el SCROLL REAL vía bunkiReveal (IntersectionObserver,
+   /js/scroll-reveal.js) sobre los elementos [data-reveal]; ya NO se anima al cargar con CSS puro.
+   Antes había aquí un @keyframes fade-rise con `animation` en .section: se retiró para que el efecto
+   ocurra al hacer scroll y para que no se duplique/choque con el reveal. Ver bloque "SCROLL REVEAL". */
 .section {
     padding: clamp(56px, 9vw, 96px) 20px;
     flex: 1;
@@ -473,7 +499,7 @@ textarea {
 }
 
 .validation-message {
-    color: var(--danger);
+    color: var(--danger-text);
     font-size: 13px;
     margin-top: 5px;
     display: block;
@@ -494,14 +520,26 @@ textarea {
     overflow: hidden;
     border: 1px solid var(--hairline);
     transition: transform var(--t), border-color var(--t), box-shadow var(--t);
+    transform-style: preserve-3d;
     display: flex;
     flex-direction: column;
 }
 
+/* Tarjeta como ENLACE (patrón Airbnb: toda la tarjeta navega al detalle). Sin subrayado y hereda el
+   color del texto para que título/precio/descripción se vean igual que en la variante <div>. El anillo
+   de foco accesible lo aporta la regla global a:focus-visible. */
+.card--link {
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+}
+
+    /* Tilt 3D MÍNIMO + elevación al pasar el cursor: un toque de profundidad como "cortesía" visual,
+       no un giro marcado (rotateX de solo 2°). Integra la elevación/borde/sombra que ya tenía el hover. */
     .card:hover {
-        transform: translateY(-4px);
+        transform: perspective(900px) translateY(-6px) rotateX(2deg);
         border-color: var(--hairline-strong);
-        box-shadow: var(--shadow);
+        box-shadow: var(--shadow-lg);
     }
 
 /* Contenedor de imagen (permite badge superpuesto + zoom contenido) */
@@ -539,6 +577,24 @@ textarea {
 .card-image-placeholder {
     width: 100%;
     height: 216px;
+    /* Centrado del ícono + leyenda (antes eran estilos inline en el markup). */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.card-placeholder-icon {
+    font-size: 34px;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.card-placeholder-text {
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.78);
 }
 
 .card-body {
@@ -563,6 +619,9 @@ textarea {
     letter-spacing: -0.01em;
     color: var(--ink);
     line-height: 1.3;
+    /* Reserva el alto de 2 líneas: así las filas internas (rating, precio) quedan alineadas entre
+       tarjetas aunque un título ocupe 1 o 2 líneas, sin saltos de maquetación en la cuadrícula. */
+    min-height: calc(1.3em * 2);
 }
 
 .card-location {
@@ -588,6 +647,11 @@ textarea {
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    text-wrap: pretty;
+    /* Reserva el alto de 2 líneas aunque la descripción ocupe 1: así los pies (precio) quedan
+       alineados entre tarjetas de la misma fila. El recorte limpio lo hace el line-clamp (no el
+       Substring frágil que cortaba a media palabra). */
+    min-height: calc(1.55em * 2);
 }
 
 .card-footer {
@@ -602,11 +666,13 @@ textarea {
 
 .card-price {
     font-family: var(--font-display);
-    font-size: 18px;
+    /* Dato clave de la tarjeta → un punto más grande (20px) para que destaque sobre el resto del pie. */
+    font-size: 20px;
     font-weight: 700;
     letter-spacing: -0.02em;
     color: var(--champagne);
     font-variant-numeric: tabular-nums;
+    line-height: 1.1;
 }
 
     .card-price small {
@@ -616,11 +682,43 @@ textarea {
         -webkit-text-fill-color: var(--ink-muted);
     }
 
+/* Flecha-afordancia del pie (solo en la variante enlace): refuerza que la tarjeta navega. Discreta en
+   reposo, se rellena y avanza levemente cuando la tarjeta está en hover/foco. */
+.card-go {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    border-radius: var(--radius-pill);
+    background: var(--gold-tint);
+    color: var(--gold);
+    font-size: 13px;
+    transition: background var(--t), color var(--t), transform var(--t);
+}
+
+.card--link:hover .card-go,
+.card--link:focus-visible .card-go {
+    background: var(--gold);
+    color: #1C140A;
+    transform: translateX(3px);
+}
+
+/* Fila del rating: altura mínima fija para que todas las tarjetas alineen igual, tengan reseñas
+   ("★★★★½ 4.5 (12)") o no ("Nuevo · Sin reseñas"). */
+.card-rating-row {
+    margin-bottom: 12px;
+    min-height: 18px;
+    display: flex;
+    align-items: center;
+}
+
 /* Rating compacto dentro de la card */
 .card-rating {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 3px;
     font-size: 13px;
     font-weight: 600;
     color: var(--ink);
@@ -628,16 +726,38 @@ textarea {
     font-variant-numeric: tabular-nums;
 }
 
+    /* Estrellas FA en dorado (llena y media). Un punto más grandes (13px) para que se lean nítidas. */
     .card-rating .fa-star,
+    .card-rating .fa-star-half-stroke,
     .card-rating .star {
         color: var(--gold);
-        font-size: 12px;
+        font-size: 13px;
+    }
+
+    /* Estrella vacía (Font Awesome regular): mismo dorado pero atenuado, para leer el rating de un
+       vistazo sin que las vacías pesen igual que las llenas. */
+    .card-rating .far.fa-star {
+        opacity: 0.30;
+    }
+
+    /* Nota numérica del rating: el dato fuerte de la fila → ink y peso 700. */
+    .card-rating-score {
+        margin-left: 4px;
+        font-weight: 700;
+        color: var(--ink);
     }
 
     .card-rating .count {
         color: var(--ink-muted);
         font-weight: 500;
     }
+
+/* Alojamiento sin reseñas: mismo lugar que el rating, en tono atenuado. */
+.card-rating-new {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-muted);
+}
 
 /* Badge superpuesto sobre la imagen del alojamiento */
 .listing-badge {
@@ -682,6 +802,21 @@ textarea {
 
 .grid-3 {
     grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+}
+
+/* Filas de exactamente 3 ítems (destacados del Home, señales de confianza): 3 columnas iguales que
+   llenan el ancho del contenedor, en vez del auto-fill de .grid-3 que dejaba un hueco a la derecha
+   cuando solo hay 3 tarjetas. Colapsa a 2 y luego a 1 columna en pantallas menores. */
+.grid--trio {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 900px) {
+    .grid--trio { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 600px) {
+    .grid--trio { grid-template-columns: 1fr; }
 }
 
 .grid-4 {
@@ -741,7 +876,8 @@ textarea {
     }
 
     .hero h1 {
-        font-family: var(--font-display);
+        /* Título principal del hero en serif Fraunces: la cara de la página, donde la serif más luce. */
+        font-family: var(--font-serif);
         font-size: clamp(40px, 6vw, 66px);
         line-height: 1.05;
         letter-spacing: -0.03em;
@@ -779,7 +915,8 @@ textarea {
 }
 
     .hero-small h1 {
-        font-family: var(--font-display);
+        /* Título de cabecera de página en serif Fraunces, coherente con el look editorial. */
+        font-family: var(--font-serif);
         font-size: clamp(28px, 5vw, 42px);
         font-weight: 800;
         letter-spacing: -0.03em;
@@ -886,8 +1023,11 @@ textarea {
         linear-gradient(180deg, rgba(15, 17, 21, 0.55) 0%, rgba(15, 17, 21, 0.68) 50%, rgba(15, 17, 21, 0.93) 100%),
         radial-gradient(900px 520px at 72% 18%, rgba(214, 168, 79, 0.12), transparent 60%),
         var(--hero-img, none);
-    background-size: cover;
+    background-size: center ;
     background-position: center;
+    /* Parallax sutil: la imagen de fondo queda fija mientras el contenido scrollea, dando profundidad
+       al hero. Se desactiva en móvil (background-attachment: scroll en el media query) por compatibilidad. */
+    background-attachment: fixed;
     border-bottom: 1px solid var(--hairline);
     overflow: hidden;
 }
@@ -921,7 +1061,9 @@ textarea {
     font-weight: 500;
     font-size: clamp(40px, 6.4vw, 74px);
     line-height: 1.04;
-    letter-spacing: -0.01em;
+    /* Tracking algo más cerrado: a tamaño display la serif gana presencia y se ve más "compuesta"
+       (sigue por encima del piso -0.04em, sin que las letras se toquen). */
+    letter-spacing: -0.02em;
     color: var(--ink);
     max-width: 16ch;
     margin-bottom: 18px;
@@ -935,6 +1077,7 @@ textarea {
     color: rgba(245, 242, 234, 0.84);
     max-width: 540px;
     margin-bottom: 34px;
+    text-wrap: pretty;   /* evita huérfanas en la bajada del hero */
 }
 
 .hero-home .search-card {
@@ -978,6 +1121,186 @@ textarea {
     font-family: var(--font-serif);
     font-weight: 600;
     letter-spacing: -0.005em;
+    /* Jerarquía más marcada: en el Home los títulos de sección suben de escala respecto al
+       .section-title por defecto (clamp 26→34) para dar "presencia de revista". Como ambos son
+       selectores de una clase y .editorial-title aparece después en el archivo, esta medida gana. */
+    font-size: clamp(30px, 4.6vw, 46px);
+    line-height: 1.08;
+}
+
+/* ===== ELEMENTO DE FIRMA: ACENTO EDITORIAL =====
+   La palabra clave de un título se compone en Fraunces ITÁLICA + champán. Es la "voz" propia del
+   Home: rima con las citas en cursiva de los testimonios y recorre hero y títulos como un hilo de
+   carácter. Usa solo tokens ya comprometidos (--font-serif + --champagne): NO cambia paleta ni fuente. */
+.editorial-accent {
+    font-style: italic;
+    font-weight: 500;
+    color: var(--champagne);
+}
+
+/* ===== RITMO VERTICAL INTENCIONAL (composición, no uniforme) =====
+   Especificidad 0,2,0 (.section.section--x) para ganar al padding base de .section sin !important.
+   Cadencia: hero → (mucho aire) destacados como FEATURE → (poco aire) categorías pegadas como bloque
+   de exploración → banda de confianza → testimonios. Rompe el paso plano que tenía el Home. */
+.section.section--feature {
+    padding-top: clamp(72px, 11vw, 120px);
+    padding-bottom: clamp(40px, 6vw, 64px);
+}
+
+.section.section--tight {
+    padding-top: clamp(32px, 5vw, 56px);
+}
+
+/* ===== SCROLL REVEAL (entrada al hacer scroll) =====
+   Los elementos parten ocultos (fade + leve translateY) y bunkiReveal les añade .is-visible cuando
+   entran al viewport. Reemplaza la antigua animación fade-rise de .section, que disparaba al cargar.
+   La transición usa --t-slow (que ya incluye --ease). Se desactiva en prefers-reduced-motion (abajo). */
+[data-reveal] {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity var(--t-slow), transform var(--t-slow);
+    will-change: opacity, transform;
+}
+
+    [data-reveal].is-visible {
+        opacity: 1;
+        transform: none;
+    }
+
+/* Escalonado: dentro de un grid/lista marcado como grupo, cada tarjeta entra en cascada (delay
+   creciente) para un reveal más vivo sin animación extra por elemento. */
+[data-reveal-group] > * {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity var(--t-slow), transform var(--t-slow);
+    will-change: opacity, transform;
+}
+
+    [data-reveal-group].is-visible > * {
+        opacity: 1;
+        transform: none;
+    }
+
+    [data-reveal-group].is-visible > *:nth-child(2) { transition-delay: 70ms; }
+    [data-reveal-group].is-visible > *:nth-child(3) { transition-delay: 140ms; }
+    [data-reveal-group].is-visible > *:nth-child(4) { transition-delay: 210ms; }
+    [data-reveal-group].is-visible > *:nth-child(5) { transition-delay: 280ms; }
+    [data-reveal-group].is-visible > *:nth-child(6) { transition-delay: 350ms; }
+
+/* Cabecera de sección centrada (reemplaza estilos inline): para secciones sin enlace lateral
+   como categorías o testimonios, el título y el eyebrow se centran. */
+.section-head--center {
+    justify-content: center;
+    text-align: center;
+}
+
+    .section-head--center .section-head-text {
+        max-width: 100%;
+    }
+
+    .section-head--center .section-title {
+        text-align: center;
+    }
+
+/* ===== CATEGORÍAS (Home: "¿Qué clase de estadía buscas?") ===== */
+/* Tarjetas de categoría en grid responsive (6 desktop / 3 tablet / 2 móvil). Cada tarjeta apila el
+   ícono grande arriba y el nombre debajo, centrados, para una fila tipo Airbnb. */
+.categorias-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: var(--space-4);
+    margin-top: var(--space-6);
+}
+
+.categoria-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    padding: var(--space-5) var(--space-3);
+    background: var(--surface-2);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    color: var(--ink);
+    text-decoration: none;       /* sin subrayado de link */
+    text-align: center;
+    cursor: pointer;
+    transition: transform var(--t), border-color var(--t), box-shadow var(--t);
+}
+
+    .categoria-card:hover {
+        transform: translateY(-4px);          /* se eleva al pasar el cursor */
+        border-color: var(--gold);
+        box-shadow: var(--shadow);
+    }
+
+/* Ícono grande arriba, en dorado. */
+.categoria-icon {
+    font-size: 30px;
+    color: var(--gold);
+    line-height: 1;
+}
+
+/* Nombre debajo del ícono, centrado, sin subrayado. */
+.categoria-nombre {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+@media (max-width: 768px) {
+    .categorias-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 480px) {
+    .categorias-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ===== TESTIMONIOS (Home: "Lo que dicen nuestros huéspedes") ===== */
+.testimonial {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin: 0;
+    padding: var(--space-6);
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    /* Hover sutil coherente con el resto de tarjetas de la app (antes eran estáticas). */
+    transition: transform var(--t), border-color var(--t), box-shadow var(--t);
+}
+
+    .testimonial:hover {
+        transform: translateY(-4px);
+        border-color: var(--hairline-strong);
+        box-shadow: var(--shadow);
+    }
+
+.testimonial-stars {
+    display: inline-flex;
+    gap: 4px;
+    color: var(--gold);
+    font-size: 13px;
+}
+
+/* Comentario en serif itálica para el acento editorial. */
+.testimonial-quote {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--ink);
+    margin: 0;
+    text-wrap: pretty;
+}
+
+.testimonial-author {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink-muted);
+    margin-top: auto;
 }
 
 /* ===== CABECERA DE SECCIÓN (eyebrow + título + enlace) ===== */
@@ -1003,8 +1326,9 @@ textarea {
     color: var(--ink-muted);
     font-size: 16px;
     margin-top: 12px;
-    max-width: 560px;
+    max-width: 560px;       /* line-length controlada (~60-65ch) */
     line-height: 1.6;
+    text-wrap: pretty;
 }
 
 .section-link {
@@ -1023,6 +1347,93 @@ textarea {
         color: var(--gold);
         gap: 11px;
     }
+
+/* ===== CARRUSEL DE DESTACADOS (Home) ===== */
+/* Reutiliza las tarjetas <AlojamientoCard>; el control (flechas, puntos, autoplay) lo maneja
+   /js/carrusel.js, siguiendo el mismo patrón de interop que el datepicker. */
+.carrusel {
+    position: relative;
+    padding: 0 52px;          /* espacio lateral para que las flechas no tapen las tarjetas */
+}
+
+.carrusel-track {
+    display: flex;
+    gap: var(--space-4);
+    overflow-x: auto;          /* el JS desplaza por scrollLeft; en táctil también se puede arrastrar */
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;     /* Firefox: oculta la barra de scroll */
+}
+
+    .carrusel-track::-webkit-scrollbar { display: none; }  /* WebKit: oculta la barra de scroll */
+
+/* Ancho fijo por tarjeta: ~3 visibles en desktop, sin deformarse. */
+.carrusel-item {
+    flex: 0 0 calc((100% - 2 * var(--space-4)) / 3);
+    min-width: 0;
+    scroll-snap-align: start;
+}
+
+.carrusel-flecha {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-2);
+    border: 1px solid var(--hairline);
+    color: var(--ink);
+    font-size: 22px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2;                 /* sobre las tarjetas */
+    transition: background var(--t), border-color var(--t), color var(--t);
+}
+
+    .carrusel-flecha:hover {
+        border-color: var(--gold);
+        color: var(--gold);
+    }
+
+.carrusel-flecha--prev { left: 0; }
+.carrusel-flecha--next { right: 0; }
+
+.carrusel-dots {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-2);
+    margin-top: var(--space-5);
+}
+
+.carrusel-dot {
+    width: 8px;
+    height: 8px;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-pill);
+    background: var(--ink-faint);
+    cursor: pointer;
+    transition: background var(--t), transform var(--t);
+}
+
+    .carrusel-dot--activo {
+        background: var(--gold);
+        transform: scale(1.3);
+    }
+
+/* Responsive: menos tarjetas visibles en pantallas chicas. */
+@media (max-width: 900px) {
+    .carrusel-item { flex-basis: calc((100% - var(--space-4)) / 2); }  /* ~2 visibles */
+}
+
+@media (max-width: 600px) {
+    .carrusel { padding: 0 40px; }
+    .carrusel-item { flex-basis: 100%; }                              /* 1 visible */
+}
 
 /* ===== HERO HOME RESPONSIVE ===== */
 @media (max-width: 768px) {
@@ -1094,7 +1505,7 @@ textarea {
 
 .badge-danger {
     background: var(--danger-tint);
-    color: var(--danger);
+    color: var(--danger-text);
 }
 
 /* ===== SIDEBAR ===== */
@@ -1174,7 +1585,7 @@ textarea {
 .stat-icon--success   { background: var(--success-tint); color: var(--success); }
 .stat-icon--warning   { background: var(--warning-tint); color: var(--warning); }
 .stat-icon--orange    { background: var(--orange-tint);  color: var(--orange); }
-.stat-icon--danger    { background: var(--danger-tint);  color: var(--danger); }
+.stat-icon--danger    { background: var(--danger-tint);  color: var(--danger-text); }
 
 .stat-number {
     font-family: var(--font-display);
@@ -1192,7 +1603,7 @@ textarea {
 .stat-number--success   { color: var(--success); }
 .stat-number--blue      { color: var(--blue-strong); }
 .stat-number--warning   { color: var(--warning); }
-.stat-number--danger    { color: var(--danger); }
+.stat-number--danger    { color: var(--danger-text); }
 
 .stat-label {
     color: var(--ink-muted);
@@ -1215,7 +1626,7 @@ textarea {
     }
 
 .stat-trend--up   { color: var(--success); }
-.stat-trend--down { color: var(--danger); }
+.stat-trend--down { color: var(--danger-text); }
 
 /* ===== TABS ===== */
 .tabs {
@@ -1305,8 +1716,11 @@ textarea {
 }
 
 .message-sent {
-    background: var(--blue);
-    color: white;
+    /* Burbuja propia en tinte dorado de marca (antes azul #2563EB, ajeno a la paleta).
+       El azul no pertenece al sistema de color de Bunki; usamos un dorado tenue legible. */
+    background: var(--gold-tint);
+    color: var(--ink);
+    border: 1px solid var(--hairline-strong);
     border-radius: 18px 18px 4px 18px;
     align-self: flex-end;
     margin-left: auto;
@@ -1404,22 +1818,24 @@ tr:hover td {
     font-size: 14px;
 }
 
+/* Bordes de alerta sincronizados con la paleta apagada: ~0.30 del nuevo color base de cada estado
+   (antes usaban rgba de los viejos saturados: esmeralda #10B981, ámbar #F59E0B, rojo #EF4444). */
 .alert-success {
     background: var(--success-tint);
-    border: 1px solid rgba(16, 185, 129, 0.30);
+    border: 1px solid rgba(103, 154, 117, 0.30);
     color: var(--success);
 }
 
 .alert-warning {
     background: var(--warning-tint);
-    border: 1px solid rgba(245, 158, 11, 0.30);
+    border: 1px solid rgba(192, 144, 62, 0.30);
     color: var(--warning);
 }
 
 .alert-danger {
     background: var(--danger-tint);
-    border: 1px solid rgba(239, 68, 68, 0.30);
-    color: var(--danger);
+    border: 1px solid rgba(184, 88, 80, 0.30);
+    color: var(--danger-text);
 }
 
 /* ===== GALERÍA ===== */
@@ -1489,7 +1905,9 @@ tr:hover td {
     font-size: 13.5px;
     font-weight: 500;
     color: var(--ink-muted);
-    transition: background var(--t), border-color var(--t), color var(--t);
+    /* Chip que se activa/desactiva a menudo: feedback snappy con --t-fast (130ms) en vez de --t, y
+       transform incluido para el press. Propiedades explícitas (no "all"). */
+    transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast), transform var(--t-fast);
     font-family: inherit;
 }
 
@@ -1502,6 +1920,11 @@ tr:hover td {
         border-color: var(--gold);
         background: var(--gold-tint);
         color: var(--gold);
+    }
+
+    /* Press: leve hundimiento → confirma al tacto que el chip "escuchó" el clic. */
+    .filter-btn:active {
+        transform: scale(0.96);
     }
 
 /* ===== PAGINACIÓN ===== */
@@ -1780,28 +2203,104 @@ tr:hover td {
 }
 
 /* ===== FOOTER ===== */
+/* ===== FOOTER DEL SITIO (3 columnas + línea legal) ===== */
 footer {
     background: var(--surface);
     border-top: 1px solid var(--hairline);
     color: var(--ink-muted);
-    padding: 40px 20px;
-    text-align: center;
 }
 
-    footer p {
-        margin-bottom: 10px;
-        font-size: 14px;
+.footer-inner {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr;
+    gap: var(--space-7);
+    padding-top: var(--space-8);
+    padding-bottom: var(--space-7);
+}
+
+.footer-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.footer-logo {
+    font-family: var(--font-serif);
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+}
+
+.footer-tagline {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--ink-muted);
+    max-width: 38ch;
+    margin: 0;
+}
+
+.footer-title {
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin: 0 0 var(--space-1);
+}
+
+.footer-links {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+footer a {
+    color: var(--ink-muted);
+    text-decoration: none;
+    transition: color var(--t);
+    font-size: 14px;
+}
+
+    footer a:hover {
+        color: var(--gold);
     }
 
-    footer a {
-        color: var(--ink-muted);
-        text-decoration: none;
-        transition: color var(--t);
+.footer-social {
+    display: flex;
+    gap: var(--space-3);
+    font-size: 16px;
+}
+
+.footer-contact {
+    font-size: 14px;
+    color: var(--ink-muted);
+    margin: var(--space-2) 0 0;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.footer-bottom {
+    border-top: 1px solid var(--hairline);
+    padding: var(--space-5) 0;
+}
+
+    .footer-bottom p {
+        margin: 0;
+        font-size: 13px;
+        text-align: center;
+        color: var(--ink-faint);
     }
 
-        footer a:hover {
-            color: var(--gold);
-        }
+@media (max-width: 768px) {
+    .footer-inner {
+        grid-template-columns: 1fr;
+        gap: var(--space-6);
+        padding-top: var(--space-7);
+    }
+}
 
 /* ===== UTILIDADES ===== */
 .text-center { text-align: center; }
@@ -1926,6 +2425,33 @@ footer {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
+    }
+
+    /* Desactivamos explícitamente los efectos del Home (el catch-all anula la duración de
+       animation/transition, pero no estos valores): parallax y el tilt 3D del hover. */
+    .hero-home { background-attachment: scroll; }    /* sin parallax */
+    .card:hover { transform: translateY(-4px); }     /* sin tilt 3D: solo elevación leve */
+    .carrusel-track { scroll-behavior: auto; }       /* sin scroll animado (autoplay ya off en el JS) */
+
+    /* AlojamientoCard: sin zoom de imagen ni desplazamiento de la flecha (solo el cambio de color). */
+    .card:hover .card-media .card-image,
+    .card:hover .card-media .card-image-placeholder { transform: none; }
+    .card--link:hover .card-go,
+    .card--link:focus-visible .card-go { transform: none; }
+
+    /* Explorar: sin entrada escalonada del grid (tarjetas visibles desde el inicio) ni micro-presses. */
+    .explorar-grid > * { animation: none; }
+    .filter-btn:active,
+    .view-toggle-btn:active,
+    .filter-clear:active { transform: none; }
+
+    /* Scroll reveal desactivado: los elementos quedan visibles desde el inicio, sin desplazamiento
+       (bunkiReveal además revela todo de inmediato cuando matchMedia coincide). */
+    [data-reveal],
+    [data-reveal-group] > * {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
     }
 }
 .search-field select {
@@ -2098,7 +2624,8 @@ footer {
     justify-content: space-between;
     gap: 20px;
     flex-wrap: wrap;
-    margin-bottom: 28px;
+    /* Igual al gap del .explorar-layout (32px) → ritmo parejo header → filtros/resultados. */
+    margin-bottom: 32px;
 }
 
 .explorar-title {
@@ -2143,7 +2670,7 @@ footer {
     font-weight: 600;
     border-radius: var(--radius-sm);
     cursor: pointer;
-    transition: background var(--t), color var(--t);
+    transition: background var(--t-fast), color var(--t-fast), transform var(--t-fast);
 }
 
     .view-toggle-btn:hover {
@@ -2154,6 +2681,11 @@ footer {
         background: var(--surface-3);
         color: var(--ink);
         box-shadow: var(--shadow-xs);
+    }
+
+    /* Press del segmentado: mismo lenguaje táctil que los chips. */
+    .view-toggle-btn:active {
+        transform: scale(0.97);
     }
 
     .view-toggle-btn i {
@@ -2202,11 +2734,15 @@ footer {
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    transition: color var(--t);
+    transition: color var(--t-fast), transform var(--t-fast);
 }
 
     .filter-clear:hover {
         color: var(--gold);
+    }
+
+    .filter-clear:active {
+        transform: scale(0.96);
     }
 
 .filter-group {
@@ -2272,6 +2808,34 @@ footer {
 /* Resultados (evita desbordes del grid dentro del layout) */
 .explorar-results {
     min-width: 0;
+}
+
+/* Rejilla de resultados (y skeletons): densa y responsive SIN breakpoints. auto-fill + minmax(280px)
+   deja 3 tarjetas junto al panel de filtros y hasta 4 cuando el panel colapsa; baja sola a 2 y 1 en
+   pantallas chicas. auto-fill (no auto-fit) evita que una tarjeta suelta de la última fila se estire. */
+.explorar-grid {
+    display: grid;
+    gap: var(--space-5);
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+/* Entrada escalonada al MONTAR la rejilla: como "Aplicar filtros" pasa por el estado de carga
+   (skeletons) y luego re-monta los resultados, esta cascada se reproduce en cada filtrado, dando una
+   transición suave en vez de un salto seco. Es one-shot (no afecta el hover de la tarjeta) y el estado
+   por defecto es visible (opacity:1), así nunca queda en blanco si la animación no corre. */
+.explorar-grid > * {
+    animation: explorar-card-in var(--t) var(--ease) backwards;
+}
+
+    .explorar-grid > *:nth-child(2) { animation-delay: 45ms; }
+    .explorar-grid > *:nth-child(3) { animation-delay: 90ms; }
+    .explorar-grid > *:nth-child(4) { animation-delay: 135ms; }
+    .explorar-grid > *:nth-child(5) { animation-delay: 180ms; }
+    .explorar-grid > *:nth-child(6) { animation-delay: 225ms; }
+
+@keyframes explorar-card-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 /* Zona reservada para el mapa (preparada, sin implementar) */
@@ -2926,10 +3490,11 @@ footer {
     -webkit-backdrop-filter: blur(6px);
 }
 
-/* Acento superior según estado */
-.rsv-media--confirmada { box-shadow: inset 0 3px 0 rgba(22, 163, 74, 0.5); }
+/* Acento superior según estado. Verde/rojo sincronizados con la paleta apagada (antes verde #16A34A
+   y rojo #DC2626 viejos); el ámbar/cobre del estado pendiente ya es el cobre de marca, se conserva. */
+.rsv-media--confirmada { box-shadow: inset 0 3px 0 rgba(103, 154, 117, 0.5); }
 .rsv-media--pendiente  { box-shadow: inset 0 3px 0 rgba(200, 117, 51, 0.55); }
-.rsv-media--cancelada  { box-shadow: inset 0 3px 0 rgba(220, 38, 38, 0.5); }
+.rsv-media--cancelada  { box-shadow: inset 0 3px 0 rgba(184, 88, 80, 0.5); }
 
 /* Cuerpo */
 .rsv-body {
@@ -3258,7 +3823,9 @@ footer {
     padding: 18px;
 }
 
-.earn-card--fee { background: var(--danger-tint); border-color: rgba(220, 38, 38, 0.22); }
+/* La comisión es ingreso de la plataforma (un descuento sobre el bruto), no una pérdida/peligro →
+   superficie neutral en vez del tinte rojo. El signo "-" ya comunica que se resta. */
+.earn-card--fee { background: var(--surface-3); border-color: var(--hairline-strong); }
 .earn-card--net { background: var(--gold-tint);   border-color: rgba(214, 168, 79, 0.30); }
 
 .earn-label {
@@ -3280,8 +3847,10 @@ footer {
     font-variant-numeric: tabular-nums;
 }
 
-.earn-card--fee .earn-value { color: var(--danger); }
-.earn-card--net .earn-value { color: var(--champagne); }
+.earn-card--fee .earn-value { color: var(--ink-muted); }  /* comisión = neutral, no rojo de pérdida */
+/* El NETO es el resultado del desglose → un punto más grande para que lidere la jerarquía
+   (bruto = referencia en --ink, comisión = neutral atenuada, neto = protagonista en champán). */
+.earn-card--net .earn-value { color: var(--champagne); font-size: 25px; }
 
 /* ----- Acciones rápidas ----- */
 .host-actions {
@@ -3587,12 +4156,14 @@ footer {
 /* Botón "rechazar" — peligro suave (no neón) */
 .btn-soft-danger {
     background: var(--danger-tint);
-    color: var(--danger);
+    color: var(--danger-text);
     border-color: transparent;
 }
 
     .btn-soft-danger:hover {
-        background: rgba(220, 38, 38, 0.22);
+        /* Hover sincronizado: el mismo terracota nuevo --danger #B85850 a 0.22 (un escalón más que el
+           tint base 0.16), antes era el rojo viejo #DC2626. Texto --danger-text encima = 4.5:1 ✓. */
+        background: rgba(184, 88, 80, 0.22);
         transform: translateY(-2px);
     }
 
@@ -3799,6 +4370,22 @@ footer {
     background: linear-gradient(180deg, var(--champagne), var(--copper));
     opacity: 0.78;
     transition: height var(--t-slow);
+    /* Entrada: las barras CRECEN desde la base al cargar (scaleY), escalonadas, para dar vida al
+       mini-gráfico sin robarle protagonismo al dato. */
+    transform-origin: bottom center;
+    animation: spark-grow 620ms var(--ease) both;
+}
+
+    .spark-col:nth-child(1) .spark-bar { animation-delay: 30ms; }
+    .spark-col:nth-child(2) .spark-bar { animation-delay: 75ms; }
+    .spark-col:nth-child(3) .spark-bar { animation-delay: 120ms; }
+    .spark-col:nth-child(4) .spark-bar { animation-delay: 165ms; }
+    .spark-col:nth-child(5) .spark-bar { animation-delay: 210ms; }
+    .spark-col:nth-child(6) .spark-bar { animation-delay: 255ms; }
+
+@keyframes spark-grow {
+    from { transform: scaleY(0); }
+    to   { transform: scaleY(1); }
 }
 
 .spark-col:last-child .spark-bar {
@@ -3822,6 +4409,15 @@ footer {
     gap: 10px;
 }
 
+/* --val registrado como <number> animable: permite que el arco del conic-gradient se DIBUJE suave
+   (al cargar vía @starting-style y al cambiar de período). En reduced-motion el catch-all global lo
+   deja estático (transition ~0 → salta al valor final). */
+@property --val {
+    syntax: "<number>";
+    inherits: false;
+    initial-value: 0;
+}
+
 .gauge {
     --val: 0;
     width: 116px;
@@ -3831,6 +4427,13 @@ footer {
     place-items: center;
     background: conic-gradient(var(--gold) calc(var(--val) * 1%), var(--surface-3) 0);
     position: relative;
+    /* El arco se anima al asentar el valor (carga inicial y cambios de período). */
+    transition: --val 900ms var(--ease);
+}
+
+/* Dibuja el arco desde 0 en la primera aparición (la transición no dispara sin un valor previo). */
+@starting-style {
+    .gauge { --val: 0; }
 }
 
     .gauge::before {
@@ -3918,7 +4521,7 @@ footer {
 .state--pendiente .state-dot  { background: var(--copper); }
 .state--confirmada { background: var(--success-tint); color: var(--success); }
 .state--confirmada .state-dot { background: var(--success); }
-.state--cancelada  { background: var(--danger-tint);  color: var(--danger); }
+.state--cancelada  { background: var(--danger-tint);  color: var(--danger-text); }
 .state--cancelada .state-dot  { background: var(--danger); }
 .state--completada { background: rgba(168, 162, 158, 0.14); color: var(--ink-muted); }
 .state--completada .state-dot { background: var(--ink-muted); }
@@ -4813,8 +5416,8 @@ footer {
 
     .admin-dd-item:hover { background: rgba(168, 162, 158, 0.07); }
     .admin-dd-item i { color: var(--ink-muted); width: 16px; text-align: center; margin-top: 2px; }
-    .admin-dd-item.danger { color: var(--danger); }
-    .admin-dd-item.danger i { color: var(--danger); }
+    .admin-dd-item.danger { color: var(--danger-text); }
+    .admin-dd-item.danger i { color: var(--danger-text); }
 
 .admin-dd-msg { line-height: 1.4; }
 .admin-dd-time { font-size: 11.5px; color: var(--ink-faint); margin-top: 2px; }
@@ -4927,7 +5530,14 @@ footer {
     gap: 16px;
     text-decoration: none;
     color: inherit;
+    /* Cola de acción PRIORITARIA: borde algo más marcado que las tarjetas de contexto (actividad), con
+       realce al pasar y leve hundimiento al cliquear, para que se lean como llamados a la acción navegables. */
+    border-color: var(--hairline-strong);
+    transition: border-color var(--t), box-shadow var(--t), transform var(--t-fast);
 }
+
+    .admin-alert:hover { transform: translateY(-2px); }
+    .admin-alert:active { transform: scale(0.985); }
 
 .admin-alert-icon {
     width: 48px;
@@ -4943,7 +5553,7 @@ footer {
 }
 
 .admin-alert-icon--warn { background: var(--warning-tint); color: var(--warning); }
-.admin-alert-icon--danger { background: var(--danger-tint); color: var(--danger); }
+.admin-alert-icon--danger { background: var(--danger-tint); color: var(--danger-text); }
 
 .admin-alert-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 
@@ -5037,7 +5647,34 @@ footer {
     }
 
     .admin-quick-link:hover .admin-quick-arrow { color: var(--gold); transform: translateX(3px); }
+    .admin-quick-link:active { transform: scale(0.98); }   /* press: confirma el toque */
     .admin-quick-link:focus-visible { outline: none; box-shadow: var(--ring); }
+
+/* Entrada al cargar: KPIs → pendientes → columnas aparecen con un fade + leve subida, escalonados, para
+   que el dashboard se "asiente" sin brusquedad. Solo los CONTENEDORES (jamás se anima el valor numérico).
+   Fill BACKWARDS a propósito (no forwards): así, al terminar, las tarjetas vuelven a su estilo normal y los
+   transform de hover siguen funcionando. El catch-all de reduced-motion lo deja estático (visible al inicio). */
+@keyframes admin-rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: none; }
+}
+
+.admin-kpis > *,
+.admin-alerts > *,
+.admin-cols > * {
+    animation: admin-rise 460ms var(--ease) backwards;
+}
+
+    .admin-kpis > *:nth-child(2) { animation-delay: 50ms; }
+    .admin-kpis > *:nth-child(3) { animation-delay: 100ms; }
+    .admin-kpis > *:nth-child(4) { animation-delay: 150ms; }
+
+    .admin-alerts > *:nth-child(1) { animation-delay: 120ms; }
+    .admin-alerts > *:nth-child(2) { animation-delay: 170ms; }
+    .admin-alerts > *:nth-child(3) { animation-delay: 220ms; }
+
+    .admin-cols > *:nth-child(1) { animation-delay: 260ms; }
+    .admin-cols > *:nth-child(2) { animation-delay: 310ms; }
 
 @media (max-width: 1000px) {
     .admin-kpis { grid-template-columns: repeat(2, 1fr); }
@@ -5404,7 +6041,7 @@ footer {
 }
 
     .mod-resena-stat-num.mod-ok  { color: var(--success); }
-    .mod-resena-stat-num.mod-off { color: var(--danger); }
+    .mod-resena-stat-num.mod-off { color: var(--danger-text); }
 
 .mod-resena-stat-cap {
     display: block;
@@ -5465,7 +6102,7 @@ footer {
 
 .mod-resena-badge--oculta {
     background: var(--danger-tint);
-    color: var(--danger);
+    color: var(--danger-text);
 }
 
 .mod-resena-card-foot {
@@ -5498,3 +6135,372 @@ footer {
 }
 
     .mod-resena-tag i { color: var(--gold); font-size: 11px; }
+
+/* ===========================================================
+   SPLASH DE INTRO "BUNKI" (una vez por sesión del navegador)
+   Secuencia PAUSADA y elegante (CSS puro, sin librerías):
+     1) las letras de BUNKI aparecen UNA A UNA (fade + leve subida, stagger generoso),
+     2) una barra blanca fina debajo se LLENA de 0→100% acompañándolas,
+     3) breve SOSTÉN con todo visible para "respirar",
+     4) palabra + barra se desvanecen → queda la pantalla LIMPIA del color de la navbar,
+     5) ese fondo hace fade-out y revela el Home.
+   Fondo: rgb(10,8,5) SÓLIDO (la versión opaca del .navbar rgba(10,8,5,0.62)), no el --bg.
+   Es HTML estático del <body> (visible por defecto) para no parpadear antes de que Blazor hidrate;
+   /js/intro.js (en el <head>) lo oculta si ya se vio en esta sesión (sessionStorage → sale al entrar,
+   no en F5) o si se pide menos movimiento. Se AUTO-DESCARTA por animación: aunque el JS fallara, igual
+   se desvanece y deja de bloquear, y la app queda usable.
+   Tiempos (encadenado): letras 160→~1600ms · barra 300→1600ms · sostén ~1600→2150ms ·
+   salida palabra+barra 2150→2670ms · pantalla limpia ~230ms · fade al Home 2900→3550ms.
+   =========================================================== */
+.bunki-intro {
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--z-toast) + 200);   /* por encima de TODO, incluidos toasts */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgb(10, 8, 5);   /* color SÓLIDO de la navbar (no el --bg #0F1115) */
+    overflow: hidden;
+    /* Paso 5: tras la pantalla limpia, el fondo se desvanece y revela el Home. forwards con
+       visibility/pointer-events → deja de bloquear aunque el JS no llegue a quitar el nodo. */
+    animation: bunki-intro-dismiss 650ms var(--ease) 2900ms forwards;
+}
+
+/* Palabra + barra. Se desvanecen JUNTAS (paso 4) antes de la pantalla limpia. */
+.bunki-intro-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+    animation: bunki-intro-content-out 520ms var(--ease) 2150ms forwards;
+}
+
+/* "BUNKI" en Sora 700 / -0.02em (la tipografía del logo), blanco, tamaño moderado (no gigante). */
+.bunki-intro-word {
+    display: flex;
+    gap: 0.02em;
+    font-family: var(--font-display);   /* Sora, la misma del logo */
+    font-weight: 700;
+    letter-spacing: -0.02em;            /* mismo tracking del logo */
+    font-size: clamp(32px, 5vw, 56px);
+    line-height: 1;
+    color: #fff;
+}
+
+/* Paso 1: cada letra entra por separado. El stagger generoso (--i * 220ms) da el aire pausado/elegante;
+   la curva --ease (ease-out fuerte) hace que cada letra "asiente" con suavidad, no robótica. */
+.bunki-intro-letter {
+    display: inline-block;
+    opacity: 0;
+    animation: bunki-intro-letter-in 560ms var(--ease) calc(160ms + var(--i) * 220ms) both;
+}
+
+/* Paso 2: barra de carga fina con track sutil. */
+.bunki-intro-bar {
+    position: relative;
+    width: clamp(150px, 22vw, 200px);
+    height: 2px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);   /* track sutil */
+    overflow: hidden;
+}
+
+/* Relleno blanco: scaleX 0→1 (GPU). Curva propia con carácter para que el llenado se sienta natural
+   (avanza decidido y asienta al final), no lineal. Al completarse, un glow blanco sutil (micro-detalle). */
+.bunki-intro-bar-fill {
+    position: absolute;
+    inset: 0;
+    transform-origin: left center;
+    transform: scaleX(0);
+    border-radius: inherit;
+    background: #fff;
+    animation:
+        bunki-intro-bar-fill 1300ms cubic-bezier(0.7, 0, 0.2, 1) 300ms both,
+        bunki-intro-bar-glow 760ms var(--ease) 1480ms both;
+}
+
+@keyframes bunki-intro-letter-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bunki-intro-bar-fill {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+}
+
+/* Glow blanco sutil al completarse la barra (pulso único y breve; box-shadow es pintura pero es puntual). */
+@keyframes bunki-intro-bar-glow {
+    0%   { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+    55%  { box-shadow: 0 0 16px 1px rgba(255, 255, 255, 0.55); }
+    100% { box-shadow: 0 0 7px 0 rgba(255, 255, 255, 0.18); }
+}
+
+/* Paso 4: palabra + barra se desvanecen juntas (leve subida) → pantalla limpia del color de fondo. */
+@keyframes bunki-intro-content-out {
+    from { opacity: 1; transform: translateY(0); }
+    to   { opacity: 0; transform: translateY(-6px); }
+}
+
+/* Paso 5: el fondo se desvanece, revela el Home y suelta los clics. */
+@keyframes bunki-intro-dismiss {
+    to { opacity: 0; visibility: hidden; pointer-events: none; }
+}
+
+/* Ya visto en esta sesión (clase puesta por intro.js ANTES del primer paint) → no se muestra:
+   anti-parpadeo en F5. */
+html.bunki-intro-seen .bunki-intro {
+    display: none;
+}
+
+/* Menos movimiento: no mostramos el splash (no molestar). Doble seguro junto al guard de intro.js. */
+@media (prefers-reduced-motion: reduce) {
+    .bunki-intro {
+        display: none;
+    }
+}
+
+/* ===========================================================
+   AUTH (Login / Registro) — SPLIT-LAYOUT premium
+   Antes el formulario flotaba centrado en un vacío oscuro. Ahora la pantalla se divide en dos: un panel
+   de marca (imagen real de alojamiento + velo cálido oscuro + titular editorial) y el formulario. El logo
+   va dentro del layout y el © al pie del form, para integrar navbar/footer sin un doble header. En móvil
+   el panel visual se oculta y aparece un mini-logo: el formulario ocupa el ancho.
+   =========================================================== */
+.auth-split {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: var(--bg);
+}
+
+/* --- Panel visual de marca --- */
+.auth-visual {
+    position: sticky; /* si el form (Registro) es largo, la imagen queda fija mientras se scrollea */
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: clamp(28px, 4vw, 48px);
+    overflow: hidden;
+    /* Imagen de alojamiento + velo cálido oscuro para legibilidad (con respaldo en gradiente si faltara
+       la imagen). Mismo lenguaje que el hero del Home. */
+    background-color: var(--bg);
+    background-image: linear-gradient(180deg, rgba(10, 8, 5, 0.50) 0%, rgba(10, 8, 5, 0.70) 55%, rgba(10, 8, 5, 0.92) 100%), radial-gradient(900px 520px at 80% 0%, rgba(214, 168, 79, 0.16), transparent 60%), url('/images/premium/upscalemedia-transformed.jpeg');
+    background-size: cover;
+    background-position: center;
+}
+
+.auth-visual .logo {
+    position: relative;
+    z-index: 1;
+    width: fit-content;
+}
+
+.auth-visual-content {
+    position: relative;
+    z-index: 1;
+    max-width: 24ch;
+}
+
+.auth-visual-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--bg);
+    margin-bottom: 16px;
+}
+
+    .auth-visual-eyebrow::before {
+        content: '';
+        width: 26px;
+        height: 1px;
+        background: var(--gold);
+    }
+
+.auth-visual-title {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    font-size: clamp(30px, 3.4vw, 46px);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    text-wrap: balance;
+    margin-bottom: 14px;
+}
+
+.auth-visual-sub {
+    color: rgba(245, 242, 234, 0.82);
+    font-size: 15px;
+    line-height: 1.6;
+    max-width: 34ch;
+    text-wrap: pretty;
+}
+
+/* --- Lado del formulario --- */
+.auth-form-side {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(36px, 5vw, 64px) clamp(24px, 5vw, 64px);
+    background: var(--bg);
+}
+
+.auth-form {
+    width: 100%;
+    max-width: 430px;
+    margin: 0 auto;
+}
+
+/* Mini-logo: solo visible en móvil (cuando el panel de marca se oculta). */
+.auth-mini-logo {
+    display: none;
+    margin-bottom: 26px;
+}
+
+.auth-title {
+    font-family: var(--font-serif);   /* titular en serif Fraunces, coherente con la marca */
+    font-size: clamp(26px, 3vw, 34px);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 8px;
+    text-wrap: balance;
+}
+
+.auth-sub {
+    color: var(--ink-muted);
+    font-size: 14.5px;
+    line-height: 1.6;
+    margin-bottom: 26px;
+    text-wrap: pretty;
+}
+
+/* Enlace "¿olvidaste tu contraseña?" alineado a la derecha bajo el campo. */
+.auth-forgot {
+    text-align: right;
+    margin-top: -6px;
+    margin-bottom: 20px;
+}
+
+.auth-forgot a,
+.auth-alt a {
+    color: var(--champagne);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+    .auth-forgot a:hover,
+    .auth-alt a:hover { text-decoration: underline; }
+
+.auth-submit {
+    width: 100%;
+    margin-top: 6px;
+}
+
+.auth-alt {
+    text-align: center;
+    margin-top: 22px;
+    color: var(--ink-muted);
+    font-size: 14.5px;
+}
+
+.auth-foot {
+    text-align: center;
+    margin-top: 26px;
+    font-size: 12.5px;
+    color: var(--ink-faint);
+}
+
+/* --- Campo de contraseña con botón mostrar/ocultar --- */
+.pw-field {
+    position: relative;
+}
+
+    /* Espacio a la derecha para que el texto no quede bajo el ícono del ojo. */
+    .pw-field input {
+        padding-right: 44px;
+    }
+
+.pw-toggle {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    transform: translateY(-50%);
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--ink-faint);
+    border-radius: var(--radius-sm);
+    transition: color var(--t);
+}
+
+    .pw-toggle:hover { color: var(--ink); }
+    .pw-toggle:focus-visible { outline: none; box-shadow: var(--ring); }
+
+/* --- Checkbox de términos bien alineado (antes el reset global input{width:100%} lo deformaba) --- */
+.auth-terms {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 22px;
+}
+
+    .auth-terms input[type="checkbox"] {
+        width: 18px;            /* anula el width:100% global que estiraba el checkbox */
+        height: 18px;
+        margin: 2px 0 0;        /* el 2px superior lo alinea con la primera línea del texto */
+        flex-shrink: 0;
+        accent-color: var(--gold);
+        cursor: pointer;
+    }
+
+    .auth-terms label {
+        margin: 0;
+        font-weight: 500;
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--ink-muted);
+        cursor: pointer;
+    }
+
+    .auth-terms a { color: var(--gold); text-decoration: none; }
+    .auth-terms a:hover { text-decoration: underline; }
+
+/* --- Responsive: panel visual fuera, formulario a ancho completo --- */
+@media (max-width: 860px) {
+    .auth-split { grid-template-columns: 1fr; }
+    .auth-visual { display: none; }
+    .auth-mini-logo { display: inline-flex; }
+    .auth-form-side { justify-content: flex-start; }
+}
+
+/* ===========================================================
+   HOVER DORADO COHERENTE — solo tarjetas INTERACTIVAS (clicables/enlaces)
+   El dorado del acento (íconos, links) se vuelve también el color de INTERACCIÓN: al pasar el cursor, el
+   borde se tiñe de dorado semi y aparece una sombra cálida con un anillo fino. Va al final del archivo a
+   propósito: misma especificidad que los :hover propios de cada tarjeta, así gana por orden de cascada y
+   recolorea SOLO borde+sombra, conservando el transform/elevación que cada una ya define.
+   Las tarjetas NO interactivas (.testimonial, paneles informativos) se quedan con su borde sutil, sin este
+   hover. La transición de border-color/box-shadow ya está declarada en cada tarjeta (con --t); en
+   prefers-reduced-motion el catch-all global la vuelve instantánea (sin movimiento brusco). */
+.card--link:hover,
+.admin-alert:hover,
+.categoria-card:hover {
+    border-color: rgba(214, 168, 79, 0.5);
+    box-shadow: var(--shadow-gold), 0 0 0 1px rgba(214, 168, 79, 0.18);
+}

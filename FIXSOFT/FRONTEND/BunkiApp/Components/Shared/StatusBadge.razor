@@ -1,0 +1,39 @@
+@* Components/Shared/StatusBadge.razor *@
+@*
+   Fuente ÚNICA de verdad para el badge de estado.
+   Antes había 3 formas distintas de mapear estado → clase: un switch en ReservasRecibidas,
+   Reserva.EstadoBadgeClass en ReservaCard y un ternario en AdminUsuarios. Este componente
+   centraliza ese mapeo en un solo lugar y REUTILIZA las clases CSS existentes (.state + .state--*,
+   ya con la paleta apagada nueva). No crea CSS de color nuevo.
+*@
+<span class="state @ClaseEstado">
+    @if (ConPunto)
+    {
+        <span class="state-dot"></span>
+    }
+    @(TextoVisible ?? Estado)
+</span>
+
+@code {
+    // Estado lógico (ej. "Confirmada", "Activo"). Es lo que decide el color del badge.
+    [Parameter, EditorRequired] public string Estado { get; set; } = "";
+
+    // Texto a mostrar si difiere del estado lógico. Por defecto se muestra el propio Estado.
+    [Parameter] public string? TextoVisible { get; set; }
+
+    // Mostrar el puntito (.state-dot) antes del texto. La mayoría de los badges lo llevan.
+    [Parameter] public bool ConPunto { get; set; } = true;
+
+    // Mapea el estado a la clase .state--* correcta. Tolerante a mayúsculas/espacios (Trim +
+    // case-insensitive) para no romper si llega "confirmada" o "  CONFIRMADA ". Cubre estados de
+    // reserva y de usuario; cualquier desconocido cae en el neutro (state--completada) para que el
+    // badge nunca quede sin estilo.
+    private string ClaseEstado => (Estado ?? "").Trim().ToLowerInvariant() switch
+    {
+        "confirmada" or "activo"   => "state--confirmada",
+        "pendiente"                => "state--pendiente",
+        "cancelada" or "bloqueado" => "state--cancelada",
+        "completada"               => "state--completada",
+        _                          => "state--completada"
+    };
+}

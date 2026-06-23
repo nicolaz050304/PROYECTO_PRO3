@@ -7,7 +7,7 @@
 
 <PageTitle>Bunki Admin · Usuarios</PageTitle>
 
-<h1 class="admin-page-title">Usuarios</h1>
+@* Título quitado: ya lo muestra el topbar del AdminLayout (evitamos el doble título). *@
 <p class="admin-page-sub">Busca, filtra y administra las cuentas de la plataforma.</p>
 
 <!-- TOOLBAR -->
@@ -58,9 +58,7 @@
                             <td class="adm-muted">@u.Email</td>
                             <td>@u.Rol</td>
                             <td>
-                                <span class="state @EstadoClase(u.Estado)">
-                                    <span class="state-dot"></span>@u.Estado
-                                </span>
+                                <StatusBadge Estado="@u.Estado" />
                             </td>
                             <td class="adm-muted">@u.Registro</td>
                             <td>
@@ -307,14 +305,8 @@
         _ => "Activo"
     };
 
-    // Color del badge según la etiqueta: Activo=verde, Bloqueado=rojo, Pendiente=ámbar.
-    private string EstadoClase(string estado) => estado switch
-    {
-        "Activo" => "state--confirmada",
-        "Bloqueado" => "state--cancelada",
-        "Pendiente" => "state--pendiente",
-        _ => "state--confirmada"
-    };
+    // (El color del badge — Activo=verde, Bloqueado=rojo, Pendiente=ámbar — ahora lo decide
+    //  <StatusBadge>, fuente única de verdad que ya mapea Activo/Bloqueado.)
 
     private IEnumerable<UsuarioAdmin> Filtrados => _usuarios.Where(u =>
         (_rol == "Todos" || u.Rol == _rol) &&

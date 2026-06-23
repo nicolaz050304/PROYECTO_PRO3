@@ -158,8 +158,10 @@
                 }
                 else if (Cargando)
                 {
-                    <!-- Estado de carga: skeleton cards mientras llega la respuesta del provider -->
-                    <div class="grid grid-3" aria-busy="true" aria-label="Cargando alojamientos">
+                    <!-- Estado de carga: skeleton cards mientras llega la respuesta del provider.
+                         Usa la MISMA rejilla (.explorar-grid) que los resultados para que no haya salto
+                         de maquetación al pasar de skeleton a tarjetas reales. -->
+                    <div class="explorar-grid" aria-busy="true" aria-label="Cargando alojamientos">
                         @for (int s = 0; s < ElementosPorPagina; s++)
                         {
                             <div class="card skeleton-card" aria-hidden="true">
@@ -177,11 +179,25 @@
                 }
                 else if (AlojamientosFiltrados.Count == 0)
                 {
-                    <AlertMessage Tipo="warning" Mensaje="No se encontraron alojamientos con los filtros seleccionados. Intenta ajustar la búsqueda." Cerrable="false" />
+                    @* Empty state real (no una alerta): ícono + mensaje + acción directa para recuperarse.
+                       "Limpiar filtros" reusa LimpiarFiltros (sin tocar la lógica de filtrado). *@
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><i class="fas fa-magnifying-glass"></i></div>
+                        <h3>Sin resultados</h3>
+                        <p>No hay alojamientos que coincidan con estos filtros. Prueba ampliar el precio máximo o quitar algún filtro.</p>
+                        <div class="empty-state-actions">
+                            <button type="button" class="btn btn-secondary" @onclick="LimpiarFiltros">
+                                <i class="fas fa-rotate-left"></i> Limpiar filtros
+                            </button>
+                        </div>
+                    </div>
                 }
                 else
                 {
-                    <div class="grid grid-3">
+                    @* Rejilla densa y responsive sin breakpoints: auto-fill + minmax deja 3 tarjetas con el
+                       panel de filtros y hasta 4 cuando el panel colapsa, cayendo solo a 2/1 en pantallas
+                       chicas. La entrada escalonada al montar da la transición suave al filtrar. *@
+                    <div class="explorar-grid">
                         @foreach (var item in AlojamientosPaginados)
                         {
                             <AlojamientoCard Alojamiento="item" UrlDetalle="@ConstruirUrlDetalle(item.Id)" />

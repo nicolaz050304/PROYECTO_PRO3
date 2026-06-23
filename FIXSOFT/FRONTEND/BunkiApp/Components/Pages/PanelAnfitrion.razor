@@ -32,7 +32,9 @@
             <!-- Spotlight: ingresos + mini bar-chart -->
             <div class="spotlight">
                 <span class="spotlight-label"><i class="fas fa-sack-dollar"></i> Ganancias totales (neto)</span>
-                <div class="spotlight-value">@AppState.FormatearPrecio(GananciasReales)</div>
+                @* data-countup: el dato estrella cuenta de 0 a su valor al cargar (count-up vía /js/countup.js).
+                   El destino va como número invariante; el formato de moneda lo conserva Blazor (snap final). *@
+                <div class="spotlight-value" data-countup="@GananciasReales.ToString(CultureInfo.InvariantCulture)">@AppState.FormatearPrecio(GananciasReales)</div>
                 <p class="spotlight-sub"><span class="up"><i class="fas fa-receipt"></i> @CantidadPagos</span> pagos recibidos</p>
                 <div class="spark-bars" aria-hidden="true">
                     @foreach (var m in Ingresos6m)
@@ -59,7 +61,8 @@
                 </div>
                 <div class="gauge" style="--val:@(Stats.TasaOcupacion)" role="img"
                      aria-label="Ocupación proyectada @(Stats.TasaOcupacion) por ciento">
-                    <span class="gauge-num">@(Stats.TasaOcupacion)%</span>
+                    @* El arco se dibuja por CSS (@@property --val); el número cuenta hasta el % por count-up. *@
+                    <span class="gauge-num" data-countup="@Stats.TasaOcupacion" data-countup-decimals="0">@(Stats.TasaOcupacion)%</span>
                 </div>
                 <span class="gauge-label">Ocupación proyectada</span>
             </div>
@@ -69,21 +72,21 @@
                 <div class="metric-mini">
                     <span class="metric-mini-icon metric-mini-icon--warning"><i class="fas fa-clock"></i></span>
                     <div class="metric-mini-body">
-                        <div class="metric-mini-value">@ReservasPendientes</div>
+                        <div class="metric-mini-value" data-countup="@ReservasPendientes">@ReservasPendientes</div>
                         <div class="metric-mini-label">Reservas pendientes</div>
                     </div>
                 </div>
                 <div class="metric-mini">
                     <span class="metric-mini-icon metric-mini-icon--info"><i class="fas fa-house"></i></span>
                     <div class="metric-mini-body">
-                        <div class="metric-mini-value">@AlojamientosActivos</div>
+                        <div class="metric-mini-value" data-countup="@AlojamientosActivos">@AlojamientosActivos</div>
                         <div class="metric-mini-label">Alojamientos activos</div>
                     </div>
                 </div>
                 <div class="metric-mini">
                     <span class="metric-mini-icon"><i class="fas fa-star"></i></span>
                     <div class="metric-mini-body">
-                        <div class="metric-mini-value">@Stats.RatingPromedio.ToString("F1")</div>
+                        <div class="metric-mini-value" data-countup="@Stats.RatingPromedio.ToString(CultureInfo.InvariantCulture)" data-countup-decimals="1">@Stats.RatingPromedio.ToString("F1")</div>
                         <div class="metric-mini-label">Calificación promedio</div>
                     </div>
                 </div>
@@ -114,17 +117,18 @@
                     </div>
 
                     <div class="host-earnings">
+                        @* data-countup: los montos del desglose cuentan de 0 a su valor al cargar. *@
                         <div class="earn-card">
                             <span class="earn-label">Ingresos brutos</span>
-                            <span class="earn-value">@AppState.FormatearPrecio(IngresosBrutosReales)</span>
+                            <span class="earn-value" data-countup="@IngresosBrutosReales.ToString(CultureInfo.InvariantCulture)">@AppState.FormatearPrecio(IngresosBrutosReales)</span>
                         </div>
                         <div class="earn-card earn-card--fee">
                             <span class="earn-label">Comisión Bunki (10%)</span>
-                            <span class="earn-value">- @AppState.FormatearPrecio(ComisionReal)</span>
+                            <span class="earn-value" data-countup="@ComisionReal.ToString(CultureInfo.InvariantCulture)">- @AppState.FormatearPrecio(ComisionReal)</span>
                         </div>
                         <div class="earn-card earn-card--net">
                             <span class="earn-label">Ganancia neta</span>
-                            <span class="earn-value">@AppState.FormatearPrecio(GananciasReales)</span>
+                            <span class="earn-value" data-countup="@GananciasReales.ToString(CultureInfo.InvariantCulture)">@AppState.FormatearPrecio(GananciasReales)</span>
                         </div>
                     </div>
                 </div>
@@ -162,10 +166,7 @@
                                 </div>
 
                                 <div class="host-recent-state">
-                                    <span class="state @EstadoState(r.Estado)">
-                                        <span class="state-dot"></span>
-                                        @r.Estado
-                                    </span>
+                                    <StatusBadge Estado="@r.Estado" />
                                 </div>
                             </div>
                         }
@@ -231,6 +232,13 @@
 @code {
     private List<Alojamiento> Alojamientos = new();
     private (int ReservasActivas, decimal IngresosEsteMes, double RatingPromedio, int TasaOcupacion) Stats;
+
+    // El count-up solo debe dispararse cuando los datos REALES ya están en el DOM. Con el prerender/
+    // hidratación de Blazor Server, el PRIMER render ocurre con los valores aún en 0 (OnInitializedAsync
+    // todavía await-eando los providers); si el count-up corre ahí, "congela" esos ceros encima del dato
+    // real que llega después. Estas banderas lo retrasan hasta que los datos están cargados, y a una sola vez.
+    private bool _datosCargados = false;
+    private bool _countUpHecho = false;
 
     // Filtro de período para la ocupación PROYECTADA (en días, ventana hacia adelante desde hoy). 30 por defecto.
     private int _diasPeriodo = 30;
@@ -298,6 +306,9 @@
         {
             _pagos = await PagoProvider.ListarPorAnfitrionAsync(AppState.UsuarioActual.Id);
         }
+
+        // Datos ya cargados: a partir del re-render que dispara esto, el count-up puede leer valores reales.
+        _datosCargados = true;
     }
 
     public void Dispose() => AppState.OnChange -= OnMonedaChanged;
@@ -311,10 +322,23 @@
     }
 
     // Recalcula la ocupación para la ventana [hoy, hoy + _diasPeriodo) y actualiza Stats.TasaOcupacion.
+    // Reconstruye Stats con ocupación Y rating REALES en la MISMA línea, para que ninguno pise al otro.
     private void RecalcularOcupacion()
     {
         int ocup = CalcularOcupacionPeriodo(Alojamientos.Count, _reservasAnfitrion, _diasPeriodo);
-        Stats = (Stats.ReservasActivas, Stats.IngresosEsteMes, Stats.RatingPromedio, ocup);
+        double ratingReal = CalcularRatingAnfitrion(Alojamientos);
+        Stats = (Stats.ReservasActivas, Stats.IngresosEsteMes, ratingReal, ocup);
+    }
+
+    // Rating REAL del anfitrión (RF19): promedio de las calificaciones de sus alojamientos que ya tienen
+    // reseñas. Antes era mock (4.8 fijo). Cada alojamiento trae su Rating (AVG de sus reseñas) del backend.
+    // Se excluyen los que aún no tienen reseñas (Rating 0) para no hundir el promedio con ceros.
+    // 0 si ninguno tiene reseñas todavía. Así coincide con el rating real que ya muestra MisResenas.
+    private double CalcularRatingAnfitrion(List<Alojamiento> alojamientos)
+    {
+        var conResenas = alojamientos.Where(a => a.Rating > 0).ToList();
+        if (conResenas.Count == 0) return 0;
+        return Math.Round(conResenas.Average(a => a.Rating), 1);
     }
 
     // Ocupación PROYECTADA (RF21): noches reservadas / noches disponibles en los próximos 'dias' días.
@@ -345,14 +369,7 @@
         return Math.Min(pct, 100);
     }
 
-    private string EstadoState(string estado) => estado switch
-    {
-        "Pendiente"  => "state--pendiente",
-        "Confirmada" => "state--confirmada",
-        "Completada" => "state--completada",
-        "Cancelada"  => "state--cancelada",
-        _            => "state--completada"
-    };
+    // (El mapeo estado→clase del badge ahora vive en <StatusBadge>, fuente única de verdad.)
 
     // Calendario dark unificado (mismo Flatpickr que el resto de Bunki).
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -361,6 +378,15 @@
         {
             await JS.InvokeVoidAsync("bunkiDatePicker.initHostDate", "#host-filtro-inicio");
             await JS.InvokeVoidAsync("bunkiDatePicker.initHostDate", "#host-filtro-fin");
+        }
+
+        // Count-up de los KPIs (ingresos, ocupación, rating, desglose): SOLO cuando los datos reales ya
+        // están en el DOM (no en el primer render con ceros) y una única vez. Así anima desde el valor real
+        // y nunca deja 0; si el JS no corriera, el dato real ya está pintado por Blazor. Respeta reduced-motion.
+        if (_datosCargados && !_countUpHecho)
+        {
+            _countUpHecho = true;
+            await JS.InvokeVoidAsync("bunkiCountUp.init", "[data-countup]");
         }
     }
 

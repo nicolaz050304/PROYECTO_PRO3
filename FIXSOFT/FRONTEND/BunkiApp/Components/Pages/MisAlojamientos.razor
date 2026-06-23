@@ -26,9 +26,11 @@
 
         <!-- MÉTRICAS -->
         <div class="host-metrics">
-            <StatBox Valor="@_alojamientos.Count.ToString()" Etiqueta="Publicaciones" Icono="fa-layer-group" Tono="info" />
-            <StatBox Valor="@_alojamientos.Count(a => a.EstadoPublicacion == "Activo").ToString()" Etiqueta="Activos" Icono="fa-circle-check" Tono="exito" />
-            <StatBox Valor="@_reservas.Count.ToString()" Etiqueta="Reservas recibidas" Icono="fa-inbox" Tono="pendiente" />
+            @* KPIs en neutral (--ink): el color sobre conteos era arbitrario (azul/verde/ámbar sin lógica).
+               Solo el de dinero conserva su tono. *@
+            <StatBox Valor="@_alojamientos.Count.ToString()" Etiqueta="Publicaciones" Icono="fa-layer-group" Tono="neutral" />
+            <StatBox Valor="@_alojamientos.Count(a => a.EstadoPublicacion == "Activo").ToString()" Etiqueta="Activos" Icono="fa-circle-check" Tono="neutral" />
+            <StatBox Valor="@_reservas.Count.ToString()" Etiqueta="Reservas recibidas" Icono="fa-inbox" Tono="neutral" />
             <StatBox Valor="@AppState.FormatearPrecio(_reservas.Sum(r => r.Total))" Etiqueta="Ingresos totales" Icono="fa-sack-dollar" Tono="dinero" />
         </div>
 

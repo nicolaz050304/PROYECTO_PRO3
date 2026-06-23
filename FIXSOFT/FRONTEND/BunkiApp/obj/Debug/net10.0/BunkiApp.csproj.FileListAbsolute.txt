@@ -239,7 +239,6 @@ C:\Users\a2023\OneDrive\Documentos\FixSoft\PROYECTO_PRO3\FIXSOFT\FRONTEND\BunkiA
 C:\Users\a2023\OneDrive\Documentos\FixSoft\PROYECTO_PRO3\FIXSOFT\FRONTEND\BunkiApp\obj\Debug\net10.0\ref\BunkiApp.dll
 C:\Users\a2023\OneDrive\Documentos\FixSoft\PROYECTO_PRO3\FIXSOFT\FRONTEND\BunkiApp\obj\Debug\net10.0\compressed\xeqig0uy19-{0}-0wqac4l1yp-0wqac4l1yp.gz
 C:\Users\a2023\OneDrive\Documentos\FixSoft\PROYECTO_PRO3\FIXSOFT\FRONTEND\BunkiApp\obj\Debug\net10.0\compressed\ekcqsvzypg-{0}-ovgno1q0pd-ovgno1q0pd.gz
-C:\Users\a2023\OneDrive\Documentos\FixSoft\PROYECTO_PRO3\FIXSOFT\FRONTEND\BunkiApp\obj\Debug\net10.0\compressed\gk592mo66w-{0}-k20uc861q7-k20uc861q7.gz
 C:\Users\a2023\AppData\Local\Temp\bunki_build_check\appsettings.json
 C:\Users\a2023\AppData\Local\Temp\bunki_build_check\BunkiApp.staticwebassets.runtime.json
 C:\Users\a2023\AppData\Local\Temp\bunki_build_check\BunkiApp.staticwebassets.endpoints.json
@@ -247,4 +246,10 @@ C:\Users\a2023\AppData\Local\Temp\bunki_build_check\BunkiApp.deps.json
 C:\Users\a2023\AppData\Local\Temp\bunki_build_check\BunkiApp.runtimeconfig.json
 C:\Users\a2023\AppData\Local\Temp\bunki_build_check\BunkiApp.dll
 C:\Users\a2023\AppData\Local\Temp\bunki_build_check\BunkiApp.pdb
+C:\Users\a2023\OneDrive\Documentos\FixSoft\PROYECTO_PRO3\FIXSOFT\FRONTEND\BunkiApp\obj\Debug\net10.0\compressed\48hzb6eqn2-{0}-ix8gef8o9d-ix8gef8o9d.gz
+C:\Users\a2023\OneDrive\Documentos\FixSoft\PROYECTO_PRO3\FIXSOFT\FRONTEND\BunkiApp\obj\Debug\net10.0\compressed\6oomvfsr68-{0}-a25t0kwwg1-a25t0kwwg1.gz
 C:\Users\a2023\OneDrive\Documentos\FixSoft\PROYECTO_PRO3\FIXSOFT\FRONTEND\BunkiApp\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt
+C:\Users\a2023\OneDrive\Documentos\FixSoft\PROYECTO_PRO3\FIXSOFT\FRONTEND\BunkiApp\obj\Debug\net10.0\compressed\f5ch57h4m1-{0}-gl2jlvpw2n-gl2jlvpw2n.gz
+C:\Users\a2023\OneDrive\Documentos\FixSoft\PROYECTO_PRO3\FIXSOFT\FRONTEND\BunkiApp\obj\Debug\net10.0\compressed\c500ey1isi-{0}-mwkg0x8tez-mwkg0x8tez.gz
+C:\Users\a2023\OneDrive\Documentos\FixSoft\PROYECTO_PRO3\FIXSOFT\FRONTEND\BunkiApp\obj\Debug\net10.0\compressed\222k0ivani-{0}-uw1n1p2gri-uw1n1p2gri.gz
+C:\Users\a2023\OneDrive\Documentos\FixSoft\PROYECTO_PRO3\FIXSOFT\FRONTEND\BunkiApp\obj\Debug\net10.0\compressed\gk592mo66w-{0}-6nkmicer3s-6nkmicer3s.gz

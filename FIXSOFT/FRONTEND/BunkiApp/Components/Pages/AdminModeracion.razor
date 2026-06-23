@@ -5,7 +5,7 @@
 
 <PageTitle>Bunki Admin · Moderación</PageTitle>
 
-<h1 class="admin-page-title">Moderación</h1>
+@* Título quitado: ya lo muestra el topbar del AdminLayout (evitamos el doble título). *@
 <p class="admin-page-sub">Aprueba publicaciones, revisa denuncias y gestiona incidencias.</p>
 
 <!-- TABS -->
@@ -48,10 +48,12 @@
                                 <td class="adm-muted">@a.Fecha</td>
                                 <td>
                                     <div class="adm-row-actions" style="justify-content: flex-end;">
-                                        <button class="btn btn-small btn-success" @onclick='() => PedirConfirmacion(a, "aprobar")'>
+                                        @* Acción primaria = botón de marca (dorado); el verde/rojo se reservan
+                                           para badges de estado, no para botones de acción. *@
+                                        <button class="btn btn-small btn-primary" @onclick='() => PedirConfirmacion(a, "aprobar")'>
                                             <i class="fas fa-check"></i> Aprobar
                                         </button>
-                                        <button class="btn btn-small btn-soft-danger" @onclick='() => PedirConfirmacion(a, "rechazar")'>
+                                        <button class="btn btn-small btn-secondary" @onclick='() => PedirConfirmacion(a, "rechazar")'>
                                             Rechazar
                                         </button>
                                     </div>
@@ -154,7 +156,8 @@
             </p>
             <div class="adm-modal-actions">
                 <button class="btn btn-outline" style="flex: 1;" @onclick="CerrarConfirm">Cancelar</button>
-                <button class="btn @(aprobar ? "btn-success" : "btn-danger")" style="flex: 1;" @onclick="ConfirmarAccion">
+                @* Botón de marca para la acción primaria; verde/rojo solo para badges de estado, no botones. *@
+                <button class="btn @(aprobar ? "btn-primary" : "btn-secondary")" style="flex: 1;" @onclick="ConfirmarAccion">
                     @(aprobar ? "Aprobar" : "Rechazar")
                 </button>
             </div>

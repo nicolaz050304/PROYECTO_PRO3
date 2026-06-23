@@ -12,7 +12,9 @@
 <section class="hero-home" style="@HeroStyle">
     <div class="hero-home-inner container">
         <span class="hero-eyebrow">Alojamientos seleccionados en Perú</span>
-        <h1>Encuentra estadías extraordinarias</h1>
+        @* Firma editorial: la palabra clave en Fraunces itálica + champán (.editorial-accent).
+           Es la "voz" que se repite en los títulos de sección y rima con las citas de los testimonios. *@
+        <h1>Encuentra estadías <span class="editorial-accent">extraordinarias</span></h1>
         <p class="hero-sub">
             Alojamientos elegidos para viajes, descanso y experiencias memorables —
             reservados con la confianza de una plataforma profesional.
@@ -89,39 +91,145 @@
 </section>
 
 <!-- ===== ALOJAMIENTOS DESTACADOS ===== -->
-<div class="section">
+@* section--feature: el carrusel es el contenido estrella, así que respira más que el resto (ritmo no
+   uniforme). data-reveal: la sección entra al hacer scroll (IntersectionObserver / scroll-reveal.js). *@
+<div class="section section--feature" data-reveal>
     <div class="container">
+        @* Sin eyebrow dorado de sección: repetirlo en cada bloque es "gramática de IA"; el título serif
+           (Fraunces) tiene peso suficiente para liderar. Solo el hero conserva su kicker de apertura. *@
         <div class="section-head">
             <div class="section-head-text">
-                <span class="eyebrow">Selección Bunki</span>
-                <h2 class="section-title editorial-title">Alojamientos destacados</h2>
+                <h2 class="section-title editorial-title">Alojamientos <span class="editorial-accent">destacados</span></h2>
                 <p class="section-subtitle">Una muestra de las estadías mejor valoradas por nuestros huéspedes.</p>
             </div>
             <a href="/explorar" class="section-link">Ver todos <i class="fas fa-arrow-right"></i></a>
         </div>
 
-        <div class="grid grid-3">
-            @foreach (var alojamiento in AlojamientosDestacados)
-            {
-                <AlojamientoCard Alojamiento="alojamiento" />
-            }
+        @* Carrusel: reutiliza <AlojamientoCard> tal cual (tarjetas idénticas al resto). Las flechas, los
+           puntos y el autoplay los controla /js/carrusel.js, inicializado vía interop igual que el datepicker. *@
+        <div class="carrusel" id="carruselDestacados">
+            <button type="button" class="carrusel-flecha carrusel-flecha--prev" aria-label="Anterior">‹</button>
+            <div class="carrusel-track">
+                @foreach (var alojamiento in AlojamientosDestacados)
+                {
+                    <div class="carrusel-item">
+                        <AlojamientoCard Alojamiento="alojamiento" />
+                    </div>
+                }
+            </div>
+            <button type="button" class="carrusel-flecha carrusel-flecha--next" aria-label="Siguiente">›</button>
+            <div class="carrusel-dots"></div>  @* los puntos se generan desde el JS según el nº de páginas *@
+        </div>
+    </div>
+</div>
+
+<!-- ===== CATEGORÍAS ("¿Qué clase de estadía buscas?") ===== -->
+@* section--tight: se acerca a los destacados para leerse como un bloque de exploración (ritmo). *@
+<div class="section section--tight" data-reveal>
+    <div class="container">
+        <div class="section-head section-head--center">
+            <div class="section-head-text">
+                <h2 class="section-title editorial-title">¿Qué clase de <span class="editorial-accent">estadía</span> buscas?</h2>
+            </div>
+        </div>
+
+        @* Tarjetas de categoría en grid: ícono grande arriba + nombre debajo, centrados. Cada una es un
+           punto de entrada visual al catálogo: por ahora solo navega a /explorar (no aplica filtro todavía).
+           data-reveal-group: las tarjetas entran en cascada (escalonado) cuando el grid llega al viewport. *@
+        <div class="categorias-grid" data-reveal-group>
+            <a href="/explorar" class="categoria-card">
+                <span class="categoria-icon"><i class="fas fa-house"></i></span>
+                <span class="categoria-nombre">Casas</span>
+            </a>
+            <a href="/explorar" class="categoria-card">
+                <span class="categoria-icon"><i class="fas fa-building"></i></span>
+                <span class="categoria-nombre">Departamentos</span>
+            </a>
+            <a href="/explorar" class="categoria-card">
+                <span class="categoria-icon"><i class="fas fa-bed"></i></span>
+                <span class="categoria-nombre">Habitaciones</span>
+            </a>
+            <a href="/explorar" class="categoria-card">
+                <span class="categoria-icon"><i class="fas fa-umbrella-beach"></i></span>
+                <span class="categoria-nombre">Playa</span>
+            </a>
+            <a href="/explorar" class="categoria-card">
+                <span class="categoria-icon"><i class="fas fa-city"></i></span>
+                <span class="categoria-nombre">Ciudad</span>
+            </a>
+            <a href="/explorar" class="categoria-card">
+                <span class="categoria-icon"><i class="fas fa-tree"></i></span>
+                <span class="categoria-nombre">Campo</span>
+            </a>
         </div>
     </div>
 </div>
 
 <!-- ===== POR QUÉ BUNKI ===== -->
-<div class="section bg-light">
+<div class="section bg-light" data-reveal>
     <div class="container">
-        <div class="section-head" style="justify-content: center; text-align: center;">
-            <div class="section-head-text" style="max-width: 100%;">
-                <span class="eyebrow">Por qué Bunki</span>
-                <h2 class="section-title editorial-title" style="text-align: center;">Reserva con tranquilidad</h2>
+        @* Cabecera centrada vía clase .section-head--center (antes con estilos inline duplicados). *@
+        <div class="section-head section-head--center">
+            <div class="section-head-text">
+                <h2 class="section-title editorial-title">Reserva con <span class="editorial-accent">tranquilidad</span></h2>
             </div>
         </div>
-        <div class="grid grid-3">
-            <StatBox Tono="neutral" Icono="fa-house" Valor="10,000+" Etiqueta="Alojamientos disponibles" />
-            <StatBox Tono="exito" Icono="fa-shield-halved" Valor="100%" Etiqueta="Transacciones seguras" />
-            <StatBox Tono="rating" Icono="fa-star" Valor="4.8" Etiqueta="Rating promedio" />
+        @* grid--trio: fija 3 columnas iguales para las filas de exactamente 3 ítems del Home, evitando
+           la columna vacía a la derecha que dejaba el auto-fill de .grid-3 en pantallas anchas.
+           data-reveal-group: las tres señales de confianza entran escalonadas. *@
+        <div class="grid grid-3 grid--trio" data-reveal-group>
+            @* Señales de confianza CUALITATIVAS: evitamos cifras infladas/no verificables (antes "10,000+",
+               "100%", "4.8") que restan credibilidad. Mensajes honestos sobre lo que sí garantizamos. *@
+            <StatBox Tono="neutral" Icono="fa-user-check" Valor="Anfitriones verificados" Etiqueta="" />
+            <StatBox Tono="neutral" Icono="fa-shield-halved" Valor="Pago protegido" Etiqueta="" />
+            <StatBox Tono="neutral" Icono="fa-headset" Valor="Soporte en español" Etiqueta="" />
+        </div>
+    </div>
+</div>
+
+<!-- ===== TESTIMONIOS ("Lo que dicen nuestros huéspedes") ===== -->
+<div class="section" data-reveal>
+    <div class="container">
+        <div class="section-head section-head--center">
+            <div class="section-head-text">
+                <h2 class="section-title editorial-title">Lo que dicen nuestros <span class="editorial-accent">huéspedes</span></h2>
+            </div>
+        </div>
+
+        @* Testimonios estáticos curados: práctica habitual en una landing. No provienen del backend ni
+           pretenden ser métricas; son opiniones personales de ejemplo.
+           data-reveal-group: las tres tarjetas de opinión entran escalonadas al hacer scroll. *@
+        <div class="grid grid-3 grid--trio" data-reveal-group>
+            <figure class="testimonial">
+                <div class="testimonial-stars" aria-label="5 de 5 estrellas">
+                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                </div>
+                <blockquote class="testimonial-quote">
+                    El departamento superó nuestras expectativas. La ubicación en Miraflores es inmejorable
+                    y el anfitrión atendió cada detalle.
+                </blockquote>
+                <figcaption class="testimonial-author">Ana R. · Lima</figcaption>
+            </figure>
+
+            <figure class="testimonial">
+                <div class="testimonial-stars" aria-label="5 de 5 estrellas">
+                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                </div>
+                <blockquote class="testimonial-quote">
+                    Reservar fue facilísimo y la casa estaba impecable. Volveremos sin dudarlo.
+                </blockquote>
+                <figcaption class="testimonial-author">Diego M. · Arequipa</figcaption>
+            </figure>
+
+            <figure class="testimonial">
+                <div class="testimonial-stars" aria-label="5 de 5 estrellas">
+                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                </div>
+                <blockquote class="testimonial-quote">
+                    Comunicación excelente con el anfitrión y todo tal como en las fotos. Muy recomendable.
+                </blockquote>
+                <figcaption class="testimonial-author">Lucía P. · Cusco</figcaption>
+            </figure>
         </div>
     </div>
 </div>
@@ -140,12 +248,13 @@
     private string HeroImagen = "";
 
     // Solo define la variable si hay imagen; si no, el CSS usa su respaldo (none).
-    private string HeroStyle => "--hero-img: url('/images/premium/hero-bunki-premium.png')";
+    private string HeroStyle => "--hero-img: url('/images/premium/image (2).png')";
 
     protected override void OnInitialized()
     {
         var todos = Data.ObtenerAlojamientos();
-        AlojamientosDestacados = todos.Take(3).ToList();
+        // Para el carrusel mostramos más estadías (hasta 8, o las que haya). Misma fuente de datos.
+        AlojamientosDestacados = todos.Take(8).ToList();
 
         HeroImagen = todos.Skip(3).FirstOrDefault(a => !string.IsNullOrEmpty(a.ImagenUrl))?.ImagenUrl
                      ?? todos.FirstOrDefault(a => !string.IsNullOrEmpty(a.ImagenUrl))?.ImagenUrl
@@ -181,6 +290,11 @@
         if (firstRender)
         {
             await JS.InvokeVoidAsync("bunkiDatePicker.init", ".flatpickr-date");
+            // Mismo patrón de interop que el datepicker: inicializa el carrusel ya renderizado por Blazor.
+            await JS.InvokeVoidAsync("bunkiCarrusel.init", "#carruselDestacados");
+            // Scroll reveal: DESPUÉS del datepicker y el carrusel (no los toca). Observa los [data-reveal]
+            // y revela cada sección/tarjeta al entrar al viewport; respeta prefers-reduced-motion.
+            await JS.InvokeVoidAsync("bunkiReveal.init");
         }
     }
     private string FormatPickerDate(DateTime? fecha)

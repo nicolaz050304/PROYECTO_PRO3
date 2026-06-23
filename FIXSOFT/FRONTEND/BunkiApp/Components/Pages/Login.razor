@@ -2,49 +2,64 @@
 @layout EmptyLayout
 <PageTitle>Bunki - Inicia Sesión</PageTitle>
 
-<header>
-    <div class="navbar container">
+@* Split-layout: panel de marca (imagen + velo) + formulario, en vez del form centrado en un vacío oscuro.
+   El formulario sigue siendo el MISMO POST estático a /auth/login (sin interactividad), con sus inputs
+   "correo"/"contrasena" y la lógica de Error intactos. *@
+<div class="auth-split">
+
+    <!-- Panel visual de marca -->
+    <aside class="auth-visual">
         <a href="/" class="logo"><i class="fas fa-home"></i> Bunki</a>
-    </div>
-</header>
+        <div class="auth-visual-content">
+            <span class="auth-visual-eyebrow">Alojamientos seleccionados en Perú</span>
+            <h2 class="auth-visual-title">Tu próxima escapada empieza <span class="editorial-accent">aquí</span></h2>
+            <p class="auth-visual-sub">Vuelve a tus reservas, tus mensajes y los espacios que publicas.</p>
+        </div>
+    </aside>
 
-<div class="section">
-    <div class="container" style="max-width:420px;">
-        <h2 class="section-title">Inicia Sesión</h2>
+    <!-- Formulario -->
+    <main class="auth-form-side">
+        <div class="auth-form">
+            <a href="/" class="logo auth-mini-logo"><i class="fas fa-home"></i> Bunki</a>
 
-        @if (Error is not null)
-        {
-            <AlertMessage Tipo="danger" Mensaje="@MensajeError" />
-        }
+            <h1 class="auth-title">Bienvenido de nuevo</h1>
+            <p class="auth-sub">Inicia sesión para continuar en Bunki.</p>
 
-        <form action="/auth/login" method="post">
-            <div class="form-group">
-                <label>Correo Electrónico</label>
-                <input name="correo" type="email" placeholder="tu@ejemplo.com" required />
-            </div>
+            @if (Error is not null)
+            {
+                <AlertMessage Tipo="danger" Mensaje="@MensajeError" />
+            }
 
-            <div class="form-group">
-                <label>Contraseña</label>
-                <input name="contrasena" type="password" placeholder="••••••••" required />
-            </div>
+            @* Formulario POST estático intacto: action, method y los name de los campos NO cambian. *@
+            <form action="/auth/login" method="post">
+                <div class="form-group">
+                    <label>Correo electrónico</label>
+                    <input name="correo" type="email" placeholder="tu@ejemplo.com" required />
+                </div>
 
-            <div class="form-group" style="text-align:right;">
-                <a href="/recuperar-password" style="color:var(--gold);text-decoration:none;font-size:14px;">
-                    ¿Olvidaste tu contraseña?
-                </a>
-            </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    @* .pw-field + botón de ojo: el toggle es JS mínimo (bunkiPw.toggle) y no afecta al POST. *@
+                    <div class="pw-field">
+                        <input id="login-pw" name="contrasena" type="password" placeholder="••••••••" required />
+                        <button type="button" class="pw-toggle" aria-label="Mostrar contraseña" onclick="bunkiPw.toggle(this)">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
 
-            <button type="submit" class="btn btn-primary btn-large">Inicia Sesión</button>
-        </form>
+                <div class="auth-forgot">
+                    <a href="/recuperar-password">¿Olvidaste tu contraseña?</a>
+                </div>
 
-        <p style="text-align:center;margin-top:20px;color:var(--text-light);">
-            ¿No tienes cuenta?
-            <a href="/registro" style="color:var(--gold);text-decoration:none;">Regístrate aquí</a>
-        </p>
-    </div>
+                <button type="submit" class="btn btn-primary btn-large auth-submit">Iniciar sesión</button>
+            </form>
+
+            <p class="auth-alt">¿No tienes cuenta? <a href="/registro">Regístrate</a></p>
+            <p class="auth-foot">© 2026 Bunki. Todos los derechos reservados.</p>
+        </div>
+    </main>
 </div>
-
-<footer><div class="container"><p>&copy; 2026 Bunki. Todos los derechos reservados.</p></div></footer>
 
 @code {
     [SupplyParameterFromQuery] public int? Error { get; set; }
