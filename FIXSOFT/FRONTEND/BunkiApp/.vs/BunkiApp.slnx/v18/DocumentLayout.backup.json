@@ -3,6 +3,10 @@
   "WorkspaceRootPath": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\a2023\\onedrive\\documentos\\fixsoft\\proyecto_pro3\\fixsoft\\frontend\\bunkiapp\\components\\pages\\home.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\pages\\home.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\a2023\\onedrive\\documentos\\fixsoft\\proyecto_pro3\\fixsoft\\frontend\\bunkiapp\\wwwroot\\css\\styles.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}",
       "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:wwwroot\\css\\styles.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}"
     },
@@ -21,10 +25,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\a2023\\onedrive\\documentos\\fixsoft\\proyecto_pro3\\fixsoft\\frontend\\bunkiapp\\components\\routes.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
       "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\routes.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\a2023\\onedrive\\documentos\\fixsoft\\proyecto_pro3\\fixsoft\\frontend\\bunkiapp\\components\\pages\\home.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|solutionrelative:components\\pages\\home.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{592CA369-AA0E-8B5B-4D5D-EF3C819FD007}|BunkiApp.csproj|c:\\users\\a2023\\onedrive\\documentos\\fixsoft\\proyecto_pro3\\fixsoft\\frontend\\bunkiapp\\components\\layout\\navmenu.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
@@ -78,21 +78,8 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 7,
+          "SelectedChildIndex": 6,
           "Children": [
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "App.razor",
-              "DocumentMoniker": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Components\\App.razor",
-              "RelativeDocumentMoniker": "Components\\App.razor",
-              "ToolTip": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Components\\App.razor",
-              "RelativeToolTip": "Components\\App.razor",
-              "ViewState": "AgIAABgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-06-23T03:34:39.092Z",
-              "EditorCaption": ""
-            },
             {
               "$type": "Bookmark",
               "Name": "ST:1:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
@@ -104,6 +91,18 @@
             {
               "$type": "Document",
               "DocumentIndex": 2,
+              "Title": "App.razor",
+              "DocumentMoniker": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Components\\App.razor",
+              "RelativeDocumentMoniker": "Components\\App.razor",
+              "ToolTip": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Components\\App.razor",
+              "RelativeToolTip": "Components\\App.razor",
+              "ViewState": "AgIAABgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-06-23T03:34:39.092Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
               "Title": "Explorar.razor",
               "DocumentMoniker": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Components\\Pages\\Explorar.razor",
               "RelativeDocumentMoniker": "Components\\Pages\\Explorar.razor",
@@ -111,12 +110,11 @@
               "RelativeToolTip": "Components\\Pages\\Explorar.razor",
               "ViewState": "AgIAAJ4BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-06-23T03:40:37.871Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-23T03:40:37.871Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 4,
               "Title": "_Imports.razor",
               "DocumentMoniker": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Components\\_Imports.razor",
               "RelativeDocumentMoniker": "Components\\_Imports.razor",
@@ -124,12 +122,11 @@
               "RelativeToolTip": "Components\\_Imports.razor",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-06-23T03:34:34.563Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-23T03:34:34.563Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 5,
               "Title": "Routes.razor",
               "DocumentMoniker": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Components\\Routes.razor",
               "RelativeDocumentMoniker": "Components\\Routes.razor",
@@ -137,30 +134,30 @@
               "RelativeToolTip": "Components\\Routes.razor",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-06-23T03:34:31.42Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-23T03:34:31.42Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 0,
               "Title": "Home.razor",
               "DocumentMoniker": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Components\\Pages\\Home.razor",
               "RelativeDocumentMoniker": "Components\\Pages\\Home.razor",
               "ToolTip": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\Components\\Pages\\Home.razor",
               "RelativeToolTip": "Components\\Pages\\Home.razor",
-              "ViewState": "AgIAAOgAAAAAAAAAAAAQwPoAAABPAAAAAAAAAA==",
+              "ViewState": "AgIAAOIAAAAAAAAAAAAQwPoAAABKAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-06-22T21:38:08.386Z"
+              "WhenOpened": "2026-06-22T21:38:08.386Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "styles.css",
               "DocumentMoniker": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\wwwroot\\css\\styles.css",
               "RelativeDocumentMoniker": "wwwroot\\css\\styles.css",
               "ToolTip": "C:\\Users\\a2023\\OneDrive\\Documentos\\FixSoft\\PROYECTO_PRO3\\FIXSOFT\\FRONTEND\\BunkiApp\\wwwroot\\css\\styles.css",
               "RelativeToolTip": "wwwroot\\css\\styles.css",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAARAAAAAAAAAA==",
+              "ViewState": "AgIAAPEYAAAAAAAAAAAwwPsYAAAaAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003000|",
               "WhenOpened": "2026-06-22T20:15:08.558Z",
               "EditorCaption": ""

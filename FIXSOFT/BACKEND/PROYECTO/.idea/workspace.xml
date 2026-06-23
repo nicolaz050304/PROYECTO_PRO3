@@ -10,31 +10,37 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b65f8cba-90fd-4899-aa83-a727a7a560b2" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/.vs/BunkiApp.slnx/FileContentIndex/2036c523-6eed-46e0-8237-963bc5e1f394.vsidx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/.vs/BunkiApp.slnx/FileContentIndex/2ba62635-382a-4a2f-aca5-734276ff9493.vsidx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/.vs/BunkiApp.slnx/v18/.futdcache.v2" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/.vs/BunkiApp.slnx/v18/.futdcache.v2" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/.vs/BunkiApp.slnx/DesignTimeBuild/.dtbcache.v2" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/.vs/BunkiApp.slnx/DesignTimeBuild/.dtbcache.v2" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/.vs/BunkiApp.slnx/FileContentIndex/c8f5056c-5290-4462-97a9-32cbeb3c9981.vsidx" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/.vs/BunkiApp.slnx/v18/.suo" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/.vs/BunkiApp.slnx/v18/.suo" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/.vs/ProjectEvaluation/bunkiapp.metadata.v10.bin" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/.vs/ProjectEvaluation/bunkiapp.metadata.v10.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/.vs/ProjectEvaluation/bunkiapp.projects.v10.bin" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/.vs/ProjectEvaluation/bunkiapp.projects.v10.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/Components/Pages/AdminModeracion.razor" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/Components/Pages/AdminModeracion.razor" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/Components/Pages/AdminReportesFinancieros.razor" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/Components/Pages/AdminReportesFinancieros.razor" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/.vs/BunkiApp.slnx/v18/DocumentLayout.backup.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/.vs/BunkiApp.slnx/v18/DocumentLayout.backup.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/.vs/BunkiApp.slnx/v18/DocumentLayout.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/.vs/BunkiApp.slnx/v18/DocumentLayout.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/Components/Pages/Home.razor" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/Components/Pages/Home.razor" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/Components/Pages/PanelAnfitrion.razor" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/Components/Pages/PanelAnfitrion.razor" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/bin/Debug/net10.0/BunkiApp.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/bin/Debug/net10.0/BunkiApp.dll" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/bin/Debug/net10.0/BunkiApp.exe" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/bin/Debug/net10.0/BunkiApp.exe" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/bin/Debug/net10.0/BunkiApp.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/bin/Debug/net10.0/BunkiApp.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/bin/Debug/net10.0/BunkiApp.staticwebassets.endpoints.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/bin/Debug/net10.0/BunkiApp.staticwebassets.endpoints.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/bin/Debug/net10.0/BunkiApp.staticwebassets.runtime.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/bin/Debug/net10.0/BunkiApp.staticwebassets.runtime.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/BunkiApp.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/BunkiApp.AssemblyInfo.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/BunkiApp.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/BunkiApp.AssemblyInfoInputs.cache" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/BunkiApp.csproj.FileListAbsolute.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/BunkiApp.csproj.FileListAbsolute.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/BunkiApp.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/BunkiApp.dll" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/BunkiApp.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/BunkiApp.pdb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/BunkiApp.sourcelink.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/BunkiApp.sourcelink.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/apphost.exe" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/apphost.exe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/compressed/gk592mo66w-{0}-6nkmicer3s-6nkmicer3s.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/rbcswa.dswa.cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/rbcswa.dswa.cache.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/ref/BunkiApp.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/ref/BunkiApp.dll" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/refint/BunkiApp.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/refint/BunkiApp.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/rjimswa.dswa.cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/rjimswa.dswa.cache.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/rjsmcshtml.dswa.cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/rjsmcshtml.dswa.cache.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/rjsmrazor.dswa.cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/rjsmrazor.dswa.cache.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/rpswa.dswa.cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/rpswa.dswa.cache.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/wwwroot/css/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/wwwroot/css/styles.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/staticwebassets.build.endpoints.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/staticwebassets.build.endpoints.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/staticwebassets.build.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/staticwebassets.build.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/staticwebassets.build.json.cache" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/staticwebassets.build.json.cache" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/staticwebassets.development.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/staticwebassets.development.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/staticwebassets.upToDateCheck.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../../FRONTEND/BunkiApp/obj/Debug/net10.0/staticwebassets.upToDateCheck.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -218,7 +224,7 @@
       <workItem from="1781979654338" duration="15561000" />
       <workItem from="1782054199853" duration="6878000" />
       <workItem from="1782142384482" duration="2968000" />
-      <workItem from="1782158441716" duration="5681000" />
+      <workItem from="1782158441716" duration="6953000" />
     </task>
     <servers />
   </component>

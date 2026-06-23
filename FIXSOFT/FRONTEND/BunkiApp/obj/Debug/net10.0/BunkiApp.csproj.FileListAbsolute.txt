@@ -252,4 +252,4 @@ C:\Users\a2023\OneDrive\Documentos\FixSoft\PROYECTO_PRO3\FIXSOFT\FRONTEND\BunkiA
 C:\Users\a2023\OneDrive\Documentos\FixSoft\PROYECTO_PRO3\FIXSOFT\FRONTEND\BunkiApp\obj\Debug\net10.0\compressed\f5ch57h4m1-{0}-gl2jlvpw2n-gl2jlvpw2n.gz
 C:\Users\a2023\OneDrive\Documentos\FixSoft\PROYECTO_PRO3\FIXSOFT\FRONTEND\BunkiApp\obj\Debug\net10.0\compressed\c500ey1isi-{0}-mwkg0x8tez-mwkg0x8tez.gz
 C:\Users\a2023\OneDrive\Documentos\FixSoft\PROYECTO_PRO3\FIXSOFT\FRONTEND\BunkiApp\obj\Debug\net10.0\compressed\222k0ivani-{0}-uw1n1p2gri-uw1n1p2gri.gz
-C:\Users\a2023\OneDrive\Documentos\FixSoft\PROYECTO_PRO3\FIXSOFT\FRONTEND\BunkiApp\obj\Debug\net10.0\compressed\gk592mo66w-{0}-6nkmicer3s-6nkmicer3s.gz
+C:\Users\a2023\OneDrive\Documentos\FixSoft\PROYECTO_PRO3\FIXSOFT\FRONTEND\BunkiApp\obj\Debug\net10.0\compressed\gk592mo66w-{0}-dfzj9mllmq-dfzj9mllmq.gz
