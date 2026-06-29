@@ -1,0 +1,392 @@
+@page "/"
+@rendermode InteractiveServer
+@inject DataService Data
+@inject AlojamientoProvider AlojamientoProvider
+@inject Services.ResenaProvider ResenaProvider
+@inject NavigationManager Navigation
+@inject BunkiApp.Models.AppState AppState
+@inject IJSRuntime JS
+@using System.Globalization
+@implements IDisposable
+
+<PageTitle>Bunki - Encuentra estadías extraordinarias en Perú</PageTitle>
+
+<!-- ===== HERO EDITORIAL ("Editorial Mono": wordmark tipográfico) ===== -->
+<section class="hero-ed">
+    <div class="hero-ed-inner container">
+        @* Fila superior estilo revista: firma a la izquierda; año, lema y sellos de confianza a la
+           derecha (— Verificado / — Protegido / — Sin sorpresas), tal como en el sistema de diseño. *@
+        <header class="hero-ed-top">
+            <span class="hero-ed-kicker">Bunki · estadías</span>
+            <div class="hero-ed-meta">
+                <span class="hero-ed-year serif-accent">2026</span>
+                <span class="hero-ed-claim">Hospitalidad con criterio</span>
+                <ul class="hero-ed-trust">
+                    <li>Verificado</li>
+                    <li>Protegido</li>
+                    <li>Sin sorpresas</li>
+                </ul>
+            </div>
+        </header>
+
+        @* Titular Porcelana: frase en Hanken 800 (sentence case) con un acento serif cursivo en "tuyo".
+           Sobrio y acogedor, tipo hotel boutique. *@
+        <div class="hero-ed-display">
+            <h1 class="hero-ed-headline">Un lugar que ya se siente <span class="serif-accent">tuyo.</span></h1>
+        </div>
+
+        <p class="hero-ed-sub">
+            Espacios elegidos a mano en todo el país. Reserva en minutos, paga con confianza
+            y llega a casa desde el primer momento.
+        </p>
+
+        <!-- Buscador estilo Airbnb integrado (se conserva; misma lógica) -->
+        <div class="search-card">
+            <div class="search-field">
+                <label>Ubicación</label>
+                <input type="text" placeholder="¿A dónde vas?" @bind="Ubicacion" @bind:event="oninput" />
+            </div>
+            <div class="search-field">
+                <label>Entrada</label>
+                <input id="home-fecha-entrada"
+                       class="flatpickr-date"
+                       type="text"
+                       placeholder="dd/mm/aaaa"
+                       value="@FormatPickerDate(FechaEntrada)"
+                       readonly
+                       autocomplete="off" />
+            </div>
+            <div class="search-field">
+                <label>Salida</label>
+                <input id="home-fecha-salida"
+                       class="flatpickr-date"
+                       type="text"
+                       placeholder="dd/mm/aaaa"
+                       value="@FormatPickerDate(FechaSalida)"
+                       readonly
+                       autocomplete="off" />
+            </div>
+            <div class="search-field search-field-guests">
+                <label>Huéspedes</label>
+
+                <div class="guest-chip-group">
+                    <button type="button"
+                            class="guest-chip @(Huespedes == 1 ? "active" : "")"
+                            @onclick="() => Huespedes = 1">
+                        1
+                    </button>
+
+                    <button type="button"
+                            class="guest-chip @(Huespedes == 2 ? "active" : "")"
+                            @onclick="() => Huespedes = 2">
+                        2
+                    </button>
+
+                    <button type="button"
+                            class="guest-chip @(Huespedes == 3 ? "active" : "")"
+                            @onclick="() => Huespedes = 3">
+                        3
+                    </button>
+
+                    <button type="button"
+                            class="guest-chip @(Huespedes == 4 ? "active" : "")"
+                            @onclick="() => Huespedes = 4">
+                        4+
+                    </button>
+                </div>
+            </div>
+            <button class="btn btn-primary search-submit" @onclick="Buscar">
+                <i class="fas fa-search"></i> Buscar
+            </button>
+        </div>
+
+        <div class="hero-ed-actions">
+            <a href="/explorar" class="btn btn-primary btn-pill">
+                Explorar estadías <i class="fas fa-arrow-right"></i>
+            </a>
+            @if (AppState.EstaAutenticado)
+            {
+                <a href="/crear-alojamiento" class="btn btn-outline btn-pill">Ser anfitrión</a>
+            }
+            else
+            {
+                <a href="/registro" class="btn btn-outline btn-pill">Ser anfitrión</a>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- ===== ALOJAMIENTOS DESTACADOS ===== -->
+@* section--feature: el carrusel es el contenido estrella, así que respira más que el resto (ritmo no
+   uniforme). data-reveal: la sección entra al hacer scroll (IntersectionObserver / scroll-reveal.js). *@
+<div class="section section--feature" data-reveal>
+    <div class="container">
+        @* Sin eyebrow dorado de sección: repetirlo en cada bloque es "gramática de IA"; el título serif
+           (Fraunces) tiene peso suficiente para liderar. Solo el hero conserva su kicker de apertura. *@
+        <div class="section-head">
+            <div class="section-head-text">
+                <h2 class="section-title editorial-title">Alojamientos <span class="editorial-accent">destacados</span></h2>
+                <p class="section-subtitle">Una muestra de las estadías mejor valoradas por nuestros huéspedes.</p>
+            </div>
+            <a href="/explorar" class="section-link">Ver todos <i class="fas fa-arrow-right"></i></a>
+        </div>
+
+        @* Carrusel: reutiliza <AlojamientoCard> tal cual (tarjetas idénticas al resto). Las flechas, los
+           puntos y el autoplay los controla /js/carrusel.js, inicializado vía interop igual que el datepicker. *@
+        <div class="carrusel" id="carruselDestacados">
+            <button type="button" class="carrusel-flecha carrusel-flecha--prev" aria-label="Anterior">‹</button>
+            <div class="carrusel-track">
+                @foreach (var alojamiento in AlojamientosDestacados)
+                {
+                    <div class="carrusel-item">
+                        <AlojamientoCard Alojamiento="alojamiento" />
+                    </div>
+                }
+            </div>
+            <button type="button" class="carrusel-flecha carrusel-flecha--next" aria-label="Siguiente">›</button>
+            <div class="carrusel-dots"></div>  @* los puntos se generan desde el JS según el nº de páginas *@
+        </div>
+    </div>
+</div>
+
+<!-- ===== CATEGORÍAS ("¿Qué clase de estadía buscas?") ===== -->
+@* section--tight: se acerca a los destacados para leerse como un bloque de exploración (ritmo). *@
+<div class="section section--tight" data-reveal>
+    <div class="container">
+        <div class="section-head section-head--center">
+            <div class="section-head-text">
+                <h2 class="section-title editorial-title">¿Qué clase de <span class="editorial-accent">estadía</span> buscas?</h2>
+            </div>
+        </div>
+
+        @* Tarjetas de categoría en grid: ícono grande arriba + nombre debajo, centrados. Cada una es un
+           punto de entrada visual al catálogo: por ahora solo navega a /explorar (no aplica filtro todavía).
+           data-reveal-group: las tarjetas entran en cascada (escalonado) cuando el grid llega al viewport. *@
+        <div class="categorias-grid" data-reveal-group>
+            <a href="/explorar" class="categoria-card">
+                <span class="categoria-icon"><i class="fas fa-house"></i></span>
+                <span class="categoria-nombre">Casas</span>
+            </a>
+            <a href="/explorar" class="categoria-card">
+                <span class="categoria-icon"><i class="fas fa-building"></i></span>
+                <span class="categoria-nombre">Departamentos</span>
+            </a>
+            <a href="/explorar" class="categoria-card">
+                <span class="categoria-icon"><i class="fas fa-bed"></i></span>
+                <span class="categoria-nombre">Habitaciones</span>
+            </a>
+            <a href="/explorar" class="categoria-card">
+                <span class="categoria-icon"><i class="fas fa-umbrella-beach"></i></span>
+                <span class="categoria-nombre">Playa</span>
+            </a>
+            <a href="/explorar" class="categoria-card">
+                <span class="categoria-icon"><i class="fas fa-city"></i></span>
+                <span class="categoria-nombre">Ciudad</span>
+            </a>
+            <a href="/explorar" class="categoria-card">
+                <span class="categoria-icon"><i class="fas fa-tree"></i></span>
+                <span class="categoria-nombre">Campo</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- ===== POR QUÉ BUNKI ===== -->
+<div class="section bg-light" data-reveal>
+    <div class="container">
+        @* Cabecera centrada vía clase .section-head--center (antes con estilos inline duplicados). *@
+        <div class="section-head section-head--center">
+            <div class="section-head-text">
+                <h2 class="section-title editorial-title">Reserva con <span class="editorial-accent">tranquilidad</span></h2>
+            </div>
+        </div>
+        @* grid--trio: fija 3 columnas iguales para las filas de exactamente 3 ítems del Home, evitando
+           la columna vacía a la derecha que dejaba el auto-fill de .grid-3 en pantallas anchas.
+           data-reveal-group: las tres señales de confianza entran escalonadas. *@
+        <div class="grid grid-3 grid--trio" data-reveal-group>
+            @* Señales de confianza CUALITATIVAS: evitamos cifras infladas/no verificables (antes "10,000+",
+               "100%", "4.8") que restan credibilidad. Mensajes honestos sobre lo que sí garantizamos. *@
+            <StatBox Tono="neutral" Icono="fa-user-check" Valor="Anfitriones verificados" Etiqueta="" />
+            <StatBox Tono="neutral" Icono="fa-shield-halved" Valor="Pago protegido" Etiqueta="" />
+            <StatBox Tono="neutral" Icono="fa-headset" Valor="Soporte en español" Etiqueta="" />
+        </div>
+    </div>
+</div>
+
+<!-- ===== TESTIMONIOS ("Lo que dicen nuestros huéspedes") ===== -->
+<div class="section" data-reveal>
+    <div class="container">
+        @* Testimonios REALES: reseñas de huéspedes (4–5★ con comentario) traídas del backend.
+           Si todavía no hay reseñas con texto, la sección no se muestra (no inventamos opiniones). *@
+        @if (_testimonios.Any())
+        {
+            <div class="section-head section-head--center">
+                <div class="section-head-text">
+                    <h2 class="section-title editorial-title">Lo que dicen nuestros <span class="editorial-accent">huéspedes</span></h2>
+                </div>
+            </div>
+
+            <div class="grid grid-3 grid--trio" data-reveal-group>
+                @foreach (var t in _testimonios)
+                {
+                    <figure class="testimonial">
+                        <div class="testimonial-stars" aria-label="@t.Estrellas de 5 estrellas">
+                            @for (int i = 0; i < t.Estrellas; i++)
+                            {
+                                <i class="fas fa-star"></i>
+                            }
+                        </div>
+                        <blockquote class="testimonial-quote">@t.Comentario</blockquote>
+                        <figcaption class="testimonial-author">
+                            @(string.IsNullOrWhiteSpace(t.AutorNombre) ? "Huésped" : t.AutorNombre)@(string.IsNullOrWhiteSpace(t.AlojamientoNombre) ? "" : $" · {t.AlojamientoNombre}")
+                        </figcaption>
+                    </figure>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<Alojamiento> AlojamientosDestacados = new();
+    private List<Resena> _testimonios = new();
+
+    // Campos del buscador del hero (solo UI; no implementan búsqueda compleja).
+    private string Ubicacion = "";
+    private DateTime? FechaEntrada;
+    private DateTime? FechaSalida;
+    private int Huespedes = 1;
+
+    // Calendario en modo rango (mismo que el detalle) para el buscador. _ref permite que flatpickr
+    // llame a SetRango (fuente de verdad de las fechas); _pickerInicializado evita instanciarlo dos veces.
+    private DotNetObjectReference<Home>? _ref;
+    private bool _pickerInicializado = false;
+
+    // Imagen del hero: tomada de un alojamiento real del catálogo (distinto a los destacados),
+    // con respaldo en gradiente si no hubiera imagen. No altera datos ni servicios.
+    private string HeroImagen = "";
+
+    // Solo define la variable si hay imagen; si no, el CSS usa su respaldo (none).
+    private string HeroStyle => "--hero-img: url('/images/premium/hero-bunki-premium.png')";
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Catálogo REAL del backend (el provider cae a mock solo si el REST falla).
+        var todos = await AlojamientoProvider.ListarAsync();
+
+        // "Destacados / mejor valoradas": los de mayor calificación (y más reseñas) primero.
+        AlojamientosDestacados = todos
+            .OrderByDescending(a => a.Rating)
+            .ThenByDescending(a => a.TotalResenas)
+            .Take(8)
+            .ToList();
+
+        HeroImagen = todos.Skip(3).FirstOrDefault(a => !string.IsNullOrEmpty(a.ImagenUrl))?.ImagenUrl
+                     ?? todos.FirstOrDefault(a => !string.IsNullOrEmpty(a.ImagenUrl))?.ImagenUrl
+                     ?? "";
+
+        // Testimonios REALES: reseñas con 4–5★ y comentario con texto (no inventadas).
+        try
+        {
+            var resenas = await ResenaProvider.ListarTodasAsync();
+            _testimonios = resenas
+                .Where(r => r.Estrellas >= 4 && !string.IsNullOrWhiteSpace(r.Comentario))
+                .OrderByDescending(r => r.Estrellas)
+                .Take(3)
+                .ToList();
+        }
+        catch
+        {
+            _testimonios = new();
+        }
+    }
+
+    // Redirige a /explorar conservando la navegación existente.
+    // Pasa los valores como query string (forward-compatible) sin cambiar la lógica de Explorar.
+    private void Buscar()
+    {
+        var query = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(Ubicacion))
+            query.Add($"ubicacion={Uri.EscapeDataString(Ubicacion)}");
+
+        if (FechaEntrada.HasValue)
+            query.Add($"entrada={FechaEntrada.Value:yyyy-MM-dd}");
+
+        if (FechaSalida.HasValue)
+            query.Add($"salida={FechaSalida.Value:yyyy-MM-dd}");
+
+        if (Huespedes > 0)
+            query.Add($"huespedes={Huespedes}");
+
+        var url = query.Any()
+            ? $"/explorar?{string.Join("&", query)}"
+            : "/explorar";
+
+        Navigation.NavigateTo(url);
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (!_pickerInicializado)
+            {
+                _pickerInicializado = true;
+                _ref ??= DotNetObjectReference.Create(this);
+
+                // Mismo calendario de rango que el detalle PERO sin disable: en el buscador no hay un
+                // alojamiento concreto, así que no se bloquean fechas ocupadas; solo el pasado
+                // (minDate hoy). Si ya hay fechas (no es el caso típico en Home), se precargan en ISO.
+                await JS.InvokeVoidAsync("bunkiDatePicker.initDetalleRango",
+                    "#home-fecha-entrada", "#home-fecha-salida",
+                    new
+                    {
+                        minDate = "today",
+                        fechaEntrada = FechaEntrada?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                        fechaSalida = FechaSalida?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+                    },
+                    _ref);
+            }
+            // Mismo patrón de interop que el datepicker: inicializa el carrusel ya renderizado por Blazor.
+            await JS.InvokeVoidAsync("bunkiCarrusel.init", "#carruselDestacados");
+            // Scroll reveal: DESPUÉS del datepicker y el carrusel (no los toca). Observa los [data-reveal]
+            // y revela cada sección/tarjeta al entrar al viewport; respeta prefers-reduced-motion.
+            await JS.InvokeVoidAsync("bunkiReveal.init");
+        }
+    }
+
+    // [JSInvokable] SetRango: ÚNICA fuente de verdad de las fechas del buscador. flatpickr (modo rango)
+    // la llama al cambiar la selección; parseamos el ISO, asignamos y reusamos la validación fin<=inicio.
+    [JSInvokable]
+    public void SetRango(string? isoInicio, string? isoFin)
+    {
+        FechaEntrada = ParsePickerDate(isoInicio);
+        FechaSalida = ParsePickerDate(isoFin);
+
+        if (FechaEntrada.HasValue && FechaSalida.HasValue && FechaSalida <= FechaEntrada)
+        {
+            FechaSalida = null;
+        }
+
+        StateHasChanged();
+    }
+
+    public void Dispose() => _ref?.Dispose();
+    private string FormatPickerDate(DateTime? fecha)
+    {
+        return fecha?.ToString("yyyy-MM-dd") ?? "";
+    }
+
+    private DateTime? ParsePickerDate(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+
+        if (DateTime.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var fecha))
+            return fecha;
+
+        if (DateTime.TryParse(value, out fecha))
+            return fecha;
+
+        return null;
+    }
+}

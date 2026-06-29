@@ -1,0 +1,532 @@
+@page "/mis-alojamientos"
+@rendermode InteractiveServer
+@inject DataService Data
+@inject AlojamientoProvider AlojamientoProvider
+@inject ReservaProvider ReservaProvider
+@inject BunkiApp.Services.BloqueoServiceRest Bloqueo
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@inject BunkiApp.Models.AppState AppState
+@implements IDisposable
+
+<PageTitle>Bunki - Mis Alojamientos</PageTitle>
+
+<div class="section host-page">
+    <div class="container">
+
+        <!-- CABECERA -->
+        <header class="host-head">
+            <div>
+                <span class="host-head-eyebrow">Gestión de propiedades</span>
+                <h1 class="host-head-title">Mis alojamientos</h1>
+                <p class="host-head-sub">Administra tus publicaciones, estados y precios en un solo lugar.</p>
+            </div>
+            <button class="btn btn-primary" @onclick='() => Navigation.NavigateTo("/crear-alojamiento")'>
+                <i class="fas fa-plus-circle"></i> Nuevo alojamiento
+            </button>
+        </header>
+
+        <!-- MÉTRICAS -->
+        <div class="host-metrics">
+            @* KPIs en neutral (--ink): el color sobre conteos era arbitrario (azul/verde/ámbar sin lógica).
+               Solo el de dinero conserva su tono. *@
+            <StatBox Valor="@_alojamientos.Count.ToString()" Etiqueta="Publicaciones" Icono="fa-layer-group" Tono="neutral" />
+            <StatBox Valor="@_alojamientos.Count(a => a.EstadoPublicacion == "Activo").ToString()" Etiqueta="Activos" Icono="fa-circle-check" Tono="neutral" />
+            <StatBox Valor="@_reservas.Count.ToString()" Etiqueta="Reservas recibidas" Icono="fa-inbox" Tono="neutral" />
+            <StatBox Valor="@AppState.FormatearPrecio(_reservas.Sum(r => r.Total))" Etiqueta="Ingresos totales" Icono="fa-sack-dollar" Tono="dinero" />
+        </div>
+
+        @if (_cargando)
+        {
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="fas fa-spinner fa-spin"></i></div>
+                <h2>Cargando...</h2>
+                <p>Un momento, estamos obteniendo la información.</p>
+            </div>
+        }
+        else if (!_alojamientos.Any())
+        {
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="fas fa-house-chimney"></i></div>
+                <h2>Aún no tienes alojamientos</h2>
+                <p>Publica tu primer espacio y empieza a recibir reservas. Bunki te acompaña en cada paso de la publicación.</p>
+                <div class="empty-state-actions">
+                    <button class="btn btn-primary btn-large" @onclick='() => Navigation.NavigateTo("/crear-alojamiento")'>
+                        <i class="fas fa-plus-circle"></i> Publicar mi primer alojamiento
+                    </button>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="prop-grid" style="margin-bottom: 44px;">
+                @foreach (var aloj in _alojamientos)
+                {
+                    <article class="prop-card">
+                        <div class="prop-media">
+                            <span class="state @StateClass(aloj.EstadoPublicacion) prop-status">
+                                <span class="state-dot"></span>@TextoEstado(aloj.EstadoPublicacion)
+                            </span>
+                            @if (!string.IsNullOrWhiteSpace(aloj.ImagenUrl))
+                            {
+                                <img src="@aloj.ImagenUrl" alt="@aloj.Nombre" />
+                            }
+                            else
+                            {
+                                <div class="prop-media-fallback" style="background: @aloj.GradienteColor;"></div>
+                            }
+                        </div>
+                        <div class="prop-body">
+                            <h3 class="prop-title">@aloj.Nombre</h3>
+                            <p class="prop-loc"><i class="fas fa-location-dot"></i> @aloj.Distrito</p>
+                            <StarRating Valor="aloj.Rating" TotalResenas="aloj.TotalResenas" />
+
+                            <div class="prop-metrics">
+                                <div class="prop-metric">
+                                    <div class="prop-metric-value">@aloj.TotalResenas</div>
+                                    <div class="prop-metric-label">Reseñas</div>
+                                </div>
+                                <div class="prop-metric">
+                                    <div class="prop-metric-value">@ReservasDe(aloj)</div>
+                                    <div class="prop-metric-label">Reservas</div>
+                                </div>
+                                <div class="prop-metric">
+                                    <div class="prop-metric-value"><span class="champ">@AppState.FormatearPrecio(IngresoDe(aloj))</span></div>
+                                    <div class="prop-metric-label">Ingresos</div>
+                                </div>
+                            </div>
+
+                            <div class="prop-foot">
+                                <span class="price">@AppState.FormatearPrecio(aloj.PrecioNoche)<small> /noche</small></span>
+                                <div class="prop-actions">
+                                    <button class="btn btn-small btn-outline" title="Ver detalles"
+                                            @onclick='() => Navigation.NavigateTo($"/alojamiento/{aloj.Id}")'>
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-small btn-secondary" title="Editar"
+                                            @onclick='() => Navigation.NavigateTo($"/crear-alojamiento?id={aloj.Id}")'>
+                                        <i class="fas fa-pen"></i>
+                                    </button>
+                                    <button class="btn btn-small btn-outline" title="Bloquear fechas"
+                                            @onclick="() => AbrirBloqueos(aloj)">
+                                        <i class="fas fa-calendar-xmark"></i>
+                                    </button>
+                                    <button class="btn btn-small btn-outline" title="@(aloj.EstadoPublicacion == "Activo" ? "Pausar" : "Activar")"
+                                            @onclick="() => TogglePausa(aloj)">
+                                        <i class="fas @(aloj.EstadoPublicacion == "Activo" ? "fa-pause" : "fa-play")"></i>
+                                    </button>
+                                    <button class="btn btn-small btn-soft-danger" title="Eliminar"
+                                            @onclick="() => ConfirmarEliminar(aloj)">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                }
+            </div>
+
+            @if (_reservas.Any())
+            {
+                <div class="host-panel">
+                    <div class="host-panel-head">
+                        <h2 class="host-panel-title"><i class="fas fa-inbox"></i> Últimas reservas recibidas</h2>
+                        <a href="/reservas-recibidas" class="host-panel-link">Ver todas <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                    <div class="mini-booking-list">
+                        <div class="mini-booking-head">
+                            <span>Huésped</span>
+                            <span>Alojamiento</span>
+                            <span>Fechas</span>
+                            <span>Total</span>
+                            <span>Estado</span>
+                        </div>
+
+                        @foreach (var r in _reservas.Take(5))
+                        {
+                            <div class="mini-booking-row">
+                                <div class="mini-booking-guest">
+                                    <span class="mini-booking-avatar">@InicialesReserva(r)</span>
+                                    <span>@r.AnfitrionNombre</span>
+                                </div>
+
+                                <div class="mini-booking-property">
+                                    <i class="fas fa-house"></i>
+                                    <span>@r.AlojamientoNombre</span>
+                                </div>
+
+                                <div class="mini-booking-date">
+                                    <i class="fas fa-calendar-day"></i>
+                                    <span>@r.FechasTexto</span>
+                                </div>
+
+                                <span class="price mini-booking-price">@AppState.FormatearPrecio(r.Total)</span>
+
+                                <span class="badge @r.EstadoBadgeClass mini-booking-status">@r.Estado</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+<!-- MODAL ELIMINAR (tokenizado) -->
+@if (_alojamientoAEliminar is not null)
+{
+    <div class="modal-overlay">
+        <div class="modal-panel">
+            <div class="empty-state-icon" style="background: var(--danger-tint); color: var(--danger); margin-bottom: 18px;">
+                <i class="fas fa-trash"></i>
+            </div>
+            <h2 style="margin-bottom: 12px;">¿Eliminar alojamiento?</h2>
+            <p class="card-text" style="margin-bottom: 24px;">
+                Estás por eliminar <strong>@_alojamientoAEliminar.Nombre</strong>. Esta acción no se puede deshacer.
+            </p>
+            <div style="display: flex; gap: 12px;">
+                <button class="btn btn-outline" style="flex: 1;" @onclick="() => _alojamientoAEliminar = null">Cancelar</button>
+                <button class="btn btn-danger" style="flex: 1;" @onclick="EliminarAlojamiento">Eliminar</button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- MODAL BLOQUEAR FECHAS (RF30) -->
+@if (_alojamientoBloqueos is not null)
+{
+    <div class="modal-overlay">
+        <div class="modal-panel" style="max-width: 520px; text-align: left;">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:16px;">
+                <div>
+                    <h2 style="margin-bottom:4px;">Bloquear fechas</h2>
+                    <p class="card-text" style="margin:0;">@_alojamientoBloqueos.Nombre</p>
+                </div>
+                <button class="btn btn-small btn-outline" title="Cerrar" @onclick="CerrarBloqueos">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+
+            <p class="card-text" style="margin-bottom:12px;">
+                Elige un rango que no quieras recibir reservas (mantenimiento, uso personal…).
+                Estas fechas aparecerán ocupadas en el calendario del huésped.
+            </p>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                <div>
+                    <label class="form-label">Desde</label>
+                    <input type="text" id="bloq-fecha-inicio" class="form-control" placeholder="dd/mm/aaaa" readonly />
+                </div>
+                <div>
+                    <label class="form-label">Hasta</label>
+                    <input type="text" id="bloq-fecha-fin" class="form-control" placeholder="dd/mm/aaaa" readonly />
+                </div>
+            </div>
+
+            <div style="margin-bottom:16px;">
+                <label class="form-label">Motivo (opcional)</label>
+                <input type="text" class="form-control" maxlength="255" placeholder="Ej. Mantenimiento"
+                       @bind="_bloqMotivo" @bind:event="oninput" />
+            </div>
+
+            @if (!string.IsNullOrEmpty(_bloqError))
+            {
+                <p style="color: var(--danger); margin-bottom:12px;">@_bloqError</p>
+            }
+
+            <button class="btn btn-primary" style="width:100%; margin-bottom:20px;"
+                    disabled="@(_guardandoBloqueo || string.IsNullOrEmpty(_bloqInicio) || string.IsNullOrEmpty(_bloqFin))"
+                    @onclick="GuardarBloqueo">
+                <i class="fas @(_guardandoBloqueo ? "fa-spinner fa-spin" : "fa-plus")"></i>
+                @(_guardandoBloqueo ? "Guardando..." : "Agregar bloqueo")
+            </button>
+
+            <h3 style="font-size:1rem; margin-bottom:10px;">Bloqueos actuales</h3>
+            @if (_cargandoBloqueos)
+            {
+                <p class="card-text"><i class="fas fa-spinner fa-spin"></i> Cargando...</p>
+            }
+            else if (!_bloqueos.Any())
+            {
+                <p class="card-text">No hay fechas bloqueadas todavía.</p>
+            }
+            else
+            {
+                <div style="display:flex; flex-direction:column; gap:8px; max-height:220px; overflow-y:auto;">
+                    @foreach (var b in _bloqueos)
+                    {
+                        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; background:var(--surface-2, rgba(0,0,0,.04)); border-radius:10px;">
+                            <div>
+                                <div style="font-weight:600;"><i class="fas fa-calendar-day"></i> @b.RangoTexto</div>
+                                @if (!string.IsNullOrWhiteSpace(b.Motivo))
+                                {
+                                    <div class="card-text" style="font-size:.85rem;">@b.Motivo</div>
+                                }
+                            </div>
+                            <button class="btn btn-small btn-soft-danger" title="Quitar bloqueo"
+                                    @onclick="() => EliminarBloqueo(b)">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(_mensajeAccion))
+{
+    <div style="position: fixed; bottom: 24px; right: 24px; z-index: var(--z-toast);">
+        <AlertMessage Tipo="success" Mensaje="@_mensajeAccion" AutoDismissMs="4000" />
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(_mensajeError))
+{
+    <div style="position: fixed; bottom: 24px; right: 24px; z-index: var(--z-toast);">
+        <AlertMessage Tipo="danger" Mensaje="@_mensajeError" AutoDismissMs="5000" />
+    </div>
+}
+
+@code {
+    private bool _cargando = true;
+    private List<Alojamiento> _alojamientos = new();
+    private List<Reserva> _reservas = new();
+    private Alojamiento? _alojamientoAEliminar;
+    private string _mensajeAccion = "";
+    private string _mensajeError = "";
+
+    // --- Estado del modal de bloqueo de fechas (RF30) ---
+    private Alojamiento? _alojamientoBloqueos;
+    private List<Bloqueo> _bloqueos = new();
+    private List<RangoFecha> _ocupadasPicker = new();   // reservas + bloqueos: el picker las deshabilita
+    private bool _cargandoBloqueos;
+    private bool _guardandoBloqueo;
+    private bool _reinitPicker;                          // pendiente de (re)inicializar flatpickr
+    private string? _bloqInicio;                         // ISO yyyy-MM-dd del rango elegido
+    private string? _bloqFin;
+    private string _bloqMotivo = "";
+    private string _bloqError = "";
+    private DotNetObjectReference<MisAlojamientos>? _ref;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
+        AppState.OnChange += OnMonedaChanged;
+
+        _cargando = true;
+        try
+        {
+            // Fuente: REST con fallback automático a mock (providers).
+            var anfitrionId = AppState.UsuarioActual?.Id ?? 0;
+            _alojamientos = await AlojamientoProvider.ListarPorAnfitrionAsync(anfitrionId);
+            // Todas las reservas recibidas por este anfitrión (no solo próximas): alimenta
+            // los KPIs, las métricas reales por propiedad y el panel de "últimas reservas".
+            _reservas = await ReservaProvider.ListarPorAnfitrionAsync(anfitrionId);
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+
+    public void Dispose()
+    {
+        AppState.OnChange -= OnMonedaChanged;
+        _ref?.Dispose();
+    }
+    private void OnMonedaChanged() => InvokeAsync(StateHasChanged);
+
+    // ====== BLOQUEO DE FECHAS (RF30) ======
+
+    // Abre el modal: carga los bloqueos actuales y las fechas ya ocupadas (reservas + bloqueos),
+    // resetea la selección y marca el picker para inicializarse en el próximo render.
+    private async Task AbrirBloqueos(Alojamiento aloj)
+    {
+        _alojamientoBloqueos = aloj;
+        _bloqInicio = _bloqFin = null;
+        _bloqMotivo = "";
+        _bloqError = "";
+        _cargandoBloqueos = true;
+        StateHasChanged();
+        try
+        {
+            _bloqueos = await Bloqueo.ListarAsync(aloj.Id);
+            _ocupadasPicker = await ReservaProvider.ObtenerFechasOcupadasAsync(aloj.Id);
+        }
+        catch
+        {
+            _bloqueos = new();
+            _ocupadasPicker = new();
+        }
+        finally
+        {
+            _cargandoBloqueos = false;
+            _reinitPicker = true;   // el calendario se (re)crea en OnAfterRenderAsync
+        }
+    }
+
+    private void CerrarBloqueos() => _alojamientoBloqueos = null;
+
+    // flatpickr (modo rango) es la fuente de verdad del rango elegido.
+    [JSInvokable]
+    public void SetBloqueoRango(string? isoInicio, string? isoFin)
+    {
+        _bloqInicio = isoInicio;
+        _bloqFin = isoFin;
+        StateHasChanged();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_reinitPicker && _alojamientoBloqueos is not null)
+        {
+            _reinitPicker = false;
+            try
+            {
+                _ref ??= DotNetObjectReference.Create(this);
+                await JS.InvokeVoidAsync("bunkiDatePicker.initBloqueoRango",
+                    "#bloq-fecha-inicio", "#bloq-fecha-fin",
+                    new { minDate = "today", disable = OcupadasParaFlatpickr() },
+                    _ref);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al inicializar calendario de bloqueo: {ex.Message}");
+            }
+        }
+    }
+
+    private object[] OcupadasParaFlatpickr() =>
+        _ocupadasPicker
+            .Where(r => !string.IsNullOrWhiteSpace(r.FechaInicio) && !string.IsNullOrWhiteSpace(r.FechaFin))
+            .Select(r => (object)new { from = r.FechaInicio, to = r.FechaFin })
+            .ToArray();
+
+    private async Task GuardarBloqueo()
+    {
+        if (_alojamientoBloqueos is null || string.IsNullOrEmpty(_bloqInicio) || string.IsNullOrEmpty(_bloqFin))
+            return;
+
+        _guardandoBloqueo = true;
+        _bloqError = "";
+        try
+        {
+            var creado = await Bloqueo.AgregarAsync(_alojamientoBloqueos.Id, _bloqInicio, _bloqFin,
+                                                    string.IsNullOrWhiteSpace(_bloqMotivo) ? null : _bloqMotivo.Trim());
+            if (creado is not null) _bloqueos.Add(creado);
+
+            // Refrescamos las fechas deshabilitadas y reiniciamos el calendario (limpia la selección).
+            _ocupadasPicker = await ReservaProvider.ObtenerFechasOcupadasAsync(_alojamientoBloqueos.Id);
+            _bloqInicio = _bloqFin = null;
+            _bloqMotivo = "";
+            _reinitPicker = true;
+            _mensajeAccion = "Fechas bloqueadas correctamente.";
+        }
+        catch
+        {
+            _bloqError = "No se pudo guardar el bloqueo. Inténtalo de nuevo.";
+        }
+        finally
+        {
+            _guardandoBloqueo = false;
+        }
+    }
+
+    private async Task EliminarBloqueo(Bloqueo b)
+    {
+        try
+        {
+            await Bloqueo.EliminarAsync(b.Id);
+            _bloqueos.Remove(b);
+            if (_alojamientoBloqueos is not null)
+                _ocupadasPicker = await ReservaProvider.ObtenerFechasOcupadasAsync(_alojamientoBloqueos.Id);
+            _reinitPicker = true;   // el calendario vuelve a habilitar esas fechas
+            _mensajeAccion = "Bloqueo eliminado.";
+        }
+        catch
+        {
+            _bloqError = "No se pudo eliminar el bloqueo.";
+        }
+    }
+
+    private string StateClass(string estado) => estado switch
+    {
+        "Activo"   => "state--confirmada",
+        "Revisión" => "state--pendiente",
+        "Pausado"  => "state--completada",
+        _          => "state--completada"
+    };
+
+    private string TextoEstado(string estado) => estado switch
+    {
+        "Revisión" => "En revisión",
+        _          => estado
+    };
+
+    // Métricas REALES por propiedad, derivadas de las reservas del anfitrión (_reservas).
+    private int ReservasDe(Alojamiento a) => _reservas.Count(r => r.AlojamientoId == a.Id);
+    private decimal IngresoDe(Alojamiento a) => _reservas
+        .Where(r => r.AlojamientoId == a.Id && (r.Estado == "Confirmada" || r.Estado == "Completada"))
+        .Sum(r => r.Total);
+
+    // Pausar/Activar: persiste vía PUT (EstadoPublicacion -> disponibilidad 1/0 en el backend).
+    private async Task TogglePausa(Alojamiento aloj)
+    {
+        var nuevoEstado = aloj.EstadoPublicacion == "Activo" ? "Pausado" : "Activo";
+        var anterior = aloj.EstadoPublicacion;
+        aloj.EstadoPublicacion = nuevoEstado;   // optimista, para que el badge cambie ya
+        try
+        {
+            await AlojamientoProvider.ActualizarAsync(aloj);   // PUT -> persiste disponibilidad
+            _mensajeAccion = $"\"{aloj.Nombre}\" ahora está {(nuevoEstado == "Activo" ? "activo" : "en pausa")}.";
+        }
+        catch
+        {
+            aloj.EstadoPublicacion = anterior;   // revierte si falla
+            _mensajeAccion = "No se pudo actualizar el estado. Inténtalo de nuevo.";
+        }
+    }
+
+    private void ConfirmarEliminar(Alojamiento aloj) => _alojamientoAEliminar = aloj;
+
+    private async Task EliminarAlojamiento()
+    {
+        if (_alojamientoAEliminar is null) return;
+        var objetivo = _alojamientoAEliminar;
+        var nombre = objetivo.Nombre;
+        _mensajeError = "";
+        try
+        {
+            // Persiste la baja lógica en el backend (DELETE -> disponibilidad 0).
+            await AlojamientoProvider.EliminarAsync(objetivo.Id);
+            // Solo si el backend confirmó, quitamos la card y cerramos el modal.
+            _alojamientos.Remove(objetivo);
+            _alojamientoAEliminar = null;
+            _mensajeAccion = $"Alojamiento \"{nombre}\" eliminado.";
+            await Task.Delay(3000);
+            _mensajeAccion = "";
+        }
+        catch (Exception)
+        {
+            // No se borró en el backend: NO quitamos la card; avisamos y dejamos el modal cerrable.
+            _alojamientoAEliminar = null;
+            _mensajeError = $"No se pudo eliminar \"{nombre}\". Intenta de nuevo.";
+        }
+    }
+    private string InicialesReserva(Reserva r)
+    {
+        var nombre = r.AnfitrionNombre?.Trim();
+
+        if (string.IsNullOrWhiteSpace(nombre))
+            return "HU";
+
+        var partes = nombre.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        if (partes.Length == 1)
+            return partes[0].Substring(0, Math.Min(2, partes[0].Length)).ToUpperInvariant();
+
+        return $"{partes[0][0]}{partes[1][0]}".ToUpperInvariant();
+    }
+}

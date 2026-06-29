@@ -1,0 +1,641 @@
+@implements IDisposable
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+@inject BunkiApp.Models.AppState AppState
+@inject BunkiApp.Services.TipoCambioServiceRest TipoCambioRest
+@inject BunkiApp.Services.NotificacionServiceRest NotifRest
+@inject BunkiApp.Services.FavoritoServiceRest FavRest
+
+<header style="position: relative; z-index: 502;">
+    <div class="navbar container">
+
+        @* IZQUIERDA — píldora de navegación (estructura "Porcelana"): el ítem activo es una
+           pastilla oscura (tinta) con texto crema; los demás, texto a secas. *@
+        <nav class="nav-pill" aria-label="Navegación principal">
+            <a href="/" class="nav-pill-link @PillClass("/")">Inicio</a>
+            <a href="/explorar" class="nav-pill-link @PillClass("/explorar")">Estadías</a>
+            @if (AppState.EstaAutenticado)
+            {
+                <a href="/mis-reservas" class="nav-pill-link @PillClass("/mis-reservas")">Mis Reservas</a>
+                <a href="/mensajes" class="nav-pill-link @PillClass("/mensajes")">Mensajes</a>
+            }
+            else
+            {
+                <a href="/registro" class="nav-pill-link @PillClass("/registro")">Anfitriones</a>
+            }
+            <a href="/ayuda" class="nav-pill-link @PillClass("/ayuda")">Ayuda</a>
+            @if (AppState.EstaAutenticado && AppState.EsAdmin())
+            {
+                <a href="/admin" class="nav-pill-link nav-pill-link--admin @PillClass("/admin")">Admin</a>
+            }
+        </nav>
+
+        @* DERECHA — wordmark "bunki" + acciones (moneda, notificaciones / sesión). *@
+        <div class="nav-right">
+
+            <a href="/" class="nav-wordmark">bunki</a>
+
+            <div class="currency-switch" style="position:relative;">
+                <button class="currency-trigger" @onclick="ToggleMoneda" title="Cambiar moneda (referencial)">
+                    <span class="currency-code">@AppState.SimboloMoneda @AppState.MonedaSeleccionada</span>
+                    <i class="fas fa-chevron-down currency-chevron @(_menuMoneda ? "rotated" : "")"></i>
+                </button>
+
+                @if (_menuMoneda)
+                {
+                    <div class="currency-menu">
+                        @foreach (var m in AppState.Monedas)
+                        {
+                            <button type="button"
+                                    class="currency-item @(m.Codigo == AppState.MonedaSeleccionada ? "active" : "")"
+                                    @onclick="() => SeleccionarMoneda(m.Codigo)">
+                                <span class="currency-item-sym">@m.Simbolo</span>
+                                <span class="currency-item-code">@m.Codigo</span>
+                                @if (m.Codigo == AppState.MonedaSeleccionada)
+                                {
+                                    <i class="fas fa-check"></i>
+                                }
+                            </button>
+                        }
+                        <div class="currency-note">Conversión referencial. El cobro se realiza en S/ (PEN).</div>
+                    </div>
+                }
+            </div>
+
+            @if (!AppState.EstaAutenticado)
+            {
+                @* Botón principal en pastilla oscura, como el "INICIAR SESIÓN" del PDF. *@
+                <a href="/login" class="nav-login">Iniciar sesión</a>
+            }
+            else
+            {
+                <a href="/notificaciones" class="nav-bell" aria-label="Notificaciones">
+                    <i class="fas fa-bell"></i>
+                    @* Badge con el conteo REAL de no leídas del backend. *@
+                    @if (_noLeidas > 0)
+                    {
+                        <span class="nav-bell-badge">@_noLeidas</span>
+                    }
+                </a>
+
+                <div style="position:relative;">
+                    <button class="nav-user-pill" @onclick="ToggleUsuario">
+                        <span class="nav-user-name">@AppState.UsuarioActual?.NombreCompleto</span>
+                        <span class="nav-avatar-sm">@AppState.UsuarioActual?.Iniciales</span>
+                        <i class="fas fa-chevron-down nav-chevron @(_menuUsuario ? "rotated" : "")"></i>
+                    </button>
+
+                @if (_menuUsuario)
+                {
+                    <div class="nav-dropdown">
+                        <div class="nav-dropdown-header">
+                            <span class="nav-avatar-sm">@AppState.UsuarioActual?.Iniciales</span>
+                            <div>
+                                <div class="nav-dd-name">@AppState.UsuarioActual?.NombreCompleto</div>
+                                <div class="nav-dd-email">@AppState.UsuarioActual?.Email</div>
+                            </div>
+                        </div>
+                        <div class="nav-dd-divider"></div>
+
+                        <span class="nav-dd-section">Huésped</span>
+                        <a href="/perfil" class="nav-dropdown-item" @onclick="CerrarMenus"><i class="fas fa-user"></i> Mi Perfil</a>
+                        <a href="/mis-reservas" class="nav-dropdown-item" @onclick="CerrarMenus"><i class="fas fa-calendar-check"></i> Mis Reservas</a>
+                        <div class="nav-dd-divider"></div>
+
+                        @if (AppState.EsAnfitrion())
+                        {
+                            <span class="nav-dd-section">Anfitrión</span>
+                            <a href="/panel-anfitrion" class="nav-dropdown-item @NavClass("/panel-anfitrion")" @onclick="CerrarMenus">
+                                <i class="fas fa-chart-line"></i> Panel</a>
+                            <a href="/mis-alojamientos" class="nav-dropdown-item" @onclick="CerrarMenus"><i class="fas fa-home"></i> Mis Alojamientos</a>
+                            <a href="/crear-alojamiento" class="nav-dropdown-item" @onclick="CerrarMenus"><i class="fas fa-plus-circle"></i> Crear Alojamiento</a>
+                            <a href="/reservas-recibidas" class="nav-dropdown-item" @onclick="CerrarMenus"><i class="fas fa-inbox"></i> Reservas Recibidas</a>
+                            <a href="/mis-resenas" class="nav-dropdown-item" @onclick="CerrarMenus"><i class="fas fa-star"></i> Reseñas</a>
+                            <div class="nav-dd-divider"></div>
+                        }
+
+                        <a href="/perfil" class="nav-dropdown-item" @onclick="CerrarMenus"><i class="fas fa-cog"></i> Configuración</a>
+
+                        @if (AppState.EsAdmin())
+                        {
+                            <a href="/admin" class="nav-dropdown-item nav-dd-admin" @onclick="CerrarMenus">
+                                <i class="fas fa-shield-alt"></i> Panel Admin
+                            </a>
+                        }
+                        <div class="nav-dd-divider"></div>
+
+                        <a href="/auth/logout" class="nav-dropdown-item nav-dd-logout">
+                            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                        </a>
+                    </div>
+                }
+                </div>
+            }
+        </div>
+    </div>
+</header>
+
+@if (_menuVisitante || _menuUsuario || _menuMoneda)
+{
+    <div class="nav-overlay" @onclick="CerrarMenus"></div>
+}
+
+<style>
+    /* ===== BARRA SUPERIOR estilo "Porcelana": píldora a la izquierda, wordmark + acciones a la derecha ===== */
+    .navbar {
+        padding: 14px 20px;
+        gap: 20px;
+    }
+
+    /* Píldora de navegación (izquierda) */
+    .nav-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        padding: 5px;
+        background: var(--surface);
+        border: 1px solid var(--hairline);
+        border-radius: var(--radius-pill);
+        box-shadow: var(--shadow-xs);
+    }
+
+    .nav-pill-link {
+        text-decoration: none;
+        color: var(--ink-muted);
+        font-weight: 600;
+        font-size: 13px;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        padding: 9px 16px;
+        border-radius: var(--radius-pill);
+        transition: color var(--t), background var(--t);
+        white-space: nowrap;
+    }
+
+        .nav-pill-link::after { display: none; }   /* anula el subrayado global de "nav a" */
+        .nav-pill-link:hover { color: var(--ink); }
+
+        .nav-pill-link.active {
+            background: var(--ink);
+            color: var(--bg);
+        }
+
+    .nav-pill-link--admin { color: var(--gold); }
+    .nav-pill-link--admin.active { background: var(--gold); color: #fff; }
+
+    /* Lado derecho: wordmark + acciones */
+    .nav-right {
+        display: inline-flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .nav-wordmark {
+        font-family: var(--font-display);
+        font-weight: 800;
+        font-size: 22px;
+        letter-spacing: -0.02em;
+        color: var(--ink);
+        text-decoration: none;
+        transition: opacity var(--t);
+    }
+        .nav-wordmark:hover { opacity: 0.75; }
+
+    /* "Iniciar sesión" en pastilla oscura (tinta), como el PDF */
+    .nav-login {
+        display: inline-flex;
+        align-items: center;
+        padding: 11px 22px;
+        border-radius: var(--radius-pill);
+        background: var(--ink);
+        color: var(--bg);
+        font-weight: 700;
+        font-size: 12.5px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        text-decoration: none;
+        transition: background var(--t), transform var(--t-fast);
+    }
+        .nav-login:hover { background: #2E2A25; transform: translateY(-1px); }
+
+    /* Campana de notificaciones (logueado) */
+    .nav-bell {
+        position: relative;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--ink-muted);
+        background: var(--surface);
+        border: 1px solid var(--hairline);
+        text-decoration: none;
+        transition: color var(--t), border-color var(--t);
+    }
+        .nav-bell:hover { color: var(--ink); border-color: var(--hairline-strong); }
+        .nav-bell::after { display: none; }
+
+    .nav-bell-badge {
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        border-radius: 9px;
+        background: var(--danger);
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid var(--bg);
+    }
+
+    @@media (max-width: 880px) {
+        .navbar { flex-wrap: wrap; row-gap: 12px; justify-content: center; }
+        .nav-pill { order: 2; overflow-x: auto; max-width: 100%; }
+        .nav-right { order: 1; }
+    }
+
+    .nav-avatar-jp {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: rgba(31,107,94,.2);
+        border: 2px solid rgba(31,107,94,.4);
+        color: var(--gold);
+        font-weight: 700;
+        font-size: 14px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all .2s;
+        font-family: inherit;
+    }
+
+        .nav-avatar-jp:hover {
+            background: rgba(31,107,94,.35);
+            border-color: var(--gold);
+        }
+
+    .nav-user-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 5px 12px 5px 6px;
+        border-radius: var(--radius-pill);
+        border: 1px solid var(--hairline);
+        background: var(--surface);
+        box-shadow: var(--shadow-xs);
+        cursor: pointer;
+        font-family: inherit;
+        transition: border-color var(--t), box-shadow var(--t);
+    }
+
+        .nav-user-pill:hover {
+            border-color: var(--hairline-strong);
+            box-shadow: var(--shadow-sm);
+        }
+
+    .nav-user-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--ink);
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Avatar en tinta con iniciales crema: mismo lenguaje que la pastilla oscura del nav (sobrio, no verde). */
+    .nav-avatar-sm {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: var(--ink);
+        border: none;
+        color: var(--bg);
+        font-weight: 700;
+        font-size: 11px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .nav-chevron {
+        font-size: 11px;
+        color: var(--muted);
+        transition: transform .2s;
+    }
+
+        .nav-chevron.rotated {
+            transform: rotate(180deg);
+        }
+
+    .nav-dropdown {
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        background: var(--card-bg);
+        border: 1px solid rgba(31,107,94,.2);
+        border-radius: 16px;
+        min-width: 250px;
+        box-shadow: 0 20px 48px rgba(28, 26, 23, 0.16);
+        z-index: 505; /* Modificado para posicionarse por encima de todo */
+        overflow: hidden;
+        animation: ddFade .15s ease;
+    }
+
+    @@keyframes ddFade {
+        from {
+            opacity: 0;
+            transform: translateY(-6px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .nav-dropdown-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 18px;
+        background: rgba(31,107,94,.07);
+    }
+
+    .nav-dd-name {
+        font-weight: 700;
+        color: var(--light-text);
+        font-size: 14px;
+    }
+
+    .nav-dd-email {
+        font-size: 12px;
+        color: var(--muted);
+    }
+
+    .nav-dd-divider {
+        height: 1px;
+        background: rgba(31,107,94,.1);
+        margin: 3px 0;
+    }
+
+    .nav-dd-section {
+        display: block;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .7px;
+        color: var(--muted);
+        padding: 8px 18px 4px;
+    }
+
+    .nav-dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 18px;
+        color: var(--light-text);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        transition: background .15s;
+        cursor: pointer;
+        width: 100%;
+        background: none;
+        border: none;
+        text-align: left;
+        font-family: inherit;
+    }
+
+        .nav-dropdown-item:hover {
+            background: rgba(31,107,94,.08);
+            color: var(--gold);
+        }
+
+        .nav-dropdown-item i {
+            width: 16px;
+            text-align: center;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .nav-dropdown-item:hover i {
+            color: var(--gold);
+        }
+
+    .nav-dd-admin {
+        color: var(--gold) !important;
+    }
+
+        .nav-dd-admin i {
+            color: var(--gold) !important;
+        }
+
+    .nav-dd-logout {
+        color: var(--danger) !important;
+    }
+
+        .nav-dd-logout:hover {
+            background: rgba(230,57,70,.08) !important;
+            color: var(--danger) !important;
+        }
+
+        .nav-dd-logout i {
+            color: var(--danger) !important;
+        }
+
+    .nav-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 499; /* Se mantiene por debajo del header y del dropdown */
+        background: transparent;
+    }
+
+    /* ===== SELECTOR DE MONEDA (frontend mock) ===== */
+    .currency-switch {
+        position: relative;
+    }
+
+    .currency-trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 12px;
+        border-radius: 50px;
+        border: 1px solid var(--hairline-strong);
+        background: var(--surface-2);
+        color: var(--ink);
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        cursor: pointer;
+        font-variant-numeric: tabular-nums;
+        transition: border-color var(--t), background var(--t), transform var(--t-fast);
+    }
+
+        .currency-trigger:hover {
+            border-color: var(--gold);
+            background: var(--gold-tint);
+            color: var(--champagne);
+        }
+
+    .currency-chevron {
+        font-size: 9px;
+        color: var(--ink-muted);
+        transition: transform var(--t);
+    }
+
+        .currency-chevron.rotated {
+            transform: rotate(180deg);
+        }
+
+    .currency-menu {
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        min-width: 200px;
+        background: var(--surface);
+        border: 1px solid var(--hairline-strong);
+        border-radius: 14px;
+        box-shadow: var(--shadow-lg);
+        z-index: 505;
+        overflow: hidden;
+        padding: 6px;
+        animation: ddFade .15s ease;
+    }
+
+    .currency-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 10px 12px;
+        border: none;
+        border-radius: 10px;
+        background: none;
+        color: var(--ink-muted);
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        text-align: left;
+        cursor: pointer;
+        transition: background var(--t), color var(--t);
+    }
+
+        .currency-item:hover {
+            background: rgba(168, 162, 158, 0.07);
+            color: var(--ink);
+        }
+
+        .currency-item.active {
+            background: var(--gold-tint);
+            color: var(--gold);
+        }
+
+    .currency-item-sym {
+        width: 22px;
+        text-align: center;
+        color: var(--champagne);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .currency-item-code {
+        flex: 1;
+    }
+
+    .currency-item .fa-check {
+        font-size: 11px;
+        color: var(--gold);
+    }
+
+    .currency-note {
+        padding: 8px 12px 4px;
+        margin-top: 4px;
+        border-top: 1px solid var(--hairline);
+        font-size: 11px;
+        line-height: 1.4;
+        color: var(--ink-faint);
+        font-weight: 500;
+    }
+</style>
+
+@code {
+    private bool _menuVisitante = false;
+    private bool _menuUsuario = false;
+    private bool _menuMoneda = false;
+    private int _noLeidas = 0;   // conteo real de notificaciones no leídas (badge de la campanita)
+
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+        AppState.OnChange += OnAppStateChanged;
+    }
+
+    // El NavMenu envuelve toda la app y siempre se renderiza, así que es el punto
+    // natural para disparar la carga de tasas UNA vez por usuario. CargarTasasAsync
+    // es idempotente (guarda interna), por lo que reinicializaciones del NavMenu
+    // (prerender + render interactivo) no recargan ni rompen nada si el backend falla.
+    protected override async Task OnInitializedAsync()
+    {
+        await AppState.CargarTasasAsync(TipoCambioRest);
+
+        // Favoritos persistentes (RF27): se cargan del backend una vez por usuario logueado.
+        if (AppState.UsuarioActual != null)
+        {
+            await AppState.CargarFavoritosAsync(FavRest);
+        }
+
+        // Conteo real de no leídas para el badge de la campanita (antes no había contador).
+        if (AppState.UsuarioActual != null)
+        {
+            _noLeidas = await NotifRest.ContarNoLeidasAsync(AppState.UsuarioActual.Id);
+        }
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+        AppState.OnChange -= OnAppStateChanged;
+    }
+
+    private void OnAppStateChanged() => InvokeAsync(StateHasChanged);
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        CerrarMenus();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private string NavClass(string href)
+    {
+        var uri = Navigation.ToBaseRelativePath(Navigation.Uri);
+        return uri.StartsWith(href.TrimStart('/')) ? "active" : "";
+    }
+
+    // Igual que NavClass pero con caso especial para "/" (Inicio): solo activo en la home exacta,
+    // no en toda ruta (StartsWith("") sería siempre verdadero).
+    private string PillClass(string href)
+    {
+        var uri = Navigation.ToBaseRelativePath(Navigation.Uri).Split('?')[0].TrimEnd('/');
+        var target = href.TrimStart('/').TrimEnd('/');
+        if (target.Length == 0) return uri.Length == 0 ? "active" : "";
+        return uri == target || uri.StartsWith(target + "/") ? "active" : "";
+    }
+
+    private void ToggleVisitante() { _menuVisitante = !_menuVisitante; _menuUsuario = false; _menuMoneda = false; StateHasChanged(); }
+    private void ToggleUsuario() { _menuUsuario = !_menuUsuario; _menuVisitante = false; _menuMoneda = false; StateHasChanged(); }
+    private void ToggleMoneda() { _menuMoneda = !_menuMoneda; _menuUsuario = false; _menuVisitante = false; StateHasChanged(); }
+    private void SeleccionarMoneda(string codigo) { AppState.SetMoneda(codigo); _menuMoneda = false; StateHasChanged(); }
+    private void CerrarMenus() { _menuVisitante = false; _menuUsuario = false; _menuMoneda = false; StateHasChanged(); }
+
+}

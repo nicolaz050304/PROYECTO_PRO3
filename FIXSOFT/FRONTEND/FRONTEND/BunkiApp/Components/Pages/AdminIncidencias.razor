@@ -1,0 +1,240 @@
+@page "/admin/incidencias"
+@layout AdminLayout
+@rendermode InteractiveServer
+@inject BunkiApp.Services.IncidenciaServiceRest IncidenciaSvc
+
+<PageTitle>Bunki Admin · Incidencias</PageTitle>
+
+@* Título quitado: ya lo muestra el topbar del AdminLayout (evitamos el doble título). *@
+<p class="admin-page-sub">Tickets de soporte y problemas reportados por los usuarios.</p>
+
+<div class="inc-table-card">
+    <div class="inc-scroll">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>ID</th><th>Asunto</th><th>Usuario</th><th>Prioridad</th><th>Estado</th><th>Fecha</th><th style="text-align: right;">Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!_incidencias.Any())
+                {
+                    <tr><td colspan="7" style="text-align:center; padding:32px; color: var(--ink-muted);">No hay incidencias registradas.</td></tr>
+                }
+                @foreach (var t in _incidencias)
+                {
+                    <tr>
+                        <td><strong>@t.Codigo</strong></td>
+                        <td>@t.Asunto</td>
+                        <td class="inc-muted">@(string.IsNullOrWhiteSpace(t.UsuarioNombre) ? t.UsuarioCorreo : t.UsuarioNombre)</td>
+                        <td>
+                            <span class="inc-prio inc-prio--@t.PrioridadTexto.ToLower()">
+                                <span class="inc-prio-dot"></span>@t.PrioridadTexto
+                            </span>
+                        </td>
+                        <td>
+                            <span class="state @EstadoState(t.EstadoTexto)"><span class="state-dot"></span>@t.EstadoTexto</span>
+                        </td>
+                        <td class="inc-muted">@t.Fecha</td>
+                        <td style="text-align: right;">
+                            <button class="btn btn-small btn-secondary" @onclick="() => Ver(t)">
+                                <i class="fas fa-eye"></i> Ver
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- TOAST -->
+@if (!string.IsNullOrEmpty(_mensaje))
+{
+    <div style="position: fixed; bottom: 24px; right: 24px; z-index: var(--z-toast);">
+        <AlertMessage Tipo="success" Mensaje="@_mensaje" AutoDismissMs="4000" />
+    </div>
+}
+
+<!-- MODAL DETALLE -->
+@if (_sel is not null)
+{
+    <div class="modal-overlay">
+        <div class="modal-panel inc-modal">
+            <div class="inc-modal-head">
+                <h2 class="inc-modal-title">@_sel.Codigo · @_sel.Asunto</h2>
+                <span class="inc-prio inc-prio--@_sel.PrioridadTexto.ToLower()">
+                    <span class="inc-prio-dot"></span>@_sel.PrioridadTexto
+                </span>
+            </div>
+
+            <div class="inc-meta">
+                <span><i class="fas fa-user"></i> @(string.IsNullOrWhiteSpace(_sel.UsuarioNombre) ? _sel.UsuarioCorreo : _sel.UsuarioNombre)</span>
+                <span class="state @EstadoState(_sel.EstadoTexto)"><span class="state-dot"></span>@_sel.EstadoTexto</span>
+                <span><i class="fas fa-calendar-day"></i> @_sel.Fecha</span>
+            </div>
+
+            <p class="inc-desc">@(string.IsNullOrWhiteSpace(_sel.Descripcion) ? "(Sin descripción)" : _sel.Descripcion)</p>
+
+            @* Gestión real: el admin avanza el estado del ticket (persistido en backend). *@
+            <p class="inc-hint" style="margin-bottom: 10px;">Cambiar estado:</p>
+            <div class="inc-actions" style="flex-wrap: wrap;">
+                <button class="btn btn-outline" style="flex: 1; min-width: 120px;" @onclick="Cerrar">Cerrar</button>
+                @if (_sel.Estado != "EN_PROCESO")
+                {
+                    <button class="btn btn-secondary" style="flex: 1; min-width: 120px;" disabled="@_guardando"
+                            @onclick='() => CambiarEstado("EN_PROCESO")'>En proceso</button>
+                }
+                @if (_sel.Estado != "RESUELTO")
+                {
+                    <button class="btn btn-primary" style="flex: 1; min-width: 120px;" disabled="@_guardando"
+                            @onclick='() => CambiarEstado("RESUELTO")'>
+                        <i class="fas fa-check"></i> Resuelto
+                    </button>
+                }
+                @if (_sel.Estado != "CERRADO")
+                {
+                    <button class="btn btn-outline" style="flex: 1; min-width: 120px;" disabled="@_guardando"
+                            @onclick='() => CambiarEstado("CERRADO")'>Cerrar caso</button>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .inc-table-card {
+        background: var(--surface);
+        border: 1px solid var(--hairline);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+    }
+
+    .inc-scroll { overflow-x: auto; }
+    .inc-muted { color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+
+    /* Prioridad (punto + etiqueta, no solo color) */
+    .inc-prio {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 4px 11px;
+        border-radius: var(--radius-pill);
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .inc-prio-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+    .inc-prio--alta { background: var(--danger-tint); color: var(--danger); }
+    .inc-prio--alta .inc-prio-dot { background: var(--danger); }
+    .inc-prio--media { background: var(--warning-tint); color: var(--warning); }
+    .inc-prio--media .inc-prio-dot { background: var(--warning); }
+    .inc-prio--baja { background: var(--success-tint); color: var(--success); }
+    .inc-prio--baja .inc-prio-dot { background: var(--success); }
+
+    /* Variante de estado "En proceso" (azul) que extiende .state global */
+    .state--proceso { background: var(--blue-tint); color: var(--blue-strong); }
+    .state--proceso .state-dot { background: var(--blue-strong); }
+
+    /* Modal */
+    .inc-modal { max-width: 560px; text-align: left; }
+
+    .inc-modal-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 14px;
+    }
+
+    .inc-modal-title {
+        font-family: var(--font-display);
+        font-size: 19px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: var(--ink);
+        line-height: 1.25;
+    }
+
+    .inc-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px 18px;
+        padding-bottom: 16px;
+        margin-bottom: 16px;
+        border-bottom: 1px solid var(--hairline);
+        font-size: 13px;
+        color: var(--ink-muted);
+    }
+
+        .inc-meta > span { display: inline-flex; align-items: center; gap: 7px; }
+        .inc-meta i { color: var(--ink-faint); font-size: 12px; }
+
+    .inc-desc {
+        color: var(--ink);
+        font-size: 14px;
+        line-height: 1.65;
+        margin-bottom: 22px;
+    }
+
+    .inc-hint { font-size: 12px; color: var(--ink-faint); margin-top: 6px; }
+
+    .inc-actions { display: flex; gap: 12px; }
+</style>
+
+@code {
+    private string _mensaje = "";
+    private bool _guardando;
+
+    // Incidencias REALES del backend (misma fuente que el contador de /admin y la pestaña de Moderación).
+    private List<Incidencia> _incidencias = new();
+
+    protected override async Task OnInitializedAsync() => await CargarAsync();
+
+    private async Task CargarAsync()
+    {
+        try { _incidencias = await IncidenciaSvc.ListarAsync(); }
+        catch { _incidencias = new(); }
+    }
+
+    // ---- Modal ----
+    private Incidencia? _sel;
+
+    private void Ver(Incidencia t) => _sel = t;
+    private void Cerrar() => _sel = null;
+
+    // El admin avanza el estado del ticket (persistido vía PUT IncidenciaRS/{id}/estado).
+    private async Task CambiarEstado(string estado)
+    {
+        if (_sel is null) return;
+        _guardando = true;
+        try
+        {
+            await IncidenciaSvc.CambiarEstadoAsync(_sel.Id, estado);
+            _sel.Estado = estado;
+            await CargarAsync();
+            _mensaje = "Incidencia actualizada.";
+            _sel = null;
+        }
+        catch
+        {
+            _mensaje = "No se pudo actualizar la incidencia.";
+        }
+        finally
+        {
+            _guardando = false;
+        }
+    }
+
+    private string EstadoState(string estado) => estado switch
+    {
+        "Abierto"    => "state--pendiente",
+        "En proceso" => "state--proceso",
+        "Resuelto"   => "state--confirmada",
+        "Cerrado"    => "state--completada",
+        _            => "state--completada"
+    };
+}

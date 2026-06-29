@@ -1,0 +1,110 @@
+﻿@page "/perfil/favoritos"
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+@inject BunkiApp.Models.AppState AppState
+@inject BunkiApp.Services.AlojamientoProvider AlojamientoProvider
+@implements IDisposable
+
+<PageTitle>Bunki - Favoritos</PageTitle>
+
+<div class="section">
+    <div class="container" style="max-width: 1000px; padding: 50px 20px;">
+
+        @if (AppState.FavoritosIds.Count == 0)
+        {
+            <div style="text-align: center;">
+                <i class="fas fa-heart" style="font-size: 60px; color: var(--border); margin-bottom: 20px;"></i>
+                <h2 style="color: var(--text); margin-bottom: 10px;">Tus Favoritos</h2>
+                <p class="card-text" style="margin-bottom: 30px;">Aún no has guardado ningún alojamiento. ¡Explora Bunki y guarda tus lugares preferidos!</p>
+
+                <div style="display: flex; gap: 15px; justify-content: center; max-width: 400px; margin: 0 auto;">
+                    <button class="btn btn-outline" style="flex: 1;" @onclick='() => Navigation.NavigateTo("/perfil")'>Volver</button>
+                    <button class="btn btn-primary" style="flex: 1;" @onclick='() => Navigation.NavigateTo("/")'>Explorar</button>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="flex flex-between items-center" style="margin-bottom: 24px;">
+                <h2 style="margin: 0;">Tus Favoritos (@AppState.FavoritosIds.Count)</h2>
+                <button class="btn btn-outline btn-small" @onclick='() => Navigation.NavigateTo("/perfil")'>
+                    <i class="fas fa-arrow-left"></i> Volver
+                </button>
+            </div>
+
+            <div class="grid grid-3">
+                @foreach (var aloj in ListaFavoritos)
+                {
+                    <div class="card property-card">
+                        <div class="property-image" style="cursor: pointer; height: 200px; overflow: hidden;" @onclick='() => Navigation.NavigateTo($"/alojamiento/{aloj.Id}")'>
+                            @if (!string.IsNullOrWhiteSpace(aloj.ImagenUrl))
+                            {
+                                <img src="@aloj.ImagenUrl" alt="@aloj.Nombre" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px 12px 0 0;" />
+                            }
+                        </div>
+                        <div class="property-content" style="padding: 15px;">
+                            <div class="flex flex-between items-center" style="margin-bottom: 8px;">
+                                <div style="color: var(--text-light); font-size: 13px;">
+                                    <i class="fas fa-map-marker-alt" style="margin-right: 4px; color: var(--gold);"></i> @aloj.Distrito
+                                </div>
+                            </div>
+                            <h3 style="font-size: 16px; margin-bottom: 10px; cursor: pointer;" @onclick='() => Navigation.NavigateTo($"/alojamiento/{aloj.Id}")'>@aloj.Nombre</h3>
+
+                            <div class="flex flex-between items-center" style="margin-top: 15px;">
+                                <div style="font-weight: 600;">
+                                    <span class="price">@AppState.FormatearPrecio(aloj.PrecioNoche)</span> / noche
+                                </div>
+                                <button class="btn btn-outline btn-small" @onclick="() => QuitarFavorito(aloj.Id)" title="Quitar de favoritos">
+                                    <i class="fas fa-heart-broken" style="color: var(--danger); margin: 0;"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<Alojamiento> ListaFavoritos = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        AppState.OnChange += OnAppStateChanged;
+        await CargarDatosFavoritos();
+    }
+
+    public void Dispose()
+    {
+        AppState.OnChange -= OnAppStateChanged;
+    }
+
+    private async void OnAppStateChanged()
+    {
+        await InvokeAsync(async () =>
+        {
+            await CargarDatosFavoritos();
+            StateHasChanged();
+        });
+    }
+
+    // Usamos el provider para traer los datos reales de los IDs que están en memoria
+    private async Task CargarDatosFavoritos()
+    {
+        ListaFavoritos.Clear();
+        foreach (var id in AppState.FavoritosIds)
+        {
+            var aloj = await AlojamientoProvider.ObtenerPorIdAsync(id);
+            if (aloj != null)
+            {
+                ListaFavoritos.Add(aloj);
+            }
+        }
+    }
+
+    private void QuitarFavorito(int id)
+    {
+        AppState.ToggleFavorito(id);
+    }
+}

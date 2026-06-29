@@ -1,0 +1,203 @@
+@page "/admin/tipo-cambio"
+@layout AdminLayout
+@rendermode InteractiveServer
+@using System.Globalization
+@inject Services.TipoCambioServiceRest TipoCambioRest
+
+<PageTitle>Bunki Admin · Tasas de Cambio</PageTitle>
+
+@* Título quitado: ya lo muestra el topbar del AdminLayout (evitamos el doble título). *@
+<p class="admin-page-sub">Gestiona las tasas de conversión de moneda (relativas al Sol peruano).</p>
+<span class="admin-pill"><i class="fas fa-coins"></i> Monedas</span>
+
+<!-- Nota de ayuda: aclara la semántica de la tasa para que el admin no se confunda
+     con la dirección de la conversión. -->
+<div class="tc-help">
+    <i class="fas fa-circle-info"></i>
+    <span>
+        La tasa indica <strong>cuántos soles (PEN) equivale 1 unidad</strong> de esa moneda.
+        Ej.: USD = 3.75 significa que 1 dólar = 3.75 soles. El Sol (PEN) es la moneda base y
+        siempre vale 1.00, por eso no se edita.
+    </span>
+</div>
+
+<!-- TABLA: 3 estados -> cargando / vacío / datos. Mismo patrón que el resto del admin. -->
+<div class="adm-table-card">
+    @if (_cargando)
+    {
+        <div class="adm-empty">Cargando tasas...</div>
+    }
+    else if (_tasas.Count == 0)
+    {
+        <div class="adm-empty">No hay tasas de cambio configuradas.</div>
+    }
+    else
+    {
+        <div class="adm-scroll">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Símbolo</th>
+                        <th>Tasa (PEN por 1 unidad)</th>
+                        <th style="text-align: right;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in _tasas)
+                    {
+                        // El PEN es la moneda base: su tasa siempre es 1.0 y no tiene sentido editarla,
+                        // así que su input va deshabilitado y sin botón de guardar.
+                        bool esBase = t.Codigo == "PEN";
+                        <tr>
+                            <td><strong>@t.Codigo</strong></td>
+                            <td class="adm-muted">@t.Simbolo</td>
+                            <td>
+                                <input type="number" step="0.0001" min="0"
+                                       class="tc-input"
+                                       @bind="t.TasaAPen"
+                                       disabled="@esBase" />
+                            </td>
+                            <td>
+                                <div class="adm-row-actions" style="justify-content: flex-end;">
+                                    @if (!esBase)
+                                    {
+                                        <button class="btn btn-small btn-primary"
+                                                @onclick="() => Guardar(t)"
+                                                disabled="@(_guardandoCodigo == t.Codigo)">
+                                            <i class="fas fa-floppy-disk"></i>
+                                            @(_guardandoCodigo == t.Codigo ? "Guardando..." : "Guardar")
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="adm-muted" style="font-size: 13px;">Moneda base</span>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- TOAST de resultado (éxito o error). @key con contador para que un mensaje nuevo
+     reaparezca aunque el anterior se haya cerrado. -->
+@if (!string.IsNullOrEmpty(_mensaje))
+{
+    <div style="position: fixed; bottom: 24px; right: 24px; z-index: var(--z-toast);">
+        <AlertMessage @key="_toastKey" Tipo="@_mensajeTipo" Mensaje="@_mensaje" AutoDismissMs="4000" />
+    </div>
+}
+
+<style>
+    .admin-pill { margin-bottom: 18px; }
+
+    .tc-help {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        background: var(--surface-2);
+        border: 1px solid var(--hairline);
+        border-radius: var(--radius);
+        padding: 12px 16px;
+        margin-bottom: 20px;
+        font-size: 13.5px;
+        line-height: 1.5;
+        color: var(--ink-muted);
+    }
+
+        .tc-help i { color: var(--gold); margin-top: 2px; }
+
+    .adm-table-card {
+        background: var(--surface);
+        border: 1px solid var(--hairline);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+    }
+
+    .adm-scroll { overflow-x: auto; }
+    .adm-muted { color: var(--ink-muted); }
+    .adm-row-actions { display: flex; gap: 8px; }
+    .adm-empty { padding: 40px 20px; text-align: center; color: var(--ink-muted); font-size: 14.5px; }
+
+    .tc-input {
+        width: 140px;
+        max-width: 100%;
+        font-variant-numeric: tabular-nums;
+    }
+
+        .tc-input:disabled { opacity: 0.6; cursor: not-allowed; }
+</style>
+
+@code {
+    // Estado de la pantalla. _tasas son los DTO editables (TipoCambioDto es clase, así que
+    // @bind muta el objeto en sitio). _mensaje + _mensajeTipo alimentan el toast.
+    private List<TipoCambioDto> _tasas = new();
+    private bool _cargando = true;
+    private string _mensaje = "";
+    private string _mensajeTipo = "success"; // success | danger (ver AlertMessage)
+    private int _toastKey = 0;
+    private string? _guardandoCodigo; // código de la moneda que se está guardando (deshabilita su botón)
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Carga inicial de las tasas. try/finally para que _cargando baje aunque el backend falle,
+        // y así el render pase de "Cargando..." al estado vacío en vez de quedarse colgado.
+        try
+        {
+            _tasas = await TipoCambioRest.ListarAsync();
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+
+    private async Task Guardar(TipoCambioDto t)
+    {
+        // Validación mínima: una tasa <= 0 rompería la conversión (división/multiplicación),
+        // así que ni se manda al backend.
+        if (t.TasaAPen <= 0)
+        {
+            MostrarToast("La tasa debe ser mayor que 0.", "danger");
+            return;
+        }
+
+        _guardandoCodigo = t.Codigo;
+        try
+        {
+            // Persistimos vía PUT. Importante: esto afecta la conversión de TODA la plataforma,
+            // porque AppState lee estas mismas tasas del backend al iniciar (selector de moneda,
+            // precios mostrados, etc.). Por eso el cambio no es solo "de esta pantalla".
+            bool ok = await TipoCambioRest.ActualizarAsync(t);
+            if (ok)
+            {
+                MostrarToast($"Tasa de {t.Codigo} actualizada.", "success");
+            }
+            else
+            {
+                // No afirmamos que guardó si el backend respondió con error.
+                MostrarToast($"No se pudo actualizar la tasa de {t.Codigo}.", "danger");
+            }
+        }
+        catch
+        {
+            // Backend caído o error de red: avisamos sin romper la pantalla.
+            MostrarToast($"Error de conexión al guardar {t.Codigo}.", "danger");
+        }
+        finally
+        {
+            _guardandoCodigo = null;
+        }
+    }
+
+    private void MostrarToast(string mensaje, string tipo)
+    {
+        _mensaje = mensaje;
+        _mensajeTipo = tipo;
+        _toastKey++; // fuerza un AlertMessage nuevo para que reaparezca tras un cierre previo
+    }
+}

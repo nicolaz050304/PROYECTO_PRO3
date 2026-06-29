@@ -1,0 +1,378 @@
+@page "/admin/analytics"
+@layout AdminLayout
+@rendermode InteractiveServer
+@using System.Globalization
+@using System.Text
+@inject AlojamientoProvider AlojamientoProvider
+@inject ResenaProvider ResenaProvider
+
+<PageTitle>Bunki Admin · Analytics</PageTitle>
+
+@* Título quitado: ya lo muestra el topbar del AdminLayout (evitamos el doble título). *@
+<p class="admin-page-sub">Indicadores de ocupación, calidad y evolución de la plataforma.</p>
+
+<!-- REPORTES (JasperReports · PDF + CSV) -->
+<div class="admin-card" style="margin-bottom:18px;">
+    <h2 class="admin-card-title"><i class="fas fa-file-export"></i> Reportes</h2>
+    <p class="an-card-sub" style="margin-bottom:14px;">Documentos generados con JasperReports. Descarga en PDF o CSV.</p>
+
+    @foreach (var rep in _reportes)
+    {
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; padding:12px 0; border-top:1px solid var(--hairline);">
+            <div>
+                <strong style="color:var(--ink);">@rep.Titulo</strong>
+                <div class="an-card-sub" style="margin:2px 0 0;">@rep.Detalle</div>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <a class="btn btn-primary btn-small" href="@($"http://localhost:8080/BunkiBackend/webresources/ReporteRS/{rep.Endpoint}/pdf")" target="_blank" rel="noopener"><i class="fas fa-file-pdf"></i> PDF</a>
+                <a class="btn btn-secondary btn-small" href="@($"http://localhost:8080/BunkiBackend/webresources/ReporteRS/{rep.Endpoint}/csv")" target="_blank" rel="noopener"><i class="fas fa-file-csv"></i> CSV</a>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- RF22 · TOP DE ALOJAMIENTOS (datos REALES del backend) -->
+<div class="admin-card">
+    <h2 class="admin-card-title"><i class="fas fa-award"></i> Top de alojamientos</h2>
+    <p class="an-card-sub">Ranking calculado en el backend según el criterio elegido.</p>
+
+    <!-- Selector: cada botón cambia el criterio y re-consulta al backend (el ranking lo calcula allá). -->
+    <div class="criterio-selector" style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+        <button class="@(_criterio == "calificacion" ? "btn btn-small btn-primary" : "btn btn-small btn-outline")"
+                @onclick='() => CambiarCriterio("calificacion")'>Por calificación</button>
+        <button class="@(_criterio == "reservas" ? "btn btn-small btn-primary" : "btn btn-small btn-outline")"
+                @onclick='() => CambiarCriterio("reservas")'>Por reservas</button>
+        <button class="@(_criterio == "resenas" ? "btn btn-small btn-primary" : "btn btn-small btn-outline")"
+                @onclick='() => CambiarCriterio("resenas")'>Por reseñas</button>
+    </div>
+
+    @if (_top.Count == 0)
+    {
+        <p class="an-card-sub">No hay datos para mostrar.</p>
+    }
+    else
+    {
+        <div class="an-rank-list">
+            @{ int rank = 0; }
+            @foreach (var a in _top)
+            {
+                rank++;
+                <div class="an-rank-item">
+                    <span class="an-rank @(rank == 1 ? "an-rank--gold" : "")">@rank</span>
+                    <span class="an-rank-name">
+                        @a.Nombre
+                        <small style="display:block; color:var(--ink-muted); font-weight:500;">@a.Ubicacion</small>
+                    </span>
+                    <span class="an-rank-score">
+                        @if (_criterio == "calificacion")
+                        {
+                            <i class="fas fa-star"></i>
+                            <span>@R(a.Rating)</span>
+                        }
+                        else if (_criterio == "resenas")
+                        {
+                            <span>@a.TotalResenas reseñas</span>
+                        }
+                        else
+                        {
+                            @* "reservas": el DTO no trae el conteo, pero el ORDEN ya viene del backend;
+                               mostramos la posición (#1, #2...) en vez de un número inventado. *@
+                            <span>#@rank</span>
+                        }
+                    </span>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- EVOLUCIÓN (LÍNEA SVG) · promedio acumulado REAL de las reseñas, por mes -->
+<div class="admin-card an-evol-card">
+    <div class="an-evol-head">
+        <h2 class="admin-card-title"><i class="fas fa-arrow-trend-up"></i> Evolución de la calificación promedio</h2>
+        @if (_hayResenas)
+        {
+            <span class="an-evol-now">@R(_evol[^1].Val) <small>actual</small></span>
+        }
+    </div>
+
+    @if (!_hayResenas)
+    {
+        <p class="an-card-sub" style="margin-top: 10px;">Aún no hay reseñas suficientes para mostrar la evolución.</p>
+    }
+    else
+    {
+        <svg class="an-svg" viewBox="0 0 600 220" preserveAspectRatio="xMidYMid meet"
+             role="img" aria-label="Evolución de la calificación promedio en los últimos seis meses">
+            @_svg
+        </svg>
+    }
+</div>
+
+<style>
+    .an-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        align-items: start;
+        margin-bottom: 24px;
+    }
+
+    @@media (max-width: 900px) {
+        .an-grid { grid-template-columns: 1fr; }
+    }
+
+    .an-card-sub { color: var(--ink-muted); font-size: 13px; margin: -8px 0 20px; }
+
+    /* Rank badge compartido */
+    .an-rank {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: var(--surface-3);
+        border: 1px solid var(--hairline-strong);
+        color: var(--ink-muted);
+        font-family: var(--font-display);
+        font-size: 12px;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .an-rank--gold {
+        background: var(--gold-tint);
+        border-color: rgba(31, 107, 94, 0.40);
+        color: var(--gold);
+    }
+
+    /* RF21 · barras horizontales */
+    .an-bars { display: flex; flex-direction: column; gap: 16px; }
+
+    .an-bar-row {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 8px 12px;
+    }
+
+    .an-bar-name { font-size: 14px; font-weight: 600; color: var(--ink); min-width: 0; }
+
+    .an-bar-pct {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: var(--champagne);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .an-bar-track {
+        grid-column: 1 / -1;
+        height: 8px;
+        border-radius: var(--radius-pill);
+        background: var(--surface-3);
+        overflow: hidden;
+    }
+
+    .an-bar-fill {
+        height: 100%;
+        border-radius: var(--radius-pill);
+        background: linear-gradient(90deg, var(--gold), var(--copper));
+        box-shadow: inset 0 1px 0 rgba(255, 244, 222, 0.2);
+        transition: width var(--t-slow);
+    }
+
+    /* RF22 · ranking de calidad */
+    .an-rank-list { display: flex; flex-direction: column; }
+
+    .an-rank-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 13px 0;
+        border-bottom: 1px solid var(--hairline);
+    }
+
+        .an-rank-item:first-child { padding-top: 0; }
+        .an-rank-item:last-child { border-bottom: none; padding-bottom: 0; }
+
+    .an-rank-name { flex: 1; font-size: 14.5px; font-weight: 600; color: var(--ink); min-width: 0; }
+
+    .an-rank-score {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-family: var(--font-display);
+        font-size: 16px;
+        font-weight: 800;
+        color: var(--champagne);
+        font-variant-numeric: tabular-nums;
+    }
+
+        .an-rank-score i { color: var(--gold); font-size: 13px; }
+
+    /* Evolución */
+    .an-evol-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-bottom: 6px;
+    }
+
+    .an-evol-now {
+        font-family: var(--font-display);
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--champagne);
+        font-variant-numeric: tabular-nums;
+    }
+
+        .an-evol-now small { font-size: 12px; font-weight: 500; color: var(--ink-muted); }
+
+    .an-svg { width: 100%; height: auto; display: block; margin-top: 6px; }
+
+    .an-axis { fill: var(--ink-faint); font-size: 11px; font-family: var(--font-body); }
+    .an-point-val { fill: var(--ink-muted); font-size: 11px; font-weight: 700; text-anchor: middle; font-family: var(--font-body); }
+    .an-point-month { fill: var(--ink-muted); font-size: 12px; text-anchor: middle; font-family: var(--font-body); }
+</style>
+
+@code {
+    private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
+    private string R(double v) => v.ToString("0.0", Inv);
+
+    // Reportes admin (JasperReports) disponibles para descargar en PDF/CSV.
+    private record Rep(string Titulo, string Detalle, string Endpoint);
+    private readonly Rep[] _reportes =
+    {
+        new("Ocupación y Demanda", "Alojamientos ordenados por reservas, noches e ingresos (RF21).", "ocupacion"),
+        new("Satisfacción y Reseñas", "Calificación promedio y nº de reseñas por alojamiento (RF24).", "satisfaccion"),
+        new("Usuarios", "Directorio de cuentas por rol y estado (RF25).", "usuarios"),
+    };
+
+    // RF22 · TOP real desde el backend. El criterio inicial es "calificacion"; el selector lo cambia.
+    private string _criterio = "calificacion";
+    private List<Alojamiento> _top = new();
+
+    // Evolución (6 meses) · promedio ACUMULADO real de las reseñas hasta el cierre de cada mes.
+    private record Mes(string Nombre, double Val);
+    private List<Mes> _evol = new();
+    private bool _hayResenas;
+
+    // Geometría del gráfico (viewBox 600x220; dominio 4.0–5.0).
+    private record PuntoSvg(int X, int Y, string Mes, double Val, bool Ultimo);
+    private record GridLine(int Y, string Label);
+
+    private List<PuntoSvg> _pts = new();
+    private List<GridLine> _grid = new();
+    private MarkupString _svg;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ConstruirEvolucion();   // evolución REAL del rating (promedio acumulado por mes)
+        await CargarTop();            // ranking real inicial según el criterio por defecto
+    }
+
+    // Construye la serie de 6 meses con el promedio ACUMULADO real de las calificaciones:
+    // por cada mes, promedia todas las reseñas publicadas hasta el final de ese mes.
+    private async Task ConstruirEvolucion()
+    {
+        List<Resena> resenas;
+        try { resenas = await ResenaProvider.ListarTodasAsync(); }
+        catch { resenas = new(); }
+
+        var conFecha = resenas.Where(r => r.FechaPublicacion.HasValue && r.Estrellas > 0).ToList();
+        _hayResenas = conFecha.Count > 0;
+        if (!_hayResenas) return;
+
+        var es = new CultureInfo("es");
+        var hoy = DateTime.Today;
+        var serie = new List<Mes>();
+        for (int i = 5; i >= 0; i--)
+        {
+            var mes = hoy.AddMonths(-i);
+            var corte = new DateTime(mes.Year, mes.Month, 1).AddMonths(1); // fin de mes (exclusivo)
+            var hasta = conFecha.Where(r => r.FechaPublicacion!.Value < corte).ToList();
+            double val = hasta.Count > 0 ? Math.Round(hasta.Average(r => r.Estrellas), 1) : 0;
+            var etiqueta = es.TextInfo.ToTitleCase(mes.ToString("MMM", es)).Replace(".", "");
+            serie.Add(new Mes(etiqueta, val));
+        }
+
+        // Si los primeros meses no tenían reseñas (val 0), los igualamos al primer valor real
+        // para que la línea empiece en el promedio real y no caiga al piso.
+        double primerReal = serie.FirstOrDefault(m => m.Val > 0)?.Val ?? 0;
+        _evol = serie.Select(m => m.Val > 0 ? m : new Mes(m.Nombre, primerReal)).ToList();
+
+        ConstruirSvg();
+    }
+
+    // Pide el top al backend según el criterio actual (lógica de ranking en el servidor).
+    private async Task CargarTop()
+    {
+        _top = await AlojamientoProvider.TopAsync(_criterio, 5);
+    }
+
+    // El selector llama a este método: cambia el criterio y vuelve a consultar el backend.
+    private async Task CambiarCriterio(string criterio)
+    {
+        _criterio = criterio;
+        await CargarTop();
+    }
+
+    private void ConstruirSvg()
+    {
+        const int x0 = 40, x1 = 575, y0 = 24, y1 = 175;
+        const double vmin = 3.0, vmax = 5.0;
+        int n = _evol.Count;
+        if (n < 2) return;
+
+        // Clamp dentro del marco por si algún promedio cae fuera del dominio [3,5].
+        int Y(double v)
+        {
+            double vc = Math.Max(vmin, Math.Min(vmax, v));
+            return (int)Math.Round(y1 - (vc - vmin) / (vmax - vmin) * (y1 - y0));
+        }
+        int X(int i) => (int)Math.Round(x0 + i * (double)(x1 - x0) / (n - 1));
+
+        for (int i = 0; i < n; i++)
+        {
+            _pts.Add(new PuntoSvg(X(i), Y(_evol[i].Val), _evol[i].Nombre, _evol[i].Val, i == n - 1));
+        }
+
+        foreach (var v in new[] { 5.0, 4.0, 3.0 })
+        {
+            _grid.Add(new GridLine(Y(v), R(v)));
+        }
+
+        var lineaPoints = string.Join(" ", _pts.Select(p => $"{p.X},{p.Y}"));
+        var areaPath = $"M {_pts[0].X},{y1} L {lineaPoints} L {_pts[^1].X},{y1} Z";
+
+        // SVG dinámico como string para evitar el <text> reservado de Razor.
+        var sb = new StringBuilder();
+        sb.Append("<defs><linearGradient id=\"anArea\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\">");
+        sb.Append("<stop offset=\"0%\" stop-color=\"rgba(232,201,138,0.28)\"/>");
+        sb.Append("<stop offset=\"100%\" stop-color=\"rgba(232,201,138,0)\"/></linearGradient></defs>");
+
+        foreach (var g in _grid)
+        {
+            sb.Append($"<line x1=\"34\" y1=\"{g.Y}\" x2=\"582\" y2=\"{g.Y}\" stroke=\"rgba(168,162,158,0.12)\" stroke-width=\"1\"/>");
+            sb.Append($"<text x=\"6\" y=\"{g.Y + 4}\" class=\"an-axis\">{g.Label}</text>");
+        }
+
+        sb.Append($"<path d=\"{areaPath}\" fill=\"url(#anArea)\"/>");
+        sb.Append($"<polyline points=\"{lineaPoints}\" fill=\"none\" stroke=\"var(--champagne)\" stroke-width=\"2.5\" stroke-linejoin=\"round\" stroke-linecap=\"round\"/>");
+
+        foreach (var p in _pts)
+        {
+            var r = p.Ultimo ? "5" : "3.5";
+            var fill = p.Ultimo ? "var(--gold)" : "var(--champagne)";
+            sb.Append($"<circle cx=\"{p.X}\" cy=\"{p.Y}\" r=\"{r}\" fill=\"{fill}\" stroke=\"var(--bg)\" stroke-width=\"2\"/>");
+            sb.Append($"<text x=\"{p.X}\" y=\"{p.Y - 12}\" class=\"an-point-val\">{R(p.Val)}</text>");
+            sb.Append($"<text x=\"{p.X}\" y=\"210\" class=\"an-point-month\">{p.Mes}</text>");
+        }
+
+        _svg = (MarkupString)sb.ToString();
+    }
+}

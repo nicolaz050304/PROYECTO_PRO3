@@ -1,0 +1,749 @@
+@page "/crear-alojamiento"
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+@inject BunkiApp.Models.AppState AppState
+@inject Services.AlojamientoProvider AlojamientoProvider
+@inject BunkiApp.Services.UsuarioServiceRest UsuarioSvc
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
+
+<PageTitle>Bunki - Crear Alojamiento</PageTitle>
+
+<div class="section host-page">
+    <div class="container">
+
+    @* RF02: solo identidades verificadas pueden publicar. Mientras no esté verificado, el
+       formulario se reemplaza por un gate que dirige a la verificación de identidad. *@
+    @if (!_verificado)
+    {
+        <div class="card" style="max-width: 620px; margin: 40px auto; padding: 40px; text-align: center;">
+            <i class="fas fa-id-card-clip" style="font-size: 48px; color: var(--gold); margin-bottom: 18px;"></i>
+            <h2 style="margin-bottom: 12px;">Verifica tu identidad para publicar</h2>
+            <p class="card-text" style="margin-bottom: 8px;">
+                Para proteger a los huéspedes, solo los anfitriones con identidad verificada pueden
+                publicar alojamientos (RF02).
+            </p>
+            @if (_estadoValidacion == "PENDIENTE" && _verificacionLista)
+            {
+                <p class="card-text" style="margin-bottom: 24px; color: var(--warning);">
+                    <i class="fas fa-clock"></i> Tu documento está en revisión. Te avisaremos cuando se apruebe.
+                </p>
+            }
+            else if (_estadoValidacion == "RECHAZADO")
+            {
+                <p class="card-text" style="margin-bottom: 24px; color: var(--danger);">
+                    <i class="fas fa-circle-xmark"></i> Tu documento fue rechazado. Vuelve a subir uno válido.
+                </p>
+            }
+            else
+            {
+                <p class="card-text" style="margin-bottom: 24px;">Sube tu DNI o pasaporte; un administrador lo revisará.</p>
+            }
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button type="button" class="btn btn-outline" @onclick='() => Navigation.NavigateTo("/panel-anfitrion")'>
+                    <i class="fas fa-arrow-left"></i> Volver
+                </button>
+                <button type="button" class="btn btn-primary" @onclick='() => Navigation.NavigateTo("/perfil/documentos")'>
+                    <i class="fas fa-id-card"></i> Verificar mi identidad
+                </button>
+            </div>
+        </div>
+    }
+    else
+    {
+        <EditForm Model="Formulario" OnValidSubmit="Publicar">
+            <DataAnnotationsValidator />
+
+            <!-- HEADER DE PRODUCTO -->
+            <header class="host-head">
+                <div>
+                    <span class="host-head-eyebrow">Bunki Host Center</span>
+                    <h1 class="host-head-title">@(EsEdicion ? "Edita tu alojamiento" : "Publica un alojamiento")</h1>
+                    <p class="host-head-sub">Completa los detalles clave para que los huéspedes descubran tu espacio.</p>
+                </div>
+                <div class="host-head-actions">
+                    <button type="button" class="btn btn-secondary" @onclick="GuardarBorrador">
+                        <i class="fas fa-save"></i> Guardar borrador
+                    </button>
+                    <button type="submit" class="btn btn-primary" disabled="@Publicando">
+                        @if (Publicando)
+                        {
+                            <i class="fas fa-spinner fa-spin"></i>
+                        }
+                        else
+                        {
+                            <i class="fas fa-check-circle"></i>
+                        }
+                        @(EsEdicion ? "Guardar cambios" : "Publicar alojamiento")
+                    </button>
+                </div>
+            </header>
+
+            @if (!string.IsNullOrEmpty(MensajeExito))
+            {
+                <AlertMessage Tipo="success" Mensaje="@MensajeExito" />
+            }
+            @if (!string.IsNullOrEmpty(MensajeError))
+            {
+                <AlertMessage Tipo="danger" Mensaje="@MensajeError" />
+            }
+
+            <!-- STEPPER PREMIUM -->
+            <div class="pub-stepper">
+                <span class="pub-step is-current"><span class="pub-step-num">1</span> Información</span>
+                <span class="pub-step"><span class="pub-step-num">2</span> Ubicación</span>
+                <span class="pub-step"><span class="pub-step-num">3</span> Capacidad</span>
+                <span class="pub-step"><span class="pub-step-num">4</span> Servicios</span>
+                <span class="pub-step"><span class="pub-step-num">5</span> Reglas</span>
+                <span class="pub-step"><span class="pub-step-num">6</span> Precios</span>
+            </div>
+
+            <div class="create-layout">
+
+                <!-- COLUMNA FORM -->
+                <div class="create-form-col">
+                    <!-- INFORMACIÓN BÁSICA -->
+                    <div class="form-section">
+                        <h2 class="section-title" style="text-align: left; font-size: 20px;">
+                            <i class="fas fa-building" style="margin-right: 10px; color: var(--gold);"></i>
+                            Información básica
+                        </h2>
+                        <p class="section-sub">Lo esencial que verán primero los huéspedes.</p>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Nombre del alojamiento</label>
+                                <InputText @bind-Value="Formulario.Nombre" placeholder="Ej: Departamento en Miraflores" />
+                                <ValidationMessage For="() => Formulario.Nombre" class="validation-message" />
+                                <p class="field-help">Un buen título describe el lugar y su mayor atractivo (vista, ubicación, estilo).</p>
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo de alojamiento</label>
+                                <InputSelect @bind-Value="Formulario.Tipo">
+                                    <option value="">Selecciona un tipo</option>
+                                    <option>Departamento</option>
+                                    <option>Casa</option>
+                                    <option>Habitación</option>
+                                </InputSelect>
+                                <ValidationMessage For="() => Formulario.Tipo" class="validation-message" />
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Descripción</label>
+                            <InputTextArea @bind-Value="Formulario.Descripcion" placeholder="Describe tu alojamiento..." rows="4" />
+                            <p class="field-help">Cuenta qué hace único a tu espacio: ambiente, cercanías y para quién es ideal.</p>
+                        </div>
+                    </div>
+
+                    <!-- UBICACIÓN -->
+                    <div class="form-section">
+                        <h2 class="section-title" style="text-align: left; font-size: 20px;">
+                            <i class="fas fa-map-marker-alt" style="margin-right: 10px; color: var(--gold);"></i>
+                            Ubicación
+                        </h2>
+                        <p class="section-sub">Ayuda a los huéspedes a ubicar tu espacio en la ciudad.</p>
+
+                        <div class="form-group">
+                            <label>Dirección</label>
+                            <InputText @bind-Value="Formulario.Direccion" placeholder="Av. Larco 123" />
+                            <ValidationMessage For="() => Formulario.Direccion" class="validation-message" />
+                            <p class="field-help">Solo se comparte la dirección exacta con huéspedes que ya reservaron.</p>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Distrito</label>
+                                <InputSelect @bind-Value="Formulario.Distrito">
+                                    <option value="">Selecciona...</option>
+                                    <option>Miraflores</option>
+                                    <option>Barranco</option>
+                                    <option>San Isidro</option>
+                                    <option>La Molina</option>
+                                    <option>Pueblo Libre</option>
+                                    <option>Chaclacayo</option>
+                                    <option>San Borja</option>
+                                    <option>Surco</option>
+                                </InputSelect>
+                                <ValidationMessage For="() => Formulario.Distrito" class="validation-message" />
+                            </div>
+                            <div class="form-group">
+                                <label>Provincia</label>
+                                <InputText @bind-Value="Formulario.Provincia" readonly />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CAPACIDAD -->
+                    <div class="form-section">
+                        <h2 class="section-title" style="text-align: left; font-size: 20px;">
+                            <i class="fas fa-users" style="margin-right: 10px; color: var(--gold);"></i>
+                            Capacidad
+                        </h2>
+                        <p class="section-sub">Cuántas personas y habitaciones ofrece tu alojamiento.</p>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Huéspedes</label>
+                                <InputNumber @bind-Value="Formulario.MaxHuespedes" placeholder="4" min="1" max="20" />
+                                <ValidationMessage For="() => Formulario.MaxHuespedes" class="validation-message" />
+                                <p class="field-help">Número máximo de personas que pueden hospedarse.</p>
+                            </div>
+                            <div class="form-group">
+                                <label>Habitaciones</label>
+                                <InputNumber @bind-Value="Formulario.Habitaciones" placeholder="2" min="1" max="20" />
+                                <ValidationMessage For="() => Formulario.Habitaciones" class="validation-message" />
+                            </div>
+                        </div>
+
+                        @* Detalles propios del tipo (RF05): aparecen SEGÚN el tipo elegido arriba, porque cada
+                           tipo de alojamiento tiene sus propios atributos. Se bindean al Formulario y en Publicar()
+                           se copian al Alojamiento que se envía al backend (los nombres JSON ya calzan con el DTO). *@
+                        @if (Formulario.Tipo == "Casa")
+                        {
+                            <p class="section-sub" style="margin-top: 6px;">Detalles de la casa</p>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Número de pisos</label>
+                                    <InputNumber @bind-Value="Formulario.NumPisos" min="1" max="10" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Número de cocheras</label>
+                                    <InputNumber @bind-Value="Formulario.NumCocheras" min="0" max="10" />
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Número de habitaciones</label>
+                                    <InputNumber @bind-Value="Formulario.NumHabitacionesCasa" min="1" max="20" />
+                                </div>
+                                <div class="form-group">
+                                    <label class="checkbox-label">
+                                        <InputCheckbox @bind-Value="Formulario.ConPatio" /> Tiene patio
+                                    </label>
+                                </div>
+                            </div>
+                        }
+                        else if (Formulario.Tipo == "Departamento")
+                        {
+                            <p class="section-sub" style="margin-top: 6px;">Detalles del departamento</p>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Piso</label>
+                                    <InputNumber @bind-Value="Formulario.NumPiso" min="0" max="50" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Número de departamento</label>
+                                    <InputText @bind-Value="Formulario.NroDepartamento" placeholder="Ej: 402" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Número de habitaciones</label>
+                                <InputNumber @bind-Value="Formulario.NroHabitacionesDepartamento" min="1" max="20" />
+                            </div>
+                        }
+                        else if (Formulario.Tipo == "Habitación")
+                        {
+                            <p class="section-sub" style="margin-top: 6px;">Detalles de la habitación</p>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Número/identificador de habitación</label>
+                                    <InputText @bind-Value="Formulario.NroHabitacion" placeholder="Ej: A-12" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Tipo de cama</label>
+                                    <InputSelect @bind-Value="Formulario.TipoCama">
+                                        <option value="">Selecciona...</option>
+                                        <option>Individual</option>
+                                        <option>Matrimonial</option>
+                                        <option>Queen</option>
+                                        <option>King</option>
+                                        <option>Literas</option>
+                                    </InputSelect>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <InputCheckbox @bind-Value="Formulario.ConBanhoPrivado" /> Baño privado
+                                </label>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- FOTOS -->
+                    <div class="form-section">
+                        <h2 class="section-title" style="text-align: left; font-size: 20px;">
+                            <i class="fas fa-images" style="margin-right: 10px; color: var(--gold);"></i>
+                            Fotos
+                        </h2>
+                        <p class="section-sub">Sube imágenes atractivas; la primera será la portada.</p>
+
+                        <label class="image-upload">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p class="upload-text">Arrastra una foto aquí o haz clic</p>
+                            <p class="upload-hint">Una imagen principal • JPG, PNG • Máx. 5 MB</p>
+                            <InputFile OnChange="CargarImagen" accept="image/*" style="display: none;" />
+                        </label>
+
+                        @if (!string.IsNullOrWhiteSpace(MensajeImagen))
+                        {
+                            <p class="validation-message" style="margin-top: 8px;">@MensajeImagen</p>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(ImagenSubidaUrl))
+                        {
+                            <div class="image-preview">
+                                <div class="image-item">
+                                    <span class="cover-badge"><i class="fas fa-star"></i> Portada</span>
+                                    <img src="@ImagenSubidaUrl" alt="preview"
+                                         style="width: 100%; height: 160px; object-fit: cover; border-radius: 8px;" />
+                                    <button type="button" class="delete-btn" @onclick="QuitarImagen">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- SERVICIOS / AMENIDADES -->
+                    <div class="form-section">
+                        <h2 class="section-title" style="text-align: left; font-size: 20px;">
+                            <i class="fas fa-star" style="margin-right: 10px; color: var(--gold);"></i>
+                            Servicios
+                        </h2>
+                        <p class="section-sub">Marca lo que incluye tu espacio para destacar entre las búsquedas.</p>
+
+                        <div class="svc-head">
+                            <span class="svc-count"><strong>@ServiciosSeleccionados.Count</strong> de @Servicios.Length seleccionados</span>
+                        </div>
+
+                        <div class="svc-grid">
+                            @foreach (var servicio in Servicios)
+                            {
+                                bool activo = ServiciosSeleccionados.Contains(servicio.Key);
+                                <button type="button" class="svc-toggle @(activo ? "selected" : "")"
+                                        aria-pressed="@activo"
+                                        @onclick="() => ToggleServicio(servicio.Key)">
+                                    <span class="svc-toggle-icon"><i class="fas @servicio.Icono"></i></span>
+                                    <span class="svc-toggle-name">@servicio.Nombre</span>
+                                    <i class="fas fa-check svc-toggle-check"></i>
+                                </button>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- REGLAS -->
+                    <div class="form-section">
+                        <h2 class="section-title" style="text-align: left; font-size: 20px;">
+                            <i class="fas fa-clipboard-list" style="margin-right: 10px; color: var(--gold);"></i>
+                            Reglas y políticas
+                        </h2>
+                        <p class="section-sub">Define expectativas claras para una buena estadía.</p>
+                        <div class="rule-chips">
+                            @foreach (var regla in Reglas)
+                            {
+                                bool activa = ReglasSeleccionadas.Contains(regla.Key);
+                                <button type="button" class="rule-chip @(activa ? "selected" : "")"
+                                        @onclick="() => ToggleRegla(regla.Key)">
+                                    <i class="fas @regla.Icono"></i> @regla.Nombre
+                                </button>
+                            }
+                        </div>
+                        <p class="field-help" style="margin-top: 14px;">
+                            Selecciona las reglas que aplican; se mostrarán a los huéspedes antes de reservar.
+                        </p>
+                    </div>
+
+                    <!-- PRECIOS -->
+                    <div class="form-section">
+                        <h2 class="section-title" style="text-align: left; font-size: 20px;">
+                            <i class="fas fa-dollar-sign" style="margin-right: 10px; color: var(--gold);"></i>
+                            Precios (S/)
+                        </h2>
+                        <p class="section-sub">Define tu tarifa; el cobro al huésped siempre se realiza en S/ (PEN).</p>
+
+                        <div class="price-grid">
+                            <div class="form-group">
+                                <label>Precio por noche</label>
+                                <InputNumber @bind-Value="Formulario.PrecioNoche" placeholder="150" min="1" />
+                                <ValidationMessage For="() => Formulario.PrecioNoche" class="validation-message" />
+                                <p class="field-help">El cobro al huésped siempre es en S/ (PEN).</p>
+                            </div>
+                            <div class="form-group">
+                                <label>Tarifa de limpieza</label>
+                                <InputNumber @bind-Value="Formulario.TarifaLimpieza" placeholder="50" min="0" />
+                            </div>
+                            <div class="form-group">
+                                <label>Tarifa de servicio</label>
+                                <InputNumber @bind-Value="Formulario.TarifaServicio" placeholder="20" min="0" />
+                            </div>
+                            <div class="form-group">
+                                <label>Descuento semanal (%)</label>
+                                <InputNumber @bind-Value="Formulario.DescuentoSemanal" placeholder="10" min="0" max="50" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BOTONES -->
+                    <div class="button-group">
+                        <button type="submit" class="btn btn-primary" disabled="@Publicando">
+                            @if (Publicando)
+                            {
+                                <i class="fas fa-spinner fa-spin"></i>
+                            }
+                            else
+                            {
+                                <i class="fas fa-check-circle"></i>
+                            }
+                            Publicar alojamiento
+                        </button>
+
+                        <button type="button" class="btn btn-secondary" @onclick="GuardarBorrador">
+                            <i class="fas fa-save"></i> Guardar borrador
+                        </button>
+
+                        <button type="button" class="btn btn-outline" @onclick='() => Navigation.NavigateTo("/panel-anfitrion")'>
+                            <i class="fas fa-arrow-left"></i> Cancelar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- COLUMNA PREVIEW (sticky) -->
+                <aside class="create-aside">
+                    <div class="pub-preview">
+                        <div class="pub-preview-head">Vista previa de publicación</div>
+                        <div class="pub-preview-media">
+                            <span class="badge pub-preview-badge"><i class="fas fa-pen-nib"></i> Borrador</span>
+                            <i class="fas fa-image"></i>
+                        </div>
+                        <div class="pub-preview-body">
+                            <h3 class="pub-preview-title">
+                                @(string.IsNullOrWhiteSpace(Formulario.Nombre) ? "Nombre del alojamiento" : Formulario.Nombre)
+                            </h3>
+                            <p class="pub-preview-loc">
+                                <i class="fas fa-location-dot"></i> @PreviewUbicacion
+                            </p>
+
+                            <div class="pub-preview-cap">
+                                <span><i class="fas fa-users"></i> @Formulario.MaxHuespedes huéspedes</span>
+                                <span><i class="fas fa-door-open"></i> @Formulario.Habitaciones hab.</span>
+                            </div>
+
+                            @if (ServiciosSeleccionados.Any())
+                            {
+                                <div class="pub-preview-chips">
+                                    @foreach (var s in Servicios.Where(x => ServiciosSeleccionados.Contains(x.Key)).Take(6))
+                                    {
+                                        <span class="pub-chip"><i class="fas @s.Icono"></i> @s.Nombre</span>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="pub-preview-empty">Selecciona servicios para mostrarlos aquí.</p>
+                            }
+
+                            <div class="pub-preview-foot" style="margin-top: 14px;">
+                                <span class="price price-lg">
+                                    @(Formulario.PrecioNoche > 0 ? AppState.FormatearPrecio(Formulario.PrecioNoche) : "S/ —")<small> /noche</small>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="field-help" style="margin-top: 12px;">
+                        Así verán tu alojamiento los huéspedes. Se actualiza mientras completas el formulario.
+                    </p>
+                </aside>
+            </div>
+        </EditForm>
+    }
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery] public int? Id { get; set; }
+    private bool EsEdicion => Id is > 0;
+    private Alojamiento? _original;   // datos que el form no edita y hay que conservar en el PUT
+
+    // RF02 gate: solo identidades verificadas pueden publicar.
+    private bool _verificado;
+    private bool _verificacionLista;
+    private string _estadoValidacion = "PENDIENTE";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
+
+        // Re-consultamos el estado fresco del backend: la cookie de sesión puede estar
+        // desactualizada si el admin aprobó/rechazó la identidad después del login.
+        await VerificarIdentidadAsync();
+        if (!_verificado) return;   // bloqueado: no cargamos el formulario
+
+        if (EsEdicion)
+        {
+            _original = await AlojamientoProvider.ObtenerPorIdAsync(Id!.Value);
+            if (_original is not null)
+            {
+                Formulario.Nombre = _original.Nombre;
+                Formulario.Tipo = _original.Tipo;
+                Formulario.Descripcion = _original.Descripcion;
+                Formulario.Provincia = _original.Provincia;
+                Formulario.PrecioNoche = _original.PrecioNoche;
+                Formulario.TarifaLimpieza = _original.TarifaLimpieza;
+                Formulario.MaxHuespedes = _original.MaxHuespedes;
+                Formulario.Habitaciones = _original.Habitaciones;
+
+                // Atributos específicos por tipo (RF05): los cargamos del original para que el form los
+                // muestre al editar (cada tipo trae los suyos desde el backend).
+                Formulario.NumPisos = _original.NumPisos;
+                Formulario.ConPatio = _original.ConPatio;
+                Formulario.NumCocheras = _original.NumCocheras;
+                Formulario.NumHabitacionesCasa = _original.NumHabitacionesCasa;
+                Formulario.NumPiso = _original.NumPiso;
+                Formulario.NroDepartamento = _original.NroDepartamento;
+                Formulario.NroHabitacionesDepartamento = _original.NroHabitacionesDepartamento;
+                Formulario.NroHabitacion = _original.NroHabitacion;
+                Formulario.TipoCama = _original.TipoCama;
+                Formulario.ConBanhoPrivado = _original.ConBanhoPrivado;
+
+                // Servicios y reglas (RF05): preseleccionamos los chips ya guardados (se almacenan por
+                // su nombre legible, así que casamos por Nombre).
+                ServiciosSeleccionados = Servicios
+                    .Where(s => _original.Servicios.Contains(s.Nombre))
+                    .Select(s => s.Key).ToHashSet();
+                ReglasSeleccionadas = Reglas
+                    .Where(r => _original.Reglas.Contains(r.Nombre))
+                    .Select(r => r.Key).ToHashSet();
+
+                // El backend solo persiste Ubicacion combinada ("Direccion, Distrito"); Distrito no
+                // round-trip por el DTO. Si Distrito viene vacío, lo derivamos del final de Ubicacion
+                // para no perderlo ni duplicarlo al re-guardar (Ubicacion se reconstruye en Publicar).
+                if (!string.IsNullOrWhiteSpace(_original.Distrito))
+                {
+                    Formulario.Distrito = _original.Distrito;
+                    Formulario.Direccion = _original.Ubicacion;
+                }
+                else if (!string.IsNullOrWhiteSpace(_original.Ubicacion) && _original.Ubicacion.Contains(','))
+                {
+                    var idx = _original.Ubicacion.LastIndexOf(',');
+                    Formulario.Direccion = _original.Ubicacion.Substring(0, idx).Trim();
+                    Formulario.Distrito = _original.Ubicacion.Substring(idx + 1).Trim();
+                }
+                else
+                {
+                    Formulario.Direccion = _original.Ubicacion;
+                }
+            }
+        }
+    }
+
+    private async Task VerificarIdentidadAsync()
+    {
+        // Por defecto confiamos en lo que trae la sesión; si el backend responde, mandan sus datos.
+        _estadoValidacion = AppState.UsuarioActual?.EstadoValidacion ?? "PENDIENTE";
+        try
+        {
+            var uid = AppState.UsuarioActual?.Id ?? 0;
+            if (uid > 0)
+            {
+                var fresco = await UsuarioSvc.ObtenerPorIdAsync(uid);
+                if (fresco is not null)
+                {
+                    _estadoValidacion = fresco.EstadoValidacion;
+                    AppState.UsuarioActual!.EstadoValidacion = fresco.EstadoValidacion; // refresca la sesión
+                }
+            }
+        }
+        catch { /* backend caído: nos quedamos con el estado de la sesión */ }
+        _verificado = string.Equals(_estadoValidacion, "APROBADO", StringComparison.OrdinalIgnoreCase);
+        _verificacionLista = true;
+    }
+
+    private CrearAlojamientoForm Formulario = new();
+    private bool Publicando = false;
+    private string MensajeExito = "";
+    private string MensajeError = "";
+
+    private string PreviewUbicacion
+    {
+        get
+        {
+            var distrito = string.IsNullOrWhiteSpace(Formulario.Distrito) ? "Distrito" : Formulario.Distrito;
+            var tipo = string.IsNullOrWhiteSpace(Formulario.Tipo) ? "" : $" · {Formulario.Tipo}";
+            return distrito + tipo;
+        }
+    }
+    private HashSet<string> ServiciosSeleccionados = new();
+
+    // Subida real de UNA imagen principal -> ruta servida desde wwwroot/uploads.
+    private string ImagenSubidaUrl = "";
+    private string MensajeImagen = "";
+
+    private record ServicioInfo(string Key, string Nombre, string Icono);
+
+    private static readonly ServicioInfo[] Servicios =
+    {
+        new("wifi", "WiFi", "fa-wifi"),
+        new("estacionamiento", "Estacionamiento", "fa-car"),
+        new("tv", "TV", "fa-tv"),
+        new("piscina", "Piscina", "fa-water"),
+        new("aire", "Aire Acondicionado", "fa-snowflake"),
+        new("cocina", "Cocina Equipada", "fa-utensils"),
+        new("lavanderia", "Lavandería", "fa-tshirt"),
+        new("bbq", "Barbacoa", "fa-fire")
+    };
+
+    // Reglas de la casa: se persisten en el alojamiento (columna reglas), igual que los servicios.
+    private HashSet<string> ReglasSeleccionadas = new();
+
+    private static readonly ServicioInfo[] Reglas =
+    {
+        new("no-fumar", "No fumar", "fa-ban-smoking"),
+        new("no-fiestas", "Sin fiestas ni eventos", "fa-champagne-glasses"),
+        new("mascotas", "Acepta mascotas", "fa-paw"),
+        new("ninos", "Apto para niños", "fa-child"),
+        new("checkin", "Check-in flexible", "fa-clock")
+    };
+
+    private void ToggleRegla(string key)
+    {
+        if (!ReglasSeleccionadas.Remove(key))
+            ReglasSeleccionadas.Add(key);
+    }
+
+    private void ToggleServicio(string key)
+    {
+        if (!ServiciosSeleccionados.Remove(key))
+            ServiciosSeleccionados.Add(key);
+    }
+
+    private async Task CargarImagen(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file is null) return;
+        if (!file.ContentType.StartsWith("image/")) { MensajeImagen = "El archivo debe ser una imagen."; return; }
+        if (file.Size > 5 * 1024 * 1024) { MensajeImagen = "La imagen no debe pasar de 5 MB."; return; }
+
+        var uploadsDir = System.IO.Path.Combine(Env.WebRootPath, "uploads");
+        System.IO.Directory.CreateDirectory(uploadsDir);
+        var ext = System.IO.Path.GetExtension(file.Name);
+        var nombre = $"{Guid.NewGuid():N}{ext}";
+        var ruta = System.IO.Path.Combine(uploadsDir, nombre);
+        await using (var fs = new System.IO.FileStream(ruta, System.IO.FileMode.Create))
+        {
+            await file.OpenReadStream(5 * 1024 * 1024).CopyToAsync(fs);
+        }
+        ImagenSubidaUrl = $"/uploads/{nombre}";
+        MensajeImagen = "";
+    }
+
+    private void QuitarImagen() => ImagenSubidaUrl = "";
+
+    private async Task Publicar()
+    {
+        MensajeError = "";
+        MensajeExito = "";
+
+        // RF02: refuerzo del gate (defensa en profundidad por si el form llegara a renderizarse).
+        if (!_verificado)
+        {
+            MensajeError = "Debes verificar tu identidad antes de publicar.";
+            return;
+        }
+
+        // Validación mínima (la EditForm ya valida vía DataAnnotations, pero reforzamos aquí
+        // antes de enviar al backend para no mandar una publicación incompleta).
+        if (string.IsNullOrWhiteSpace(Formulario.Nombre) ||
+            string.IsNullOrWhiteSpace(Formulario.Tipo) ||
+            string.IsNullOrWhiteSpace(Formulario.Distrito) ||
+            Formulario.PrecioNoche <= 0)
+        {
+            MensajeError = "Completa al menos el nombre, el tipo, el distrito y un precio por noche válido.";
+            return;
+        }
+
+        Publicando = true;
+        try
+        {
+            // Servicios: el UI guarda las selecciones en ServiciosSeleccionados (claves), así que
+            // armamos la lista con los nombres legibles de los servicios marcados.
+            var serviciosLista = Servicios
+                .Where(s => ServiciosSeleccionados.Contains(s.Key))
+                .Select(s => s.Nombre)
+                .ToList();
+
+            // Reglas: mismas selecciones (por su nombre legible), ahora SÍ se persisten en el backend.
+            var reglasLista = Reglas
+                .Where(r => ReglasSeleccionadas.Contains(r.Key))
+                .Select(r => r.Nombre)
+                .ToList();
+
+            var alojamiento = new Alojamiento
+            {
+                Nombre = Formulario.Nombre,
+                Tipo = Formulario.Tipo,                 // "Casa" / "Departamento" / "Habitación" (con tilde, como el backend)
+                Descripcion = Formulario.Descripcion,
+                Ubicacion = string.IsNullOrWhiteSpace(Formulario.Direccion)
+                                ? Formulario.Distrito
+                                : $"{Formulario.Direccion}, {Formulario.Distrito}",
+                Distrito = Formulario.Distrito,
+                Provincia = Formulario.Provincia,
+                Pais = "Perú",                          // columna 'pais' es NOT NULL en BD; el form no la captura
+                PrecioNoche = Formulario.PrecioNoche,
+                TarifaLimpieza = Formulario.TarifaLimpieza,
+                MaxHuespedes = Formulario.MaxHuespedes,
+                Habitaciones = Formulario.Habitaciones,
+                Servicios = serviciosLista,
+                Reglas = reglasLista,
+                AnfitrionId = AppState.UsuarioActual?.Id ?? 0,  // anfitrión = usuario logueado
+                Latitud = 0,    // TODO: el formulario no captura coordenadas todavía; quedará sin pin
+                Longitud = 0,   //       en el mapa hasta agregar selección de ubicación.
+                ImagenUrl = ImagenSubidaUrl,  // ruta del archivo subido; "" si no subió ninguna
+
+                // Atributos específicos por tipo (RF05): se copian del Formulario al objeto que se envía.
+                // El backend solo usa los del tipo correspondiente; los demás van con su valor por defecto.
+                NumPisos = Formulario.NumPisos,
+                ConPatio = Formulario.ConPatio,
+                NumCocheras = Formulario.NumCocheras,
+                NumHabitacionesCasa = Formulario.NumHabitacionesCasa,
+                NumPiso = Formulario.NumPiso,
+                NroDepartamento = Formulario.NroDepartamento,
+                NroHabitacionesDepartamento = Formulario.NroHabitacionesDepartamento,
+                NroHabitacion = Formulario.NroHabitacion,
+                TipoCama = Formulario.TipoCama,
+                ConBanhoPrivado = Formulario.ConBanhoPrivado
+            };
+
+            if (EsEdicion)
+            {
+                // Conserva del original lo que el form no edita, para no perderlo en el PUT.
+                alojamiento.Id = Id!.Value;
+                alojamiento.AnfitrionId = _original?.AnfitrionId ?? alojamiento.AnfitrionId;  // conserva el dueño
+                alojamiento.ImagenUrl = _original?.ImagenUrl ?? "";                            // conserva la imagen actual
+                alojamiento.EstadoPublicacion = _original?.EstadoPublicacion ?? "Activo";      // no lo despublica
+                await AlojamientoProvider.ActualizarAsync(alojamiento);   // PUT
+            }
+            else
+            {
+                await AlojamientoProvider.RegistrarAsync(alojamiento);    // POST
+            }
+
+            MensajeExito = EsEdicion
+                ? "Cambios guardados correctamente."
+                : "¡Alojamiento publicado exitosamente! Está en revisión.";
+            await Task.Delay(1500);
+            Navigation.NavigateTo("/panel-anfitrion");
+        }
+        catch (Exception)
+        {
+            MensajeError = "No se pudo publicar el alojamiento. Revisa los datos e intenta de nuevo.";
+        }
+        finally
+        {
+            Publicando = false;
+        }
+    }
+
+    private void GuardarBorrador()
+    {
+        MensajeExito = "Borrador guardado correctamente.";
+    }
+}

@@ -1,0 +1,88 @@
+@inherits LayoutComponentBase
+@inject NavigationManager Navigation
+
+<div class="page-wrapper">
+    @* Accesibilidad: enlace para saltar al contenido (visible solo al enfocarlo con Tab). *@
+    <a href="#contenido-principal" class="skip-link">Saltar al contenido</a>
+    @if (MostrarNav)
+    {
+        <NavMenu />
+    }
+    <main id="contenido-principal" tabindex="-1">@Body</main>
+    @* Footer del sitio en 3 columnas (marca, navegación, contacto/redes) + línea legal inferior.
+       Vive en el layout para ser consistente en todas las páginas, no solo en el Home. *@
+    <footer>
+        <div class="container footer-inner">
+            <div class="footer-col footer-brand">
+                <span class="footer-logo">Bunki</span>
+                <p class="footer-tagline">Alojamientos seleccionados en Perú, reservados con la confianza de una plataforma profesional.</p>
+            </div>
+
+            <div class="footer-col">
+                <h4 class="footer-title">Navegación</h4>
+                <nav class="footer-links">
+                    <a href="/explorar">Explorar</a>
+                    <a href="/mis-reservas">Mis Reservas</a>
+                    <a href="/perfil/ayuda">Ayuda</a>
+                </nav>
+            </div>
+
+            <div class="footer-col">
+                <h4 class="footer-title">Síguenos</h4>
+                <div class="footer-social">
+                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" aria-label="X"><i class="fab fa-x-twitter"></i></a>
+                </div>
+                <p class="footer-contact"><i class="fas fa-envelope"></i> hola@bunki.pe</p>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="container">
+                <p>&copy; 2026 Bunki. Plataforma de alojamientos.</p>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<style>
+    .page-wrapper {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    main {
+        flex: 1;
+    }
+
+    main:focus { outline: none; }
+
+    /* Skip-link: oculto hasta recibir foco con teclado; entonces aparece arriba a la izquierda. */
+    .skip-link {
+        position: absolute;
+        left: 12px;
+        top: -48px;
+        z-index: var(--z-toast);
+        background: var(--ink);
+        color: #fff;
+        padding: 10px 16px;
+        border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+        font-weight: 600;
+        text-decoration: none;
+        transition: top var(--t);
+    }
+
+    .skip-link:focus {
+        top: 0;
+        outline: none;
+        box-shadow: var(--ring);
+    }
+</style>
+
+@code {
+    private bool MostrarNav =>
+        !new[] { "/login", "/registro", "/recuperar-password" }
+            .Any(p => Navigation.Uri.Contains(p));
+}

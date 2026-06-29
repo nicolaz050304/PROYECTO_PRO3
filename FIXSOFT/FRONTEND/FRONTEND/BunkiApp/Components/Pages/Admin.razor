@@ -1,0 +1,230 @@
+@page "/admin"
+@layout AdminLayout
+@rendermode InteractiveServer
+@inject DataService Data
+@inject NavigationManager Navigation
+@inject BunkiApp.Models.AppState AppState
+@inject BunkiApp.Services.DenunciaServiceRest DenunciaSvc
+@inject BunkiApp.Services.IncidenciaServiceRest IncidenciaSvc
+@inject UsuarioProvider UsuarioProv
+@inject AlojamientoProvider AlojamientoProv
+@inject ReservaProvider ReservaProv
+
+<PageTitle>Bunki Admin · Dashboard</PageTitle>
+
+<!-- ENCABEZADO -->
+<div class="admin-dash-head">
+    <div>
+        @* Título quitado: ya lo muestra el topbar del AdminLayout (evitamos el doble título). *@
+        <p class="admin-page-sub admin-page-sub--flush">Resumen general de la plataforma Bunki.</p>
+    </div>
+    <span class="admin-pill"><i class="fas fa-shield-halved"></i> Admin</span>
+</div>
+
+<!-- KPIs · datos REALES del backend (usuarios, alojamientos, reservas, ingresos cobrados).
+     Las tendencias se calculan de verdad (este mes vs. el anterior, por fecha de entrada);
+     solo se muestran en Reservas e Ingresos, que sí tienen fecha para comparar. -->
+<div class="admin-kpis">
+    @* Números de KPI en neutral (--ink); el color queda solo para tendencia (flecha) y dinero. *@
+    <StatBox Valor="@_usuarios.ToString("N0")" Etiqueta="Usuarios registrados" Icono="fa-users" Tono="neutral" />
+    <StatBox Valor="@_totalAloj.ToString("N0")" Etiqueta="Alojamientos" Icono="fa-house" Tono="neutral" />
+    <StatBox Valor="@_totalReservas.ToString("N0")" Etiqueta="Reservas registradas" Icono="fa-calendar-check"
+             Tono="neutral" Tendencia="@_trendReservas" TendenciaTono="@_trendReservasTono" />
+    <StatBox Valor="@($"S/ {_ingresos.ToString("N0")}")" Etiqueta="Ingresos cobrados" Icono="fa-sack-dollar"
+             Tono="dinero" Tendencia="@_trendIngresos" TendenciaTono="@_trendIngresosTono" />
+</div>
+
+<!-- PENDIENTES CRÍTICOS -->
+<h2 class="admin-section-label">Pendientes críticos</h2>
+<div class="admin-alerts">
+    <a href="/admin/moderacion" class="admin-card admin-alert">
+        <span class="admin-alert-icon"><i class="fas fa-clipboard-check"></i></span>
+        <span class="admin-alert-body">
+            <span class="admin-alert-count">@_porAprobar</span>
+            <span class="admin-alert-label">Alojamientos por aprobar</span>
+        </span>
+        <i class="fas fa-chevron-right admin-alert-arrow" aria-hidden="true"></i>
+    </a>
+
+    <a href="/admin/moderacion?tab=denuncias" class="admin-card admin-alert">
+        <span class="admin-alert-icon admin-alert-icon--warn"><i class="fas fa-flag"></i></span>
+        <span class="admin-alert-body">
+            <span class="admin-alert-count">@_denunciasNuevas</span>
+            <span class="admin-alert-label">Denuncias nuevas</span>
+        </span>
+        <i class="fas fa-chevron-right admin-alert-arrow" aria-hidden="true"></i>
+    </a>
+
+    <a href="/admin/incidencias" class="admin-card admin-alert">
+        <span class="admin-alert-icon admin-alert-icon--danger"><i class="fas fa-triangle-exclamation"></i></span>
+        <span class="admin-alert-body">
+            <span class="admin-alert-count">@_incidenciasAbiertas</span>
+            <span class="admin-alert-label">Incidencias abiertas</span>
+        </span>
+        <i class="fas fa-chevron-right admin-alert-arrow" aria-hidden="true"></i>
+    </a>
+</div>
+
+<!-- ACTIVIDAD + ACCESOS -->
+<div class="admin-cols">
+
+    <div class="admin-card">
+        <h2 class="admin-card-title"><i class="fas fa-clock-rotate-left"></i> Actividad reciente</h2>
+        @if (!_actividad.Any())
+        {
+            <p class="card-text" style="padding: 8px 0;">Sin actividad reciente.</p>
+        }
+        else
+        {
+            <ul class="admin-activity">
+                @foreach (var act in _actividad)
+                {
+                    <li>
+                        <span class="admin-activity-dot @act.Dot"></span>
+                        <span class="admin-activity-text">
+                            @act.Texto
+                            <span class="admin-activity-time">@act.Tiempo</span>
+                        </span>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+
+    <div class="admin-card">
+        <h2 class="admin-card-title"><i class="fas fa-bolt"></i> Accesos rápidos</h2>
+        <nav class="admin-quick" aria-label="Accesos rápidos del panel">
+            <a href="/admin/moderacion" class="admin-quick-link">
+                <i class="fas fa-scale-balanced" aria-hidden="true"></i>
+                <span>Ir a Moderación</span>
+                <i class="fas fa-chevron-right admin-quick-arrow" aria-hidden="true"></i>
+            </a>
+            <a href="/admin/usuarios" class="admin-quick-link">
+                <i class="fas fa-users" aria-hidden="true"></i>
+                <span>Ver Usuarios</span>
+                <i class="fas fa-chevron-right admin-quick-arrow" aria-hidden="true"></i>
+            </a>
+            <a href="/admin/reportes-financieros" class="admin-quick-link">
+                <i class="fas fa-coins" aria-hidden="true"></i>
+                <span>Ver Reportes</span>
+                <i class="fas fa-chevron-right admin-quick-arrow" aria-hidden="true"></i>
+            </a>
+            <a href="/admin/analytics" class="admin-quick-link">
+                <i class="fas fa-chart-line" aria-hidden="true"></i>
+                <span>Ver Analytics</span>
+                <i class="fas fa-chevron-right admin-quick-arrow" aria-hidden="true"></i>
+            </a>
+            <a href="/admin/incidencias" class="admin-quick-link">
+                <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
+                <span>Ver Incidencias</span>
+                <i class="fas fa-chevron-right admin-quick-arrow" aria-hidden="true"></i>
+            </a>
+        </nav>
+    </div>
+</div>
+
+@code {
+    // KPIs reales
+    private int _usuarios, _totalAloj, _totalReservas;
+    private decimal _ingresos;
+    private string _trendReservas = "", _trendReservasTono = "";
+    private string _trendIngresos = "", _trendIngresosTono = "";
+
+    // Pendientes críticos
+    private int _porAprobar;
+    private int _denunciasNuevas;
+    private int _incidenciasAbiertas;
+
+    // Actividad reciente (derivada de filas reales)
+    private record Actividad(string Dot, string Texto, string Tiempo);
+    private List<Actividad> _actividad = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!AppState.EstaAutenticado || !AppState.EsAdmin())
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        // Cargas reales (cada una con fallback a vacío si su REST falla).
+        var usuarios = await Safe(() => UsuarioProv.ListarAsync());
+        var alojamientos = await Safe(() => AlojamientoProv.ListarAsync());
+        var reservas = await Safe(() => ReservaProv.ListarTodasAsync());
+        var pendientes = await Safe(() => AlojamientoProv.ListarPendientesAsync());
+        var denuncias = await Safe(() => DenunciaSvc.ListarAsync());
+
+        _usuarios = usuarios.Count;
+        _totalAloj = alojamientos.Count;
+        _totalReservas = reservas.Count;
+        _ingresos = reservas.Where(r => r.Estado is "Confirmada" or "Completada").Sum(r => r.Total);
+
+        var incidencias = await Safe(() => IncidenciaSvc.ListarAsync());
+
+        _porAprobar = pendientes.Count;
+        _denunciasNuevas = denuncias.Count(d => d.Estado == "EN_REVISION");
+        // Incidencias "abiertas" = aún sin resolver/cerrar (ABIERTO o EN_PROCESO).
+        _incidenciasAbiertas = incidencias.Count(i => i.Estado is "ABIERTO" or "EN_PROCESO");
+
+        // --- Tendencias reales: este mes vs. el anterior, por fecha de entrada ---
+        var hoy = DateTime.Today;
+        var prev = hoy.AddMonths(-1);
+        bool EnMes(DateTime f, DateTime m) => f.Month == m.Month && f.Year == m.Year;
+
+        int resCur = reservas.Count(r => EnMes(r.FechaEntrada, hoy));
+        int resPrev = reservas.Count(r => EnMes(r.FechaEntrada, prev));
+        (_trendReservas, _trendReservasTono) = Tendencia(resPrev, resCur);
+
+        bool Cobrada(Reserva r) => r.Estado is "Confirmada" or "Completada";
+        double ingCur = (double)reservas.Where(r => Cobrada(r) && EnMes(r.FechaEntrada, hoy)).Sum(r => r.Total);
+        double ingPrev = (double)reservas.Where(r => Cobrada(r) && EnMes(r.FechaEntrada, prev)).Sum(r => r.Total);
+        (_trendIngresos, _trendIngresosTono) = Tendencia(ingPrev, ingCur);
+
+        // --- Actividad reciente: filas reales más recientes ---
+        var items = new List<(DateTime fecha, string dot, string texto)>();
+        foreach (var r in reservas.OrderByDescending(r => r.FechaEntrada).Take(4))
+            items.Add((r.FechaEntrada, "",
+                $"{NombreO(r.HuespedNombre, "Un huésped")} reservó \"{r.AlojamientoNombre}\""));
+        foreach (var d in denuncias.Take(3))
+            items.Add((ParseFecha(d.Fecha),
+                d.Estado == "EN_REVISION" ? "admin-activity-dot--warn" : "admin-activity-dot--success",
+                $"Denuncia #{d.Id} sobre \"{d.AlojamientoNombre}\" ({d.EstadoTexto})"));
+        foreach (var a in pendientes.Take(2))
+            items.Add((hoy, "admin-activity-dot--danger", $"\"{a.Nombre}\" espera aprobación"));
+
+        _actividad = items.OrderByDescending(i => i.fecha).Take(5)
+            .Select(i => new Actividad(i.dot, i.texto, TiempoRelativo(i.fecha)))
+            .ToList();
+    }
+
+    private static string NombreO(string? n, string fallback) =>
+        string.IsNullOrWhiteSpace(n) ? fallback : n;
+
+    // Devuelve (texto, tono) de la variación porcentual. Sin base previa -> "Nuevo este mes".
+    private static (string, string) Tendencia(double prev, double cur)
+    {
+        if (prev <= 0 && cur <= 0) return ("", "");
+        if (prev <= 0) return ("Nuevo este mes", "up");
+        var pct = (cur - prev) / prev * 100.0;
+        var signo = pct >= 0 ? "+" : "";
+        return ($"{signo}{pct:0}% vs. mes anterior", pct >= 0 ? "up" : "down");
+    }
+
+    private static DateTime ParseFecha(string? iso) =>
+        DateTime.TryParse(iso, out var d) ? d : DateTime.MinValue;
+
+    private static string TiempoRelativo(DateTime f)
+    {
+        var dias = (DateTime.Today - f.Date).Days;
+        if (dias <= 0) return "hoy";
+        if (dias == 1) return "ayer";
+        if (dias < 7) return $"hace {dias} días";
+        if (dias < 30) return $"hace {dias / 7} sem";
+        return f.ToString("dd MMM");
+    }
+
+    private static async Task<List<T>> Safe<T>(Func<Task<List<T>>> cargar)
+    {
+        try { return await cargar(); } catch { return new(); }
+    }
+}

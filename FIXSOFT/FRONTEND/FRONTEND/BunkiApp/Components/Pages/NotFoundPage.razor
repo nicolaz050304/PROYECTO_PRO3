@@ -1,0 +1,23 @@
+@* Página 404 con marca. Se alcanza por dos vías:
+   1) Navegación dentro de la app a un enlace inválido → el <NotFound> del Router (Routes.razor).
+   2) URL inválida escrita/refrescada directo → el middleware UseStatusCodePagesWithReExecute("/404")
+      en Program.cs re-ejecuta la petición hacia ESTA ruta conservando el código 404.
+   Es una ruta ESPECÍFICA (no catch-all) para no interceptar los assets estáticos (/css, /js, …). *@
+@page "/404"
+
+<PageTitle>Página no encontrada · Bunki</PageTitle>
+
+<section class="notfound">
+    <div class="container notfound-inner">
+        <span class="notfound-eyebrow">Error 404</span>
+        <h1 class="notfound-title">Esta página no <span class="serif-accent">existe.</span></h1>
+        <p class="notfound-sub">El enlace puede estar roto o la página se movió. Volvamos a un lugar conocido.</p>
+        <div class="notfound-actions">
+            <a href="/" class="btn btn-primary btn-pill">Volver al inicio</a>
+            <a href="/explorar" class="btn btn-outline btn-pill">Explorar estadías</a>
+        </div>
+    </div>
+</section>
+
+@code {
+}

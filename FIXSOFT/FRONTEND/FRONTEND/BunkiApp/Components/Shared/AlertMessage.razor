@@ -1,0 +1,80 @@
+@* Components/Shared/AlertMessage.razor *@
+@implements IDisposable
+
+@if (Visible)
+{
+    <div class="alert alert-@Tipo" role="alert">
+        <i class="fas @IconoClase"></i>
+        <span>@Mensaje</span>
+        @if (Cerrable)
+        {
+            <button style="margin-left: auto; background: none; border: none; cursor: pointer; font-size: 16px;" @onclick="Cerrar">
+                <i class="fas fa-times"></i>
+            </button>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string Tipo { get; set; } = "success"; // success | warning | danger
+    [Parameter] public string Mensaje { get; set; } = "";
+    [Parameter] public bool Cerrable { get; set; } = true;
+    // Auto-ocultar tras N ms (0 = nunca). Útil para toasts: se ocultan solos sin recargar.
+    [Parameter] public int AutoDismissMs { get; set; } = 0;
+
+    private bool Visible = true;
+    private string _ultimoMensaje = "";
+    private System.Threading.CancellationTokenSource? _cts;
+
+    // Cada vez que llega un mensaje NUEVO, se muestra y (si aplica) se reinicia el temporizador.
+    protected override void OnParametersSet()
+    {
+        if (Mensaje != _ultimoMensaje)
+        {
+            _ultimoMensaje = Mensaje;
+            if (!string.IsNullOrEmpty(Mensaje))
+            {
+                Visible = true;
+                if (AutoDismissMs > 0) ReiniciarTemporizador();
+            }
+        }
+    }
+
+    private void ReiniciarTemporizador()
+    {
+        _cts?.Cancel();
+        _cts = new System.Threading.CancellationTokenSource();
+        var token = _cts.Token;
+        _ = OcultarTrasDelayAsync(token);
+    }
+
+    private async Task OcultarTrasDelayAsync(System.Threading.CancellationToken token)
+    {
+        try { await Task.Delay(AutoDismissMs, token); }
+        catch (TaskCanceledException) { return; }
+        if (!token.IsCancellationRequested)
+        {
+            Visible = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    public void Dispose() => _cts?.Cancel();
+
+    private string IconoClase => Tipo switch
+    {
+        "success" => "fa-check-circle",
+        "warning" => "fa-exclamation-circle",
+        "danger" => "fa-times-circle",
+        _ => "fa-info-circle"
+    };
+
+    public void Mostrar(string mensaje)
+    {
+        Mensaje = mensaje;
+        Visible = true;
+        StateHasChanged();
+    }
+
+    private void Cerrar() => Visible = false;
+}

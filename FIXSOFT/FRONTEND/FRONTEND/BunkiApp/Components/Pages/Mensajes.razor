@@ -1,0 +1,255 @@
+@page "/mensajes"
+@rendermode InteractiveServer
+@inject Services.MensajeServiceRest MensajeRest
+@inject Services.ReservaProvider ReservaProvider
+@inject NavigationManager Navigation
+@inject BunkiApp.Models.AppState AppState
+
+<PageTitle>Bunki - Mensajes</PageTitle>
+
+<div class="section">
+    <div class="container" style="max-width: 1000px;">
+        <div style="display: grid; grid-template-columns: 300px 1fr; gap: 0; background: var(--card-bg); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; height: 600px; border: 1px solid var(--border);">
+
+            <div style="border-right: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0;">
+                <div style="padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+                    <h3>Conversaciones</h3>
+                    <button class="btn btn-small btn-secondary">+ Nuevo</button>
+                </div>
+
+                <div style="flex: 1; overflow-y: auto;">
+                    @if (Conversaciones.Count == 0)
+                    {
+                        <div class="chat-empty chat-empty--compact">
+                            <div class="chat-empty-icon"><i class="fas fa-comments"></i></div>
+                            <h4 class="chat-empty-title">Sin conversaciones</h4>
+                            <p class="chat-empty-text">Cuando reserves o recibas una reserva, el chat con la otra persona aparecerá aquí.</p>
+                        </div>
+                    }
+                    @foreach (var conv in Conversaciones)
+                    {
+                        <div class="conversation-item @(ConversacionActiva?.Id == conv.Id ? "active" : "")"
+                             @onclick="() => SeleccionarConversacion(conv)" style="cursor: pointer;">
+                            <div class="avatar">@conv.ContactoInicial</div>
+                            <div style="flex: 1; min-width: 0;">
+                                <div class="flex flex-between">
+                                    <h4 style="font-size: 14px;">@conv.ContactoNombre</h4>
+                                    @if (conv.MensajesNoLeidos > 0)
+                                    {
+                                        <span class="badge badge-primary" style="font-size: 11px;">@conv.MensajesNoLeidos</span>
+                                    }
+                                </div>
+                                <p class="card-text" style="font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 3px;">
+                                    @conv.Rol
+                                </p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @if (ConversacionActiva is not null)
+            {
+                <div class="chat-container" style="display: flex; flex-direction: column; height: 100%; min-height: 0;">
+
+                    <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+                        <div class="flex gap-15 items-center">
+                            <div class="avatar">@ConversacionActiva.ContactoInicial</div>
+                            <div>
+                                <h4>@ConversacionActiva.ContactoNombre</h4>
+                                <p class="card-text" style="font-size: 12px;">@ConversacionActiva.Rol</p>
+                            </div>
+                        </div>
+                        @if (ConversacionActiva.EstaEnLinea)
+                        {
+                            <span class="badge badge-success">En línea</span>
+                        }
+                    </div>
+
+                    <div class="chat-messages" id="chat-messages" style="flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column;">
+                        @if (ConversacionActiva.Mensajes == null || ConversacionActiva.Mensajes.Count == 0)
+                        {
+                            <div class="chat-empty" style="margin: auto;">
+                                <div class="chat-empty-icon"><i class="fas fa-pen-to-square"></i></div>
+                                <h4 class="chat-empty-title">Aún no hay mensajes</h4>
+                                <p class="chat-empty-text">Escribe el primero para empezar la conversación.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (var msg in ConversacionActiva.Mensajes)
+                            {
+                                <div>
+                                    <div class="message-bubble @(msg.EsMio ? "message-sent" : "message-received")">
+                                        @msg.Texto
+                                    </div>
+                                    <p class="message-meta" style="text-align: @(msg.EsMio ? "right" : "left");">
+                                        @msg.Hora
+                                    </p>
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <div class="chat-input-area" style="padding: 16px; border-top: 1px solid var(--border); display: flex; gap: 10px; background: var(--card-bg); flex-shrink: 0;">
+                        <input type="text" placeholder="Escribe tu mensaje..."
+                               style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--ink);"
+                               @bind="TextoMensaje"
+                               @onkeypress="TeclaPresionada" />
+                        <button class="btn btn-secondary" style="padding: 12px 20px; border-radius: 6px;" @onclick="EnviarMensaje">
+                            <i class="fas fa-paper-plane"></i> Enviar
+                        </button>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div style="display: flex; align-items: center; justify-content: center; height: 100%;">
+                    <div class="chat-empty">
+                        <div class="chat-empty-icon"><i class="fas fa-comments"></i></div>
+                        <h4 class="chat-empty-title">Selecciona una conversación</h4>
+                        <p class="chat-empty-text">Elige una reserva de la lista para ver y continuar el chat.</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Conversacion> Conversaciones = new();
+    private Conversacion? ConversacionActiva;
+    private string TextoMensaje = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
+
+        var yo = AppState.UsuarioActual!.Id;
+
+        var comoHuesped = await ReservaProvider.ListarPorUsuarioAsync(yo) ?? new List<Reserva>();
+        var comoAnfitrion = await ReservaProvider.ListarPorAnfitrionAsync(yo) ?? new List<Reserva>();
+
+        var convs = new List<Conversacion>();
+
+        foreach (var r in comoHuesped)
+            convs.Add(CrearConversacion(r, otroNombre: r.AnfitrionNombre));
+
+        foreach (var r in comoAnfitrion)
+            convs.Add(CrearConversacion(r, otroNombre: r.HuespedNombre));
+
+        Conversaciones = convs
+            .GroupBy(c => c.Id)
+            .Select(g => g.First())
+            .ToList();
+
+        var yoId = AppState.UsuarioActual!.Id;
+        foreach (var c in Conversaciones)
+        {
+            try
+            {
+                c.MensajesNoLeidos = await MensajeRest.ContarNoLeidosAsync(c.Id, yoId);
+            }
+            catch
+            {
+                c.MensajesNoLeidos = 0;
+            }
+        }
+
+        ConversacionActiva = Conversaciones.FirstOrDefault();
+        if (ConversacionActiva is not null)
+            await CargarMensajes(ConversacionActiva);
+    }
+
+    private Conversacion CrearConversacion(Reserva r, string? otroNombre)
+    {
+        var titulo = string.IsNullOrWhiteSpace(otroNombre) ? r.AlojamientoNombre : otroNombre;
+        return new Conversacion
+        {
+            Id = r.Id,
+            ContactoNombre = titulo,
+            ContactoInicial = Iniciales(titulo),
+            Rol = $"Reserva: {r.AlojamientoNombre}",
+            Mensajes = new()
+        };
+    }
+
+    private async Task SeleccionarConversacion(Conversacion conv) => await CargarMensajes(conv);
+
+    private async Task CargarMensajes(Conversacion conv)
+    {
+        try
+        {
+            var yo = AppState.UsuarioActual!.Id;
+            var msgs = await MensajeRest.ListarPorReservaAsync(conv.Id);
+
+            if (msgs != null)
+            {
+                conv.Mensajes = msgs.Where(m => m != null).Select(m => new Mensaje
+                {
+                    Id = m.IdMensaje,
+                    AutorNombre = m.NombreEmisor ?? (m.IdEmisor == yo ? "Tú" : "Usuario"),
+                    AutorInicial = Iniciales(m.NombreEmisor ?? (m.IdEmisor == yo ? AppState.UsuarioActual!.Nombre : "U")),
+                    Texto = m.Texto ?? "",
+                    Hora = m.FechaEnvio,
+                    EsMio = m.IdEmisor == yo
+                }).ToList();
+            }
+            else
+            {
+                conv.Mensajes = new List<Mensaje>();
+            }
+
+            ConversacionActiva = conv;
+
+            try
+            {
+                await MensajeRest.MarcarLeidosAsync(conv.Id, yo);
+                conv.MensajesNoLeidos = 0;
+            }
+            catch { }
+
+            StateHasChanged();
+        }
+        catch (Exception)
+        {
+            conv.Mensajes = new List<Mensaje>();
+            ConversacionActiva = conv;
+            StateHasChanged();
+        }
+    }
+
+    private async Task EnviarMensaje()
+    {
+        if (string.IsNullOrWhiteSpace(TextoMensaje) || ConversacionActiva is null) return;
+
+        try
+        {
+            var ok = await MensajeRest.EnviarAsync(ConversacionActiva.Id, AppState.UsuarioActual!.Id, TextoMensaje);
+            if (ok)
+            {
+                TextoMensaje = "";
+                await CargarMensajes(ConversacionActiva);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al enviar: {ex.Message}");
+        }
+    }
+
+    private async Task TeclaPresionada(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            await EnviarMensaje();
+    }
+
+    private static string Iniciales(string? nombre)
+    {
+        if (string.IsNullOrWhiteSpace(nombre)) return "?";
+        var partes = nombre.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var ini = partes[0][0].ToString();
+        if (partes.Length > 1) ini += partes[1][0].ToString();
+        return ini.ToUpper();
+    }
+}

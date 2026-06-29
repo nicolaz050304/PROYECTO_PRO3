@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="satisfaccion" pageWidth="595" pageHeight="842" columnWidth="535"
+              leftMargin="30" rightMargin="30" topMargin="30" bottomMargin="30"
+              whenNoDataType="NoDataSection">
+
+    <style name="base" isDefault="true" fontName="SansSerif" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+
+    <parameter name="P_GENERADO" class="java.lang.String"/>
+    <parameter name="P_NUM_ALOJ" class="java.lang.String"/>
+    <parameter name="P_PROMEDIO_GLOBAL" class="java.lang.String"/>
+    <parameter name="P_TOTAL_RESENAS" class="java.lang.String"/>
+
+    <field name="alojamiento" class="java.lang.String"/>
+    <field name="anfitrion" class="java.lang.String"/>
+    <field name="promedio" class="java.lang.Double"/>
+    <field name="resenas" class="java.lang.Integer"/>
+
+    <title>
+        <band height="86">
+            <staticText>
+                <reportElement x="0" y="0" width="300" height="34" forecolor="#1F6B5E"/>
+                <textElement verticalAlignment="Middle"><font size="26" isBold="true"/></textElement>
+                <text><![CDATA[bunki]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="0" y="38" width="460" height="22" forecolor="#1C1A17"/>
+                <textElement verticalAlignment="Middle"><font size="15" isBold="true"/></textElement>
+                <text><![CDATA[Reporte de Satisfacción y Reseñas]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="320" y="6" width="215" height="16" forecolor="#9A9488"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font size="9"/></textElement>
+                <text><![CDATA[Plataforma de alojamientos - Perú]]></text>
+            </staticText>
+            <line><reportElement x="0" y="78" width="535" height="1" forecolor="#1F6B5E"/></line>
+        </band>
+    </title>
+
+    <pageHeader>
+        <band height="34">
+            <staticText>
+                <reportElement x="0" y="6" width="350" height="16" forecolor="#1C1A17"/>
+                <textElement verticalAlignment="Middle"><font size="10" isBold="true"/></textElement>
+                <text><![CDATA[Alojamientos ordenados por calificación promedio]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="285" y="6" width="250" height="16" forecolor="#9A9488"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font size="9"/></textElement>
+                <textFieldExpression><![CDATA["Generado: " + $P{P_GENERADO}]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageHeader>
+
+    <columnHeader>
+        <band height="24">
+            <frame>
+                <reportElement x="0" y="0" width="535" height="24" mode="Opaque" backcolor="#1F6B5E"/>
+                <staticText><reportElement x="8" y="0" width="232" height="24" forecolor="#FFFFFF"/><textElement verticalAlignment="Middle"><font size="9" isBold="true"/></textElement><text><![CDATA[ALOJAMIENTO]]></text></staticText>
+                <staticText><reportElement x="244" y="0" width="156" height="24" forecolor="#FFFFFF"/><textElement verticalAlignment="Middle"><font size="9" isBold="true"/></textElement><text><![CDATA[ANFITRIÓN]]></text></staticText>
+                <staticText><reportElement x="400" y="0" width="60" height="24" forecolor="#FFFFFF"/><textElement textAlignment="Right" verticalAlignment="Middle"><font size="9" isBold="true"/></textElement><text><![CDATA[PROMEDIO]]></text></staticText>
+                <staticText><reportElement x="460" y="0" width="67" height="24" forecolor="#FFFFFF"/><textElement textAlignment="Right" verticalAlignment="Middle"><font size="9" isBold="true"/></textElement><text><![CDATA[RESEÑAS]]></text></staticText>
+            </frame>
+        </band>
+    </columnHeader>
+
+    <detail>
+        <band height="22">
+            <textField isStretchWithOverflow="true"><reportElement x="8" y="0" width="232" height="22" forecolor="#1C1A17"/><textElement verticalAlignment="Middle"><font size="9" isBold="true"/></textElement><textFieldExpression><![CDATA[$F{alojamiento}]]></textFieldExpression></textField>
+            <textField isStretchWithOverflow="true"><reportElement x="244" y="0" width="156" height="22" forecolor="#9A9488"/><textElement verticalAlignment="Middle"><font size="9"/></textElement><textFieldExpression><![CDATA[$F{anfitrion}]]></textFieldExpression></textField>
+            <textField pattern="0.00"><reportElement x="400" y="0" width="60" height="22" forecolor="#1F6B5E"/><textElement textAlignment="Right" verticalAlignment="Middle"><font size="9" isBold="true"/></textElement><textFieldExpression><![CDATA[$F{promedio}]]></textFieldExpression></textField>
+            <textField><reportElement x="460" y="0" width="67" height="22" forecolor="#1C1A17"/><textElement textAlignment="Right" verticalAlignment="Middle"><font size="9"/></textElement><textFieldExpression><![CDATA[$F{resenas}]]></textFieldExpression></textField>
+            <line><reportElement x="0" y="21" width="535" height="1" forecolor="#E3DFD5"/></line>
+        </band>
+    </detail>
+
+    <pageFooter>
+        <band height="24">
+            <line><reportElement x="0" y="0" width="535" height="1" forecolor="#E3DFD5"/></line>
+            <staticText><reportElement x="0" y="6" width="300" height="14" forecolor="#9A9488"/><textElement verticalAlignment="Middle"><font size="8"/></textElement><text><![CDATA[Bunki - Plataforma de alojamientos - Perú]]></text></staticText>
+            <textField><reportElement x="435" y="6" width="100" height="14" forecolor="#9A9488"/><textElement textAlignment="Right" verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA["Página " + $V{PAGE_NUMBER}]]></textFieldExpression></textField>
+        </band>
+    </pageFooter>
+
+    <summary>
+        <band height="60">
+            <frame>
+                <reportElement x="0" y="14" width="535" height="34" mode="Opaque" backcolor="#F3F0EA"/>
+                <staticText><reportElement x="10" y="0" width="200" height="34" forecolor="#1C1A17"/><textElement verticalAlignment="Middle"><font size="10" isBold="true"/></textElement><text><![CDATA[Resumen]]></text></staticText>
+                <textField><reportElement x="210" y="0" width="190" height="34" forecolor="#1C1A17"/><textElement textAlignment="Right" verticalAlignment="Middle"><font size="9"/></textElement><textFieldExpression><![CDATA[$P{P_NUM_ALOJ} + " alojamientos - " + $P{P_TOTAL_RESENAS} + " reseñas"]]></textFieldExpression></textField>
+                <textField><reportElement x="400" y="0" width="60" height="34" forecolor="#1F6B5E"/><textElement textAlignment="Right" verticalAlignment="Middle"><font size="11" isBold="true"/></textElement><textFieldExpression><![CDATA[$P{P_PROMEDIO_GLOBAL}]]></textFieldExpression></textField>
+                <staticText><reportElement x="460" y="0" width="67" height="34" forecolor="#9A9488"/><textElement textAlignment="Right" verticalAlignment="Middle"><font size="8"/></textElement><text><![CDATA[promedio]]></text></staticText>
+            </frame>
+        </band>
+    </summary>
+
+    <noData>
+        <band height="40">
+            <staticText><reportElement x="0" y="12" width="535" height="20" forecolor="#9A9488"/><textElement textAlignment="Center"><font size="11"/></textElement><text><![CDATA[Aún no hay reseñas para mostrar.]]></text></staticText>
+        </band>
+    </noData>
+
+</jasperReport>

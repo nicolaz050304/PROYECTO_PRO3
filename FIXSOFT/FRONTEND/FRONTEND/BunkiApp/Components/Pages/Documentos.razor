@@ -1,0 +1,244 @@
+@page "/perfil/documentos"
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+@inject BunkiApp.Models.AppState AppState
+@inject BunkiApp.Services.ValidacionServiceRest ValidacionSvc
+@using BunkiApp.Models
+
+<PageTitle>Bunki - Mis Documentos</PageTitle>
+
+<div class="section">
+    <div class="container" style="max-width: 700px;">
+        <div class="card" style="padding: 35px;">
+            <div style="text-align: center;">
+                <i class="fas fa-id-card" style="font-size: 50px; color: var(--primary); margin-bottom: 20px;"></i>
+                <h2 style="color: var(--text); margin-bottom: 10px;">Verificación de Identidad</h2>
+                <p class="card-text" style="margin-bottom: 24px;">
+                    Sube tu DNI o pasaporte para que un administrador verifique tu identidad (RF02).
+                    <br />La verificación es obligatoria para <strong>publicar alojamientos</strong>.
+                </p>
+            </div>
+
+            @* ---- BANNER DE ESTADO ACTUAL ---- *@
+            @if (_estado == "APROBADO")
+            {
+                <div class="val-banner val-banner--ok">
+                    <i class="fas fa-circle-check"></i>
+                    <div>
+                        <strong>Identidad verificada</strong>
+                        <p>Tu cuenta está verificada. Ya puedes publicar alojamientos.</p>
+                    </div>
+                </div>
+            }
+            else if (_estado == "PENDIENTE" && _doc is not null)
+            {
+                <div class="val-banner val-banner--wait">
+                    <i class="fas fa-clock"></i>
+                    <div>
+                        <strong>En revisión</strong>
+                        <p>Recibimos tu documento (@_doc.FechaSubida). Un administrador lo revisará pronto.</p>
+                    </div>
+                </div>
+            }
+            else if (_estado == "RECHAZADO")
+            {
+                <div class="val-banner val-banner--err">
+                    <i class="fas fa-circle-xmark"></i>
+                    <div>
+                        <strong>Documento rechazado</strong>
+                        <p>@(string.IsNullOrWhiteSpace(_doc?.MotivoRechazo) ? "Tu documento no pudo ser verificado." : _doc!.MotivoRechazo)</p>
+                        <p style="margin-top: 4px;">Vuelve a subir un documento válido.</p>
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(MensajeError))
+            {
+                <AlertMessage Tipo="danger" Mensaje="@MensajeError" />
+            }
+
+            @* ---- FORMULARIO DE SUBIDA (oculto solo si ya está APROBADO) ---- *@
+            @if (_estado != "APROBADO")
+            {
+                <div class="form-row" style="margin-top: 8px;">
+                    <div class="form-group">
+                        <label>Tipo de documento</label>
+                        <SelectMenu @bind-Value="_tipoDoc" Options="_tiposDoc" Placeholder="Selecciona..." />
+                    </div>
+                    <div class="form-group">
+                        <label>Número de documento</label>
+                        <input @bind="_numeroDoc" placeholder="Ej: 71234567" />
+                    </div>
+                </div>
+
+                <label class="val-drop">
+                    <InputFile OnChange="ArchivoSeleccionado" accept="image/*,.pdf" style="display: none;" />
+                    <i class="fas @(_archivoListo ? "fa-file-circle-check" : "fa-cloud-upload-alt")"
+                       style="font-size: 40px; color: @(_archivoListo ? "var(--primary)" : "var(--text-light)"); margin-bottom: 12px;"></i>
+                    <p style="margin: 0; font-weight: bold; color: var(--text); font-size: 16px;">
+                        @(_archivoListo ? _nombreArchivo : "Haz clic para buscar tu documento")
+                    </p>
+                    <small style="color: @(_archivoListo ? "var(--primary)" : "var(--text-light)"); display: block; margin-top: 8px;">
+                        @(_archivoListo ? "Archivo listo para enviar" : "Formatos aceptados: JPG, PNG o PDF (máx. 5 MB)")
+                    </small>
+                </label>
+
+                @if (!string.IsNullOrWhiteSpace(_previewImg))
+                {
+                    <img src="@_previewImg" alt="Vista previa del documento"
+                         style="width: 100%; max-height: 220px; object-fit: contain; border-radius: 10px; margin-top: 14px; border: 1px solid var(--border);" />
+                }
+
+                <div style="display: flex; gap: 15px; margin-top: 28px;">
+                    <button class="btn btn-outline" style="flex: 1;" @onclick='() => Navigation.NavigateTo("/perfil")'>Volver al Perfil</button>
+                    <button class="btn btn-primary" style="flex: 1;" @onclick="Enviar" disabled="@_enviando">
+                        @if (_enviando)
+                        {
+                            <i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i><span>Enviando...</span>
+                        }
+                        else
+                        {
+                            <span>@(_estado == "RECHAZADO" ? "Reenviar documento" : "Subir documento")</span>
+                        }
+                    </button>
+                </div>
+            }
+            else
+            {
+                <div style="text-align: center; margin-top: 8px;">
+                    <button class="btn btn-primary" @onclick='() => Navigation.NavigateTo("/crear-alojamiento")'>
+                        <i class="fas fa-plus"></i> Publicar un alojamiento
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .val-banner {
+        display: flex; gap: 14px; align-items: flex-start;
+        padding: 16px 18px; border-radius: 12px; margin-bottom: 20px; border: 1px solid;
+    }
+    .val-banner i { font-size: 22px; margin-top: 2px; }
+    .val-banner strong { display: block; font-size: 15px; }
+    .val-banner p { margin: 2px 0 0; font-size: 13.5px; line-height: 1.5; }
+    .val-banner--ok   { background: var(--success-tint); color: var(--success); border-color: var(--success); }
+    .val-banner--wait { background: var(--warning-tint); color: var(--warning); border-color: var(--warning); }
+    .val-banner--err  { background: var(--danger-tint);  color: var(--danger);  border-color: var(--danger); }
+    .val-drop {
+        display: block; padding: 36px 20px; border: 2px dashed var(--border); border-radius: 12px;
+        margin-top: 8px; background: var(--light); cursor: pointer; text-align: center; transition: 0.3s;
+    }
+    .val-drop:hover { border-color: var(--primary); }
+</style>
+
+@code {
+    private DocumentoValidacion? _doc;
+    private string _estado = "PENDIENTE";
+
+    private string _tipoDoc = "DNI";
+    private string _numeroDoc = "";
+    private bool _archivoListo;
+    private string _nombreArchivo = "";
+    private string? _archivoBase64;   // data URL
+    private string? _previewImg;      // solo si es imagen
+    private bool _enviando;
+    private string MensajeError = "";
+
+    private readonly List<SelectMenu.Opcion> _tiposDoc = new()
+    {
+        new("DNI", "DNI"),
+        new("PASAPORTE", "Pasaporte"),
+        new("CE", "Carné de extranjería"),
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!AppState.EstaAutenticado) { Navigation.NavigateTo("/login"); return; }
+        await CargarEstadoAsync();
+    }
+
+    private async Task CargarEstadoAsync()
+    {
+        var uid = AppState.UsuarioActual!.Id;
+        try
+        {
+            _doc = await ValidacionSvc.ObtenerDeUsuarioAsync(uid);
+            // El estado autoritativo es el del documento si existe; si no, el de la cuenta.
+            _estado = _doc?.Estado ?? AppState.UsuarioActual.EstadoValidacion ?? "PENDIENTE";
+            if (_doc is not null)
+            {
+                _tipoDoc = string.IsNullOrWhiteSpace(_doc.TipoDocumento) ? "DNI" : _doc.TipoDocumento;
+                _numeroDoc = _doc.NumeroDocumento ?? "";
+            }
+        }
+        catch
+        {
+            _estado = AppState.UsuarioActual.EstadoValidacion ?? "PENDIENTE";
+        }
+    }
+
+    private async Task ArchivoSeleccionado(InputFileChangeEventArgs e)
+    {
+        MensajeError = "";
+        var file = e.File;
+        if (file is null) return;
+        if (file.Size > 5 * 1024 * 1024) { MensajeError = "El archivo no debe pasar de 5 MB."; return; }
+
+        using var ms = new MemoryStream();
+        await file.OpenReadStream(5 * 1024 * 1024).CopyToAsync(ms);
+        var base64 = Convert.ToBase64String(ms.ToArray());
+        var contentType = string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType;
+        _archivoBase64 = $"data:{contentType};base64,{base64}";
+        _previewImg = contentType.StartsWith("image/") ? _archivoBase64 : null;
+        _nombreArchivo = file.Name;
+        _archivoListo = true;
+    }
+
+    private async Task Enviar()
+    {
+        MensajeError = "";
+        if (string.IsNullOrWhiteSpace(_numeroDoc))
+        {
+            MensajeError = "Ingresa el número de tu documento.";
+            return;
+        }
+        if (_tipoDoc == "DNI" && (_numeroDoc.Trim().Length != 8 || !_numeroDoc.Trim().All(char.IsDigit)))
+        {
+            MensajeError = "El DNI debe tener exactamente 8 dígitos.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(_archivoBase64))
+        {
+            MensajeError = "Adjunta una foto o PDF de tu documento.";
+            return;
+        }
+
+        _enviando = true;
+        try
+        {
+            var uid = AppState.UsuarioActual!.Id;
+            var (ok, error) = await ValidacionSvc.SubirAsync(uid, _tipoDoc, _numeroDoc.Trim(), _archivoBase64);
+            if (!ok)
+            {
+                MensajeError = error ?? "No se pudo enviar el documento. Intenta de nuevo.";
+                return;
+            }
+            // Refleja el nuevo estado en la sesión y recarga la vista.
+            AppState.UsuarioActual.EstadoValidacion = "PENDIENTE";
+            _archivoListo = false;
+            _archivoBase64 = null;
+            _previewImg = null;
+            await CargarEstadoAsync();
+        }
+        catch
+        {
+            MensajeError = "No se pudo enviar el documento. Revisa tu conexión e intenta de nuevo.";
+        }
+        finally
+        {
+            _enviando = false;
+        }
+    }
+}

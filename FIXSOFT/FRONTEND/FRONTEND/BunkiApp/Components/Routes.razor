@@ -1,0 +1,63 @@
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@using BunkiApp.Models
+@inject BunkiApp.Models.AppState AppState
+@inject AuthenticationStateProvider AuthProvider
+@inject Services.UsuarioProvider UsuarioProvider
+
+<Router AppAssembly="typeof(Program).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)" />
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <PageTitle>Página no encontrada · Bunki</PageTitle>
+        <LayoutView Layout="typeof(MainLayout)">
+            <section class="notfound">
+                <div class="container notfound-inner">
+                    <span class="notfound-eyebrow">Error 404</span>
+                    <h1 class="notfound-title">Esta página no <span class="serif-accent">existe.</span></h1>
+                    <p class="notfound-sub">El enlace puede estar roto o la página se movió. Volvamos a un lugar conocido.</p>
+                    <div class="notfound-actions">
+                        <a href="/" class="btn btn-primary btn-pill">Volver al inicio</a>
+                        <a href="/explorar" class="btn btn-outline btn-pill">Explorar estadías</a>
+                    </div>
+                </div>
+            </section>
+        </LayoutView>
+    </NotFound>
+</Router>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var estado = await AuthProvider.GetAuthenticationStateAsync();
+        var user = estado.User;
+        if (user.Identity?.IsAuthenticated == true && !AppState.EstaAutenticado)
+        {
+            // Respaldo inmediato: rehidratamos la sesión desde los claims de la cookie (el id sale de NameIdentifier).
+            int id = int.TryParse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var parsed) ? parsed : 0;
+            AppState.LoginConUsuario(new Usuario
+            {
+                Id = id,
+                Email = user.FindFirst("Email")?.Value ?? user.Identity.Name ?? "",
+                Nombre = user.FindFirst("Nombre")?.Value ?? "",
+                Apellido = user.FindFirst("Apellido")?.Value ?? "",
+                TipoUsuario = user.FindFirst(ClaimTypes.Role)?.Value ?? "INVITADO"
+            });
+
+            // Las claims quedan CONGELADAS en el login y no reflejan ediciones de perfil. Por eso, con id
+            // válido, recargamos el usuario FRESCO desde la BD y sobreescribimos la sesión. Si el backend no
+            // responde, conservamos lo de los claims como respaldo (no rompemos la app).
+            if (id > 0)
+            {
+                try
+                {
+                    var frescoDeBd = await UsuarioProvider.ObtenerPorIdAsync(id);
+                    if (frescoDeBd != null) AppState.LoginConUsuario(frescoDeBd);
+                }
+                catch { /* backend caído: nos quedamos con los datos de los claims */ }
+            }
+        }
+    }
+}

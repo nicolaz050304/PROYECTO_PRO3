@@ -1,0 +1,542 @@
+﻿@page "/perfil/metodos-pago"
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+@inject BunkiApp.Models.AppState AppState
+@inject Services.CuentaBancariaServiceRest CuentaRest
+
+<PageTitle>Bunki - Métodos de Pago</PageTitle>
+
+<div class="section">
+    <div class="container" style="max-width: 700px;">
+        <div class="card">
+            <div style="padding: 35px;">
+                <div style="text-align: center; margin-bottom: 35px;">
+                    <div class="avatar avatar-large" style="margin: 0 auto 20px; background: var(--primary); display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-wallet" style="color: white; font-size: 32px;"></i>
+                    </div>
+                    <h2 style="color: var(--text); margin-bottom: 10px;">Métodos de Pago</h2>
+                    <p class="card-text">Gestiona tus tarjetas para reservar y tus cuentas para recibir ganancias.</p>
+                </div>
+
+                @if (!string.IsNullOrEmpty(MensajeExito))
+                {
+                    <div style="background: var(--success-tint); color: var(--success); padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; border: 1px solid var(--success); font-weight: bold;">
+                        <i class="fas fa-check-circle"></i> @MensajeExito
+                    </div>
+                }
+
+                <!-- ========================================== -->
+                <!-- SECCIÓN 1: MIS TARJETAS (INTERACTIVA)      -->
+                <!-- ========================================== -->
+                <h3 style="margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px; font-size: 18px;">
+                    <i class="fas fa-credit-card" style="color: var(--primary); margin-right: 10px;"></i> Mis Tarjetas
+                </h3>
+
+                @if (MostrarTarjetaVisa)
+                {
+                    <div style="background: var(--light); padding: 20px; border-radius: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); transition: all 0.3s ease;">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <i class="fab fa-cc-visa" style="font-size: 36px; color: var(--ink-muted);"></i>
+                            <div>
+                                <h4 style="margin: 0; font-size: 16px;">Visa terminada en 1234</h4>
+                                <p style="margin: 0; font-size: 13px; color: var(--text-light);">Expira 12/28</p>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline" style="padding: 8px 12px;" @onclick="() => MostrarTarjetaVisa = false">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                }
+
+                @if (!MostrarFormularioTarjeta)
+                {
+                    <button type="button" class="btn btn-outline" style="width: 100%; margin-bottom: 40px; padding: 12px;" @onclick="() => MostrarFormularioTarjeta = true">
+                        <i class="fas fa-plus"></i> Agregar Nueva Tarjeta
+                    </button>
+                }
+                else
+                {
+                    <div style="background: var(--light); padding: 20px; border-radius: 12px; margin-bottom: 40px; border: 1px solid var(--border);">
+                        <h4 style="margin-bottom: 15px; font-size: 16px;">Detalles de la nueva tarjeta</h4>
+                        <EditForm Model="FormTarjeta" OnValidSubmit="GuardarTarjeta">
+                            <DataAnnotationsValidator />
+
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: bold;">Número de Tarjeta</label>
+                                <InputText @bind-Value="FormTarjeta.Numero" placeholder="0000 0000 0000 0000" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);" />
+                            </div>
+
+                            <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                                <div class="form-group" style="flex: 1;">
+                                    <label style="display: block; margin-bottom: 8px; font-weight: bold;">Vencimiento</label>
+                                    <InputText @bind-Value="FormTarjeta.Vencimiento" placeholder="MM/YY" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);" />
+                                </div>
+                                <div class="form-group" style="flex: 1;">
+                                    <label style="display: block; margin-bottom: 8px; font-weight: bold;">CVV</label>
+                                    <InputText @bind-Value="FormTarjeta.CVV" placeholder="123" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);" />
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 15px;">
+                                <button type="button" class="btn btn-outline" style="flex: 1;" @onclick="() => MostrarFormularioTarjeta = false">Cancelar</button>
+                                <button type="submit" class="btn btn-primary" style="flex: 1;" disabled="@GuardandoTarjeta">
+                                    @(GuardandoTarjeta ? "Guardando..." : "Guardar Tarjeta")
+                                </button>
+                            </div>
+                        </EditForm>
+                    </div>
+                }
+
+                <!-- ========================================== -->
+                <!-- SECCIÓN 2: CUENTAS BANCARIAS (REALES, RF15) -->
+                <!-- Estas son las cuentas del ANFITRIÓN para RECIBIR sus ganancias (no tarjetas    -->
+                <!-- para pagar). Se listan por el id del usuario logueado: cada quien ve solo las   -->
+                <!-- suyas. Una cuenta nueva nace "Pendiente" (Verificada=false) hasta que se valide.-->
+                <!-- ========================================== -->
+                <h3 style="margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 10px; font-size: 18px;">
+                    <i class="fas fa-university" style="color: var(--primary); margin-right: 10px;"></i> Mis Cuentas Bancarias (Para recibir ganancias)
+                </h3>
+                <p style="font-size: 14px; margin-bottom: 25px; color: var(--text-light);">
+                    Si eres anfitrión, registra tu cuenta bancaria para recibir los depósitos de tus reservas.
+                </p>
+
+                @if (_error.Length > 0)
+                {
+                    <div style="background: var(--danger-tint); color: var(--danger-text); padding: 12px 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--danger);">
+                        <i class="fas fa-exclamation-circle"></i> @_error
+                    </div>
+                }
+
+                @if (_cargando)
+                {
+                    <p style="color: var(--text-light); margin-bottom: 25px;">
+                        <i class="fas fa-spinner fa-spin"></i> Cargando cuentas...
+                    </p>
+                }
+                else if (_cuentas.Count == 0)
+                {
+                    <div style="background: var(--light); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px dashed var(--border); text-align: center; color: var(--text-light);">
+                        Aún no tienes cuentas registradas.
+                    </div>
+                }
+                else
+                {
+                    @* RF15: saldo total disponible entre todas las cuentas del anfitrión. *@
+                    <div style="background: var(--primary); color: white; padding: 18px 22px; border-radius: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 14px; opacity: 0.9;"><i class="fas fa-wallet"></i> Saldo disponible total</span>
+                        <strong style="font-size: 22px;">S/ @SaldoTotal.ToString("N2")</strong>
+                    </div>
+                    <p style="font-size: 13px; color: var(--text-light); margin-bottom: 18px;">
+                        <i class="fas fa-circle-info"></i> Las ganancias de tus reservas confirmadas se abonan a tu <strong>cuenta de cobro</strong> (marca cuál con "Hacer principal").
+                    </p>
+
+                    @foreach (var c in _cuentas)
+                    {
+                        <div style="background: var(--light); padding: 18px 20px; border-radius: 12px; margin-bottom: 14px; border: 1px solid var(--border);">
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <i class="fas fa-university" style="font-size: 28px; color: var(--primary);"></i>
+                                <div>
+                                    <h4 style="margin: 0; font-size: 16px;">@c.NroBanco · @c.NumeroCuenta</h4>
+                                    <p style="margin: 2px 0 0; font-size: 13px; color: var(--text-light);">
+                                        @c.TipoCuenta · @c.TipoMoneda · @c.Titular
+                                    </p>
+                                </div>
+                            </div>
+
+                            @* RF15: saldo de la cuenta + acciones (depositar / retirar / ver movimientos). *@
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); flex-wrap: wrap; gap: 10px;">
+                                <span style="font-size: 15px; display: inline-flex; align-items: center; gap: 10px;">
+                                    Saldo: <strong style="color: var(--primary);">S/ @c.Saldo.ToString("N2")</strong>
+                                    @if (c.Principal)
+                                    {
+                                        <span style="background: var(--success-tint); color: var(--success); padding: 3px 10px; border-radius: 20px; font-size: 11.5px; font-weight: bold;">
+                                            <i class="fas fa-star"></i> Cuenta de cobro
+                                        </span>
+                                    }
+                                </span>
+                                @* El ingreso de dinero es solo automático (ABONO al confirmar reservas, que va a la
+                                   cuenta de cobro principal); el anfitrión RETIRA o consulta su estado de cuenta. *@
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    @if (!c.Principal)
+                                    {
+                                        <button type="button" class="btn btn-small btn-outline" @onclick="() => HacerPrincipal(c)" disabled="@_marcandoPrincipal">
+                                            <i class="fas fa-star"></i> Hacer principal
+                                        </button>
+                                    }
+                                    <button type="button" class="btn btn-small btn-primary" @onclick="() => AbrirOperacion(c, false)">
+                                        <i class="fas fa-arrow-up"></i> Retirar
+                                    </button>
+                                    <button type="button" class="btn btn-small btn-outline" @onclick="() => AbrirMovimientos(c)">
+                                        <i class="fas fa-list"></i> Movimientos
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+
+                @if (!_mostrarForm)
+                {
+                    <button type="button" class="btn btn-outline" style="width: 100%; margin: 10px 0 30px; padding: 12px;" @onclick="() => _mostrarForm = true">
+                        <i class="fas fa-plus"></i> Agregar cuenta
+                    </button>
+                }
+                else
+                {
+                    <div style="background: var(--light); padding: 20px; border-radius: 12px; margin: 10px 0 30px; border: 1px solid var(--border);">
+                        <h4 style="margin-bottom: 15px; font-size: 16px;">Datos de la nueva cuenta</h4>
+
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: bold;">Titular</label>
+                            <input @bind="_nueva.Titular" placeholder="Nombre del titular" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);" />
+                        </div>
+
+                        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                            <div class="form-group" style="flex: 1;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: bold;">Número de cuenta</label>
+                                <input @bind="_nueva.NumeroCuenta" placeholder="191-1234567-0-12" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);" />
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: bold;">CCI (20 dígitos)</label>
+                                <input @bind="_nueva.Cci" placeholder="00219100123456780012" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);" />
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                            <div class="form-group" style="flex: 1;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: bold;">Banco</label>
+                                <input @bind="_nueva.NroBanco" placeholder="BCP, Interbank..." style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border);" />
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: bold;">Tipo de cuenta</label>
+                                <SelectMenu @bind-Value="_nueva.TipoCuenta" Options="_tipoCuentaOpciones" />
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: bold;">Moneda</label>
+                                <SelectMenu @bind-Value="_nueva.TipoMoneda" Options="_monedaOpciones" />
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 15px; margin-top: 20px;">
+                            <button type="button" class="btn btn-outline" style="flex: 1;" @onclick="CancelarCuenta" disabled="@Guardando">Cancelar</button>
+                            <button type="button" class="btn btn-primary" style="flex: 1;" @onclick="GuardarCuenta" disabled="@Guardando">
+                                @(Guardando ? "Guardando..." : "Guardar cuenta")
+                            </button>
+                        </div>
+                    </div>
+                }
+
+                <div style="display: flex; gap: 15px;">
+                    <button type="button" class="btn btn-outline" style="flex: 1;" @onclick='() => Navigation.NavigateTo("/perfil")'>Volver</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* RF15: MODAL DEPÓSITO / RETIRO *@
+@if (_opCuenta is not null)
+{
+    <div class="modal-overlay" @onclick="CerrarOperacion">
+        <div class="modal-panel" style="max-width: 420px; text-align: left;" @onclick:stopPropagation="true">
+            <h2 style="margin-bottom: 6px;">@(_esDeposito ? "Depositar" : "Retirar")</h2>
+            <p class="card-text" style="margin-bottom: 18px;">
+                @_opCuenta.NroBanco · @_opCuenta.NumeroCuenta · saldo actual <strong>S/ @_opCuenta.Saldo.ToString("N2")</strong>
+            </p>
+
+            <div class="form-group">
+                <label>Monto (S/)</label>
+                <input type="number" min="0" step="0.01" @bind="_opMonto" placeholder="0.00" />
+            </div>
+            <div class="form-group">
+                <label>Descripción (opcional)</label>
+                <input @bind="_opDescripcion" placeholder="@(_esDeposito ? "Ej: ingreso de fondos" : "Ej: retiro a mi banco")" />
+            </div>
+
+            @if (!string.IsNullOrEmpty(_opError))
+            {
+                <div style="margin-bottom: 12px;"><AlertMessage Tipo="danger" Mensaje="@_opError" /></div>
+            }
+
+            <div style="display: flex; gap: 12px; margin-top: 8px;">
+                <button class="btn btn-outline" style="flex: 1;" @onclick="CerrarOperacion" disabled="@_operando">Cancelar</button>
+                <button class="btn btn-primary" style="flex: 1;" @onclick="ConfirmarOperacion" disabled="@_operando">
+                    @(_operando ? "Procesando..." : (_esDeposito ? "Depositar" : "Retirar"))
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@* RF15: MODAL ESTADO DE CUENTA (MOVIMIENTOS) *@
+@if (_movCuenta is not null)
+{
+    <div class="modal-overlay" @onclick="CerrarMovimientos">
+        <div class="modal-panel" style="max-width: 540px; text-align: left;" @onclick:stopPropagation="true">
+            <div class="flex flex-between" style="margin-bottom: 6px;">
+                <h2 style="margin: 0;">Estado de cuenta</h2>
+                <button @onclick="CerrarMovimientos" aria-label="Cerrar" style="background: none; border: none; cursor: pointer; font-size: 20px; color: var(--ink-faint);">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+            <p class="card-text" style="margin-bottom: 16px;">@_movCuenta.NroBanco · @_movCuenta.NumeroCuenta</p>
+
+            @if (_cargandoMov)
+            {
+                <p class="card-text"><i class="fas fa-spinner fa-spin"></i> Cargando movimientos...</p>
+            }
+            else if (_movimientos.Count == 0)
+            {
+                <p class="card-text">Aún no hay movimientos en esta cuenta.</p>
+            }
+            else
+            {
+                <div style="max-height: 360px; overflow-y: auto;">
+                    @foreach (var m in _movimientos)
+                    {
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--hairline);">
+                            <div>
+                                <strong>@m.TipoTexto</strong>
+                                @if (!string.IsNullOrWhiteSpace(m.Descripcion))
+                                {
+                                    <p class="card-text" style="margin: 2px 0 0; font-size: 13px;">@m.Descripcion</p>
+                                }
+                                <p class="card-text" style="margin: 2px 0 0; font-size: 12px;">@m.Fecha</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <strong style="color: @(m.EsIngreso ? "var(--success)" : "var(--danger)");">
+                                    @(m.EsIngreso ? "+" : "−") S/ @m.Monto.ToString("N2")
+                                </strong>
+                                <p class="card-text" style="margin: 2px 0 0; font-size: 12px;">Saldo: S/ @m.SaldoResultante.ToString("N2")</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            <div style="margin-top: 18px;">
+                <button class="btn btn-outline" style="width: 100%;" @onclick="CerrarMovimientos">Cerrar</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    // --- Cuentas bancarias REALES (del backend) ---
+    // Son las cuentas del anfitrión para RECIBIR ganancias; se listan por el id del usuario
+    // logueado (cada quien ve solo las suyas). Una cuenta nueva nace Verificada=false.
+    private List<CuentaBancaria> _cuentas = new();
+    private bool _cargando = true;
+    private CuentaBancaria _nueva = new();
+
+    private readonly List<SelectMenu.Opcion> _tipoCuentaOpciones = new()
+    {
+        new("AHORROS", "Ahorros"),
+        new("CORRIENTE", "Corriente"),
+        new("SUELDO", "Sueldo"),
+        new("INTERBANCARIA", "Interbancaria"),
+    };
+    private readonly List<SelectMenu.Opcion> _monedaOpciones = new()
+    {
+        new("PEN", "PEN (S/)"),
+        new("USD", "USD ($)"),
+        new("EUR", "EUR (€)"),
+    };
+    private bool _mostrarForm = false;
+    private string _error = "";
+
+    // RF15: saldo total disponible entre todas las cuentas del anfitrión.
+    private double SaldoTotal => _cuentas.Sum(c => c.Saldo);
+
+    // --- RF15: estado de los modales de depósito/retiro y movimientos ---
+    private CuentaBancaria? _opCuenta;      // cuenta sobre la que se opera (null = modal cerrado)
+    private bool _esDeposito;
+    private double _opMonto;
+    private string _opDescripcion = "";
+    private bool _operando;
+    private string _opError = "";
+
+    private CuentaBancaria? _movCuenta;     // cuenta cuyo historial se muestra (null = cerrado)
+    private List<MovimientoCuenta> _movimientos = new();
+    private bool _cargandoMov;
+    private bool _marcandoPrincipal;
+
+    private string MensajeExito = "";
+    private bool Guardando = false;
+
+    // Variables para Tarjetas (UX visual / demostrativa, sin backend)
+    private NuevaTarjetaForm FormTarjeta = new();
+    private bool MostrarTarjetaVisa = true;
+    private bool MostrarFormularioTarjeta = false;
+    private bool GuardandoTarjeta = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarCuentasAsync();
+    }
+
+    private async Task CargarCuentasAsync()
+    {
+        // Sin usuario logueado no hay cuentas que pedir (la pantalla queda en "vacío").
+        if (AppState.UsuarioActual is null) { _cargando = false; return; }
+
+        _cargando = true;
+        try
+        {
+            _cuentas = await CuentaRest.ListarPorUsuarioAsync(AppState.UsuarioActual.Id);
+        }
+        catch
+        {
+            // Si el backend no responde, no rompemos la pantalla: lista vacía + aviso.
+            _error = "No se pudieron cargar las cuentas. Intenta más tarde.";
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+
+    private void CancelarCuenta()
+    {
+        _mostrarForm = false;
+        _nueva = new();
+        _error = "";
+    }
+
+    private async Task GuardarCuenta()
+    {
+        _error = "";
+        Guardando = true;
+        try
+        {
+            // El dueño de la cuenta es el usuario logueado.
+            _nueva.IdUsuario = AppState.UsuarioActual!.Id;
+            var ok = await CuentaRest.RegistrarAsync(_nueva);
+            if (ok)
+            {
+                await CargarCuentasAsync();           // refresca con la cuenta recién creada
+                _mostrarForm = false;
+                _nueva = new();
+                MensajeExito = "Cuenta registrada.";
+            }
+            else
+            {
+                // El backend devolvió 400 (p. ej. CCI inválido); no afirmamos éxito.
+                _error = "No se pudo registrar la cuenta. Revisa los datos (el CCI debe tener 20 dígitos).";
+            }
+        }
+        catch
+        {
+            _error = "No se pudo registrar la cuenta. Intenta de nuevo.";
+        }
+        finally
+        {
+            Guardando = false;
+        }
+    }
+
+    // ---- RF15: depósito / retiro ----
+    private void AbrirOperacion(CuentaBancaria c, bool deposito)
+    {
+        _opCuenta = c;
+        _esDeposito = deposito;
+        _opMonto = 0;
+        _opDescripcion = "";
+        _opError = "";
+    }
+
+    private void CerrarOperacion() => _opCuenta = null;
+
+    private async Task ConfirmarOperacion()
+    {
+        _opError = "";
+        if (_opCuenta is null) return;
+        if (_opMonto <= 0) { _opError = "Ingresa un monto mayor a 0."; return; }
+        if (!_esDeposito && _opMonto > _opCuenta.Saldo) { _opError = "Saldo insuficiente para ese retiro."; return; }
+
+        _operando = true;
+        try
+        {
+            var (ok, error) = _esDeposito
+                ? await CuentaRest.DepositarAsync(_opCuenta.IdCuenta, _opMonto, _opDescripcion)
+                : await CuentaRest.RetirarAsync(_opCuenta.IdCuenta, _opMonto, _opDescripcion);
+
+            if (!ok) { _opError = error ?? "No se pudo completar la operación."; return; }
+
+            MensajeExito = _esDeposito
+                ? $"Depósito de S/ {_opMonto:N2} registrado."
+                : $"Retiro de S/ {_opMonto:N2} registrado.";
+            _opCuenta = null;
+            await CargarCuentasAsync();   // refresca saldos
+        }
+        catch
+        {
+            _opError = "No se pudo completar la operación. Intenta de nuevo.";
+        }
+        finally
+        {
+            _operando = false;
+        }
+    }
+
+    // ---- RF15: estado de cuenta (movimientos) ----
+    private async Task AbrirMovimientos(CuentaBancaria c)
+    {
+        _movCuenta = c;
+        _cargandoMov = true;
+        _movimientos = new();
+        try { _movimientos = await CuentaRest.ListarMovimientosAsync(c.IdCuenta); }
+        catch { _movimientos = new(); }
+        finally { _cargandoMov = false; }
+    }
+
+    private void CerrarMovimientos() => _movCuenta = null;
+
+    // ---- RF15: marcar cuenta de cobro principal ----
+    private async Task HacerPrincipal(CuentaBancaria c)
+    {
+        if (c.Principal) return;
+        _marcandoPrincipal = true;
+        _error = "";
+        try
+        {
+            var ok = await CuentaRest.HacerPrincipalAsync(c.IdCuenta);
+            if (ok)
+            {
+                MensajeExito = $"{c.NroBanco} · {c.NumeroCuenta} es ahora tu cuenta de cobro.";
+                await CargarCuentasAsync();   // refresca el badge en todas
+            }
+            else
+            {
+                _error = "No se pudo cambiar la cuenta de cobro. Intenta de nuevo.";
+            }
+        }
+        catch
+        {
+            _error = "No se pudo cambiar la cuenta de cobro. Intenta de nuevo.";
+        }
+        finally
+        {
+            _marcandoPrincipal = false;
+        }
+    }
+
+    private async Task GuardarTarjeta()
+    {
+        GuardandoTarjeta = true;
+        await Task.Delay(800); // Simula la conexión con el banco
+        MensajeExito = "¡Nueva tarjeta agregada exitosamente!";
+        MostrarFormularioTarjeta = false;
+        GuardandoTarjeta = false;
+        // Restauramos la vista de la tarjeta y limpiamos el formulario visualmente
+        MostrarTarjetaVisa = true;
+        FormTarjeta = new();
+    }
+
+    public class NuevaTarjetaForm
+    {
+        public string Numero { get; set; } = "";
+        public string Vencimiento { get; set; } = "";
+        public string CVV { get; set; } = "";
+    }
+}

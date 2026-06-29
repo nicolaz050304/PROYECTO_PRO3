@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "bunki-web",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "FRONTEND/FRONTEND/BunkiApp", "--launch-profile", "http"],
+      "port": 5182
+    }
+  ]
+}

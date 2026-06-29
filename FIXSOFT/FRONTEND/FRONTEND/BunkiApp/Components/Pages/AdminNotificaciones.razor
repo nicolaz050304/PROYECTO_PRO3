@@ -1,0 +1,153 @@
+@page "/admin/notificaciones"
+@layout AdminLayout
+@inject BunkiApp.Services.DenunciaServiceRest DenunciaSvc
+@inject BunkiApp.Services.IncidenciaServiceRest IncidenciaSvc
+@inject ReservaProvider ReservaProvider
+@inject AlojamientoProvider AlojamientoProvider
+
+<PageTitle>Bunki Admin · Notificaciones</PageTitle>
+
+@* Título quitado: ya lo muestra el topbar del AdminLayout (evitamos el doble título). *@
+<p class="admin-page-sub">Historial de avisos del sistema y de la plataforma.</p>
+
+<div class="admin-card" style="padding: 8px 0;">
+    <div class="notif-list">
+        @if (!_historial.Any())
+        {
+            <div style="padding: 28px 22px; color: var(--ink-muted);">No hay actividad reciente que mostrar.</div>
+        }
+        @foreach (var n in _historial)
+        {
+            <div class="notif-row @(n.NoLeida ? "is-unread" : "")">
+                <span class="notif-icon notif-icon--@n.Tono"><i class="fas @n.Icono"></i></span>
+                <div class="notif-body">
+                    <p class="notif-msg">@n.Mensaje</p>
+                    <span class="notif-time"><i class="fas fa-clock"></i> @n.Cuando</span>
+                </div>
+                @if (n.NoLeida)
+                {
+                    <span class="notif-dot" title="No leída"></span>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .notif-list { display: flex; flex-direction: column; }
+
+    .notif-row {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 16px 22px;
+        border-bottom: 1px solid var(--hairline);
+        transition: background var(--t);
+    }
+
+        .notif-row:last-child { border-bottom: none; }
+        .notif-row:hover { background: rgba(168, 162, 158, 0.03); }
+        .notif-row.is-unread { background: rgba(31, 107, 94, 0.05); }
+
+    .notif-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 16px;
+        background: var(--gold-tint);
+        color: var(--gold);
+    }
+
+    .notif-icon--success { background: var(--success-tint); color: var(--success); }
+    .notif-icon--info { background: var(--blue-tint); color: var(--blue-strong); }
+    .notif-icon--warning { background: var(--warning-tint); color: var(--warning); }
+    .notif-icon--danger { background: var(--danger-tint); color: var(--danger); }
+
+    .notif-body { flex: 1; min-width: 0; }
+    .notif-msg { font-size: 14px; color: var(--ink); line-height: 1.45; }
+
+    .notif-time {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: var(--ink-faint);
+        margin-top: 3px;
+    }
+
+        .notif-time i { font-size: 10px; }
+
+    .notif-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--gold);
+        flex-shrink: 0;
+    }
+</style>
+
+@code {
+    private record Aviso(DateTime Fecha, string Icono, string Tono, string Mensaje, string Cuando, bool NoLeida);
+
+    // Feed REAL del sistema: se arma con denuncias, incidencias, reservas y alojamientos por aprobar
+    // (antes era una lista quemada). No hay tabla de "eventos"; se deriva de los datos existentes.
+    private List<Aviso> _historial = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var avisos = new List<Aviso>();
+        try
+        {
+            var denuncias = await DenunciaSvc.ListarAsync();
+            foreach (var d in denuncias)
+                avisos.Add(new Aviso(F(d.Fecha), "fa-flag", d.Estado == "EN_REVISION" ? "danger" : "info",
+                    $"Denuncia #{d.Id} sobre \"{d.AlojamientoNombre}\" ({d.EstadoTexto})", Cuando(F(d.Fecha)), d.Estado == "EN_REVISION"));
+        }
+        catch { }
+        try
+        {
+            var incidencias = await IncidenciaSvc.ListarAsync();
+            foreach (var i in incidencias)
+                avisos.Add(new Aviso(F(i.Fecha), "fa-triangle-exclamation", i.Estado == "ABIERTO" ? "warning" : "info",
+                    $"Incidencia {i.Codigo}: {i.Asunto}", Cuando(F(i.Fecha)), i.Estado is "ABIERTO" or "EN_PROCESO"));
+        }
+        catch { }
+        try
+        {
+            var reservas = await ReservaProvider.ListarTodasAsync();
+            foreach (var r in reservas.OrderByDescending(r => r.FechaEntrada).Take(8))
+                avisos.Add(new Aviso(r.FechaEntrada, "fa-calendar-plus", "success",
+                    $"Reserva en \"{r.AlojamientoNombre}\"" + (string.IsNullOrWhiteSpace(r.HuespedNombre) ? "" : $" de {r.HuespedNombre}"),
+                    Cuando(r.FechaEntrada), false));
+        }
+        catch { }
+        try
+        {
+            var pendientes = await AlojamientoProvider.ListarPendientesAsync();
+            foreach (var a in pendientes)
+                avisos.Add(new Aviso(DateTime.Today, "fa-house-circle-check", "info",
+                    $"\"{a.Nombre}\" espera aprobación", "pendiente", true));
+        }
+        catch { }
+
+        _historial = avisos.OrderByDescending(a => a.Fecha).Take(15).ToList();
+    }
+
+    private static DateTime F(string? iso) => DateTime.TryParse(iso, out var d) ? d : DateTime.MinValue;
+
+    private static string Cuando(DateTime f)
+    {
+        if (f == DateTime.MinValue) return "—";
+        var dias = (DateTime.Today - f.Date).Days;
+        if (dias < 0) return f.ToString("dd MMM");
+        if (dias == 0) return "hoy";
+        if (dias == 1) return "ayer";
+        if (dias < 7) return $"hace {dias} días";
+        if (dias < 30) return $"hace {dias / 7} sem";
+        return f.ToString("dd MMM");
+    }
+}

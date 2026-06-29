@@ -1,0 +1,592 @@
+@page "/admin/moderacion"
+@layout AdminLayout
+@rendermode InteractiveServer
+@inject AlojamientoProvider AlojProv
+@inject BunkiApp.Services.DenunciaServiceRest DenunciaSvc
+@inject BunkiApp.Services.IncidenciaServiceRest IncidenciaSvc
+@inject BunkiApp.Services.ValidacionServiceRest ValidacionSvc
+@inject BunkiApp.Models.AppState AppState
+@using BunkiApp.Services
+@using BunkiApp.Models
+
+<PageTitle>Bunki Admin · Moderación</PageTitle>
+
+@* Título quitado: ya lo muestra el topbar del AdminLayout (evitamos el doble título). *@
+<p class="admin-page-sub">Aprueba publicaciones, revisa denuncias y gestiona incidencias.</p>
+
+<!-- TABS -->
+<div class="tabs">
+    <button class="tab-btn @(_tab == 1 ? "active" : "")" @onclick="() => _tab = 1">
+        Alojamientos pendientes <span class="tab-count">@_pendientes.Count</span>
+    </button>
+    <button class="tab-btn @(_tab == 2 ? "active" : "")" @onclick="() => _tab = 2">
+        Denuncias <span class="tab-count">@_denuncias.Count</span>
+    </button>
+    <button class="tab-btn @(_tab == 3 ? "active" : "")" @onclick="() => _tab = 3">
+        Incidencias <span class="tab-count">@_incidencias.Count</span>
+    </button>
+    <button class="tab-btn @(_tab == 4 ? "active" : "")" @onclick="() => _tab = 4">
+        Validaciones <span class="tab-count">@_validaciones.Count</span>
+    </button>
+</div>
+
+<!-- TAB 1: ALOJAMIENTOS PENDIENTES -->
+@if (_tab == 1)
+{
+    <div class="adm-table-card">
+        @if (!_pendientes.Any())
+        {
+            <div class="adm-empty"><i class="fas fa-circle-check" style="color: var(--success); margin-right: 8px;"></i> No hay alojamientos pendientes de revisión.</div>
+        }
+        else
+        {
+            <div class="adm-scroll">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Alojamiento</th><th>Anfitrión</th><th>Tipo</th><th>Fecha envío</th><th style="text-align: right;">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var a in _pendientes)
+                        {
+                            <tr>
+                                <td><strong>@a.Nombre</strong></td>
+                                <td>@a.Anfitrion</td>
+                                <td>@a.Tipo</td>
+                                <td class="adm-muted">@a.Fecha</td>
+                                <td>
+                                    <div class="adm-row-actions" style="justify-content: flex-end;">
+                                        @* Acción primaria = botón de marca (dorado); el verde/rojo se reservan
+                                           para badges de estado, no para botones de acción. *@
+                                        <button class="btn btn-small btn-primary" @onclick='() => PedirConfirmacion(a, "aprobar")'>
+                                            <i class="fas fa-check"></i> Aprobar
+                                        </button>
+                                        <button class="btn btn-small btn-secondary" @onclick='() => PedirConfirmacion(a, "rechazar")'>
+                                            Rechazar
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+}
+
+<!-- TAB 2: DENUNCIAS -->
+@if (_tab == 2)
+{
+    <div class="adm-table-card">
+        <div class="adm-scroll">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>ID</th><th>Alojamiento</th><th>Anfitrión</th><th>Motivo</th><th>Estado</th><th>Fecha</th><th style="text-align: right;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!_denuncias.Any())
+                    {
+                        <tr><td colspan="7" class="adm-empty">No hay denuncias registradas.</td></tr>
+                    }
+                    @foreach (var d in _denuncias)
+                    {
+                        <tr>
+                            <td><strong>#@d.Id</strong></td>
+                            <td>@d.AlojamientoNombre</td>
+                            <td>@d.AnfitrionNombre</td>
+                            <td>@d.Motivo</td>
+                            <td><span class="state @EstadoState(d.EstadoTexto)"><span class="state-dot"></span>@d.EstadoTexto</span></td>
+                            <td class="adm-muted">@d.Fecha</td>
+                            <td style="text-align: right;">
+                                <button class="btn btn-small btn-outline" @onclick="() => VerDenuncia(d)">
+                                    <i class="fas fa-eye"></i> Ver
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<!-- TAB 3: INCIDENCIAS -->
+@if (_tab == 3)
+{
+    <div class="adm-table-card">
+        <div class="adm-scroll">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>ID</th><th>Asunto</th><th>Prioridad</th><th>Estado</th><th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!_incidencias.Any())
+                    {
+                        <tr><td colspan="5" class="adm-empty">No hay incidencias registradas.</td></tr>
+                    }
+                    @foreach (var i in _incidencias)
+                    {
+                        <tr>
+                            <td><strong>@i.Codigo</strong></td>
+                            <td>@i.Asunto</td>
+                            <td>
+                                <span class="adm-prio adm-prio--@i.PrioridadTexto.ToLower()">
+                                    <span class="adm-prio-dot"></span>@i.PrioridadTexto
+                                </span>
+                            </td>
+                            <td><span class="state @EstadoState(i.EstadoTexto)"><span class="state-dot"></span>@i.EstadoTexto</span></td>
+                            <td class="adm-muted">@i.Fecha</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<!-- TAB 4: VALIDACIONES DE IDENTIDAD (RF02) -->
+@if (_tab == 4)
+{
+    <div class="adm-table-card">
+        <div class="adm-scroll">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Usuario</th><th>Correo</th><th>Documento</th><th>Fecha</th><th style="text-align: right;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!_validaciones.Any())
+                    {
+                        <tr><td colspan="5" class="adm-empty"><i class="fas fa-circle-check" style="color: var(--success); margin-right: 8px;"></i>No hay identidades pendientes de validación.</td></tr>
+                    }
+                    @foreach (var v in _validaciones)
+                    {
+                        <tr>
+                            <td><strong>@(string.IsNullOrWhiteSpace(v.UsuarioNombre) ? $"Usuario #{v.UsuarioId}" : v.UsuarioNombre)</strong></td>
+                            <td class="adm-muted">@v.UsuarioCorreo</td>
+                            <td>@v.TipoDocumento @v.NumeroDocumento</td>
+                            <td class="adm-muted">@v.FechaSubida</td>
+                            <td style="text-align: right;">
+                                <button class="btn btn-small btn-outline" @onclick="() => VerValidacion(v)">
+                                    <i class="fas fa-eye"></i> Revisar
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<!-- MODAL REVISAR VALIDACIÓN -->
+@if (_showValidacion && _validacionSel is not null)
+{
+    <div class="modal-overlay">
+        <div class="modal-panel" style="max-width: 520px; text-align: left;">
+            <h2 style="margin-bottom: 16px;">Validar identidad</h2>
+            <dl class="adm-dl">
+                <div><dt>Usuario</dt><dd>@(string.IsNullOrWhiteSpace(_validacionSel.UsuarioNombre) ? $"#{_validacionSel.UsuarioId}" : _validacionSel.UsuarioNombre)</dd></div>
+                <div><dt>Correo</dt><dd>@_validacionSel.UsuarioCorreo</dd></div>
+                <div><dt>Documento</dt><dd>@_validacionSel.TipoDocumento @_validacionSel.NumeroDocumento</dd></div>
+                <div><dt>Enviado</dt><dd>@_validacionSel.FechaSubida</dd></div>
+            </dl>
+
+            @if (!string.IsNullOrWhiteSpace(_validacionSel.ArchivoBase64) && _validacionSel.ArchivoBase64.StartsWith("data:image"))
+            {
+                <img src="@_validacionSel.ArchivoBase64" alt="Documento"
+                     style="width: 100%; max-height: 320px; object-fit: contain; border-radius: 10px; margin-top: 16px; border: 1px solid var(--hairline);" />
+            }
+            else if (!string.IsNullOrWhiteSpace(_validacionSel.ArchivoBase64))
+            {
+                <a href="@_validacionSel.ArchivoBase64" download="documento" target="_blank"
+                   class="btn btn-outline" style="margin-top: 16px; display: inline-block;">
+                    <i class="fas fa-file-pdf"></i> Abrir documento (PDF)
+                </a>
+            }
+
+            @if (_modoRechazo)
+            {
+                <div class="form-group" style="margin-top: 16px;">
+                    <label>Motivo del rechazo</label>
+                    <input @bind="_motivoRechazo" placeholder="Ej: la foto está borrosa o el número no coincide." />
+                </div>
+            }
+
+            <div style="display: flex; gap: 10px; margin-top: 22px;">
+                <button class="btn btn-outline" style="flex: 1;" @onclick="() => _showValidacion = false">Cerrar</button>
+                @if (_modoRechazo)
+                {
+                    <button class="btn btn-secondary" style="flex: 1;" disabled="@_guardandoValidacion" @onclick="ConfirmarRechazo">
+                        Confirmar rechazo
+                    </button>
+                }
+                else
+                {
+                    <button class="btn btn-secondary" style="flex: 1;" disabled="@_guardandoValidacion" @onclick="() => _modoRechazo = true">
+                        <i class="fas fa-xmark"></i> Rechazar
+                    </button>
+                    <button class="btn btn-primary" style="flex: 1;" disabled="@_guardandoValidacion" @onclick='() => DecidirValidacion("APROBADO")'>
+                        <i class="fas fa-check"></i> Aprobar
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+<!-- TOAST -->
+@if (!string.IsNullOrEmpty(_mensaje))
+{
+    <div style="position: fixed; bottom: 24px; right: 24px; z-index: var(--z-toast);">
+        <AlertMessage Tipo="success" Mensaje="@_mensaje" AutoDismissMs="4000" />
+    </div>
+}
+
+<!-- MODAL CONFIRMAR (aprobar / rechazar) -->
+@if (_showConfirm && _target is not null)
+{
+    bool aprobar = _accion == "aprobar";
+    <div class="modal-overlay">
+        <div class="modal-panel">
+            <div class="empty-state-icon"
+                 style="margin-bottom: 18px; background: @(aprobar ? "var(--success-tint)" : "var(--danger-tint)"); color: @(aprobar ? "var(--success)" : "var(--danger)");">
+                <i class="fas @(aprobar ? "fa-check" : "fa-xmark")"></i>
+            </div>
+            <h2 style="margin-bottom: 12px;">@(aprobar ? "¿Aprobar alojamiento?" : "¿Rechazar alojamiento?")</h2>
+            <p class="card-text" style="margin-bottom: 24px;">
+                @(aprobar ? "Se publicará " : "Se rechazará ")<strong>@_target.Nombre</strong> de @_target.Anfitrion.
+            </p>
+            <div class="adm-modal-actions">
+                <button class="btn btn-outline" style="flex: 1;" @onclick="CerrarConfirm">Cancelar</button>
+                @* Botón de marca para la acción primaria; verde/rojo solo para badges de estado, no botones. *@
+                <button class="btn @(aprobar ? "btn-primary" : "btn-secondary")" style="flex: 1;" @onclick="ConfirmarAccion">
+                    @(aprobar ? "Aprobar" : "Rechazar")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- MODAL DETALLE DENUNCIA -->
+@if (_showDenuncia && _denunciaSel is not null)
+{
+    <div class="modal-overlay">
+        <div class="modal-panel" style="max-width: 480px; text-align: left;">
+            <h2 style="margin-bottom: 16px;">Denuncia #@_denunciaSel.Id</h2>
+            <dl class="adm-dl">
+                <div><dt>Alojamiento</dt><dd>@_denunciaSel.AlojamientoNombre</dd></div>
+                <div><dt>Anfitrión denunciado</dt><dd>@_denunciaSel.AnfitrionNombre</dd></div>
+                <div><dt>Reportado por</dt><dd>@_denunciaSel.DenuncianteNombre</dd></div>
+                <div><dt>Motivo</dt><dd>@_denunciaSel.Motivo</dd></div>
+                <div><dt>Estado</dt><dd><span class="state @EstadoState(_denunciaSel.EstadoTexto)"><span class="state-dot"></span>@_denunciaSel.EstadoTexto</span></dd></div>
+                <div><dt>Fecha</dt><dd>@_denunciaSel.Fecha</dd></div>
+            </dl>
+
+            @if (!string.IsNullOrWhiteSpace(_denunciaSel.Descripcion))
+            {
+                <p style="margin: 16px 0 0; color: var(--ink); font-size: 14px; line-height: 1.6;">
+                    <strong>Descripción:</strong> @_denunciaSel.Descripcion
+                </p>
+            }
+
+            @* Acciones de gestión: cambian el estado (persistido en backend). *@
+            <div style="display: flex; gap: 10px; margin-top: 22px;">
+                <button class="btn btn-outline" style="flex: 1;" @onclick="() => _showDenuncia = false">Cerrar</button>
+                @if (_denunciaSel.Estado != "RESUELTO")
+                {
+                    <button class="btn btn-primary" style="flex: 1;" disabled="@_guardandoEstado"
+                            @onclick='() => CambiarEstado("RESUELTO")'>
+                        <i class="fas fa-check"></i> Marcar resuelto
+                    </button>
+                }
+                @if (_denunciaSel.Estado != "CERRADO")
+                {
+                    <button class="btn btn-secondary" style="flex: 1;" disabled="@_guardandoEstado"
+                            @onclick='() => CambiarEstado("CERRADO")'>
+                        Cerrar caso
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .adm-table-card {
+        background: var(--surface);
+        border: 1px solid var(--hairline);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+    }
+
+    .adm-scroll { overflow-x: auto; }
+
+    .adm-muted { color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+
+    .adm-row-actions { display: flex; gap: 8px; }
+
+    .adm-empty { padding: 44px 20px; text-align: center; color: var(--ink-muted); font-size: 14.5px; }
+
+    /* Prioridad (punto + etiqueta, no solo color) */
+    .adm-prio {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 4px 11px;
+        border-radius: var(--radius-pill);
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .adm-prio-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+    .adm-prio--alta { background: var(--danger-tint); color: var(--danger); }
+    .adm-prio--alta .adm-prio-dot { background: var(--danger); }
+    .adm-prio--media { background: var(--warning-tint); color: var(--warning); }
+    .adm-prio--media .adm-prio-dot { background: var(--warning); }
+    .adm-prio--baja { background: var(--success-tint); color: var(--success); }
+    .adm-prio--baja .adm-prio-dot { background: var(--success); }
+
+    .adm-modal-actions { display: flex; gap: 12px; }
+
+    /* Lista de detalle en el modal de denuncia */
+    .adm-dl { margin: 0; text-align: left; }
+
+        .adm-dl > div {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 11px 0;
+            border-bottom: 1px solid var(--hairline);
+            font-size: 14px;
+        }
+
+            .adm-dl > div:last-child { border-bottom: none; }
+
+        .adm-dl dt { color: var(--ink-muted); }
+        .adm-dl dd { margin: 0; color: var(--ink); font-weight: 600; }
+</style>
+
+@code {
+    private int _tab = 1;
+    private string _mensaje = "";
+
+    // Permite abrir directamente una pestaña desde un enlace, p. ej.
+    // /admin/moderacion?tab=denuncias (usado por la tarjeta del dashboard).
+    [Parameter, SupplyParameterFromQuery(Name = "tab")]
+    public string? TabQuery { get; set; }
+
+    // ---- Datos ----
+    // PendingAloj ahora lleva Id real para poder aprobar/rechazar contra el backend.
+    private record PendingAloj(int Id, string Nombre, string Anfitrion, string Tipo, string Fecha);
+
+    private List<PendingAloj> _pendientes = new();
+    // Denuncias e incidencias REALES del backend (antes eran mock de DataService).
+    private List<Denuncia> _denuncias = new();
+    private List<Incidencia> _incidencias = new();
+    // Validaciones de identidad PENDIENTE (RF02).
+    private List<DocumentoValidacion> _validaciones = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _tab = TabQuery switch
+        {
+            "denuncias" => 2,
+            "incidencias" => 3,
+            "validaciones" => 4,
+            _ => 1
+        };
+
+        await CargarPendientesAsync();
+        await CargarDenunciasAsync();
+        await CargarIncidenciasAsync();
+        await CargarValidacionesAsync();
+    }
+
+    // Cola de validación documentaria (RF02). Si el REST falla, lista vacía (no rompe el panel).
+    private async Task CargarValidacionesAsync()
+    {
+        try { _validaciones = await ValidacionSvc.ListarPendientesAsync(); }
+        catch { _validaciones = new(); }
+    }
+
+    // Carga las denuncias reales (RF31). Si el REST falla, lista vacía (no rompe el panel).
+    private async Task CargarDenunciasAsync()
+    {
+        try { _denuncias = await DenunciaSvc.ListarAsync(); }
+        catch { _denuncias = new(); }
+    }
+
+    private async Task CargarIncidenciasAsync()
+    {
+        try { _incidencias = await IncidenciaSvc.ListarAsync(); }
+        catch { _incidencias = new(); }
+    }
+
+    // Cola de moderación: alojamientos PENDIENTE traídos del backend (GET AlojamientoRS/pendientes).
+    // Alojamiento no modela "fecha de envío", por eso se muestra "—".
+    private async Task CargarPendientesAsync()
+    {
+        var lista = await AlojProv.ListarPendientesAsync();
+        _pendientes = lista
+            .Select(a => new PendingAloj(a.Id, a.Nombre, a.AnfitrionNombre, a.Tipo, "—"))
+            .ToList();
+    }
+
+    // ---- Modal confirmar (aprobar/rechazar) ----
+    private bool _showConfirm;
+    private PendingAloj? _target;
+    private string _accion = "";
+
+    private void PedirConfirmacion(PendingAloj a, string accion)
+    {
+        _target = a;
+        _accion = accion;
+        _showConfirm = true;
+    }
+
+    private void CerrarConfirm()
+    {
+        _showConfirm = false;
+        _target = null;
+    }
+
+    private async Task ConfirmarAccion()
+    {
+        if (_target is null) return;
+        var nombre = _target.Nombre;
+        var aprobar = _accion == "aprobar";
+        var estado = aprobar ? "APROBADO" : "RECHAZADO";
+
+        try
+        {
+            // Persiste en el backend (PUT AlojamientoRS/{id}/validacion). Solo si tiene éxito
+            // quitamos la fila de la cola, para no mentir en pantalla si el REST falla.
+            await AlojProv.ValidarAsync(_target.Id, estado);
+            _pendientes.Remove(_target);
+            _mensaje = aprobar
+                ? $"\"{nombre}\" fue aprobado y publicado."
+                : $"\"{nombre}\" fue rechazado.";
+        }
+        catch (Exception)
+        {
+            _mensaje = $"No se pudo {(aprobar ? "aprobar" : "rechazar")} \"{nombre}\". Intenta de nuevo.";
+        }
+        finally
+        {
+            CerrarConfirm();
+        }
+    }
+
+    // ---- Modal detalle de denuncia ----
+    private bool _showDenuncia;
+    private bool _guardandoEstado;
+    private Denuncia? _denunciaSel;
+
+    private void VerDenuncia(Denuncia d)
+    {
+        _denunciaSel = d;
+        _showDenuncia = true;
+    }
+
+    // RF31: el admin cambia el estado (persistido vía PUT DenunciaRS/{id}/estado).
+    private async Task CambiarEstado(string estado)
+    {
+        if (_denunciaSel is null) return;
+        _guardandoEstado = true;
+        try
+        {
+            await DenunciaSvc.CambiarEstadoAsync(_denunciaSel.Id, estado);
+            _denunciaSel.Estado = estado;          // refleja en el modal abierto
+            await CargarDenunciasAsync();          // refresca la tabla
+            _mensaje = estado == "RESUELTO" ? "Denuncia marcada como resuelta." : "Caso cerrado.";
+            _showDenuncia = false;
+        }
+        catch
+        {
+            _mensaje = "No se pudo actualizar la denuncia. Intenta de nuevo.";
+        }
+        finally
+        {
+            _guardandoEstado = false;
+        }
+    }
+
+    // ---- Modal validación de identidad (RF02) ----
+    private bool _showValidacion;
+    private bool _modoRechazo;
+    private bool _guardandoValidacion;
+    private string _motivoRechazo = "";
+    private DocumentoValidacion? _validacionSel;
+
+    private void VerValidacion(DocumentoValidacion v)
+    {
+        _validacionSel = v;
+        _modoRechazo = false;
+        _motivoRechazo = "";
+        _showValidacion = true;
+    }
+
+    // Aprueba o rechaza la identidad (PUT ValidacionRS/{id}/decision). Al aprobar, el backend
+    // deja al usuario verificado (estado_validacion=APROBADO + cuenta DISPONIBLE).
+    private async Task DecidirValidacion(string estado)
+    {
+        if (_validacionSel is null) return;
+        _guardandoValidacion = true;
+        try
+        {
+            int adminId = AppState.UsuarioActual?.Id ?? 0;
+            var (ok, error) = await ValidacionSvc.DecidirAsync(
+                _validacionSel.Id, estado, estado == "RECHAZADO" ? _motivoRechazo : null, adminId);
+            if (!ok)
+            {
+                _mensaje = error ?? "No se pudo registrar la decisión. Intenta de nuevo.";
+                return;
+            }
+            _validaciones.Remove(_validacionSel);
+            _mensaje = estado == "APROBADO"
+                ? "Identidad aprobada. El usuario ya puede publicar."
+                : "Identidad rechazada.";
+            _showValidacion = false;
+        }
+        catch
+        {
+            _mensaje = "No se pudo registrar la decisión. Intenta de nuevo.";
+        }
+        finally
+        {
+            _guardandoValidacion = false;
+        }
+    }
+
+    private async Task ConfirmarRechazo()
+    {
+        if (string.IsNullOrWhiteSpace(_motivoRechazo))
+        {
+            _mensaje = "Indica el motivo del rechazo.";
+            return;
+        }
+        await DecidirValidacion("RECHAZADO");
+    }
+
+    // Estado → clase semántica reutilizando .state del sistema.
+    private string EstadoState(string estado) => estado switch
+    {
+        "Resuelto"    => "state--confirmada",
+        "En revisión" => "state--pendiente",
+        "Abierto"     => "state--pendiente",
+        "En proceso"  => "state--pendiente",
+        "Cerrado"     => "state--completada",
+        _             => "state--completada"
+    };
+}

@@ -1,0 +1,554 @@
+@page "/pagos"
+@rendermode InteractiveServer
+@using System.Globalization
+@inject NavigationManager Navigation
+@inject BunkiApp.Models.AppState AppState
+@inject AlojamientoProvider AlojamientoProvider
+@inject ReservaProvider ReservaProvider
+@inject Services.PagoProvider PagoProvider
+@inject Services.NiubizServiceRest NiubizService
+@inject IJSRuntime JS
+@implements IDisposable
+
+<div class="section">
+    <div class="container two-column" style="max-width: 1000px;">
+        <div>
+            <h2 class="section-title" style="text-align: left;">Resumen de Pago</h2>
+
+            <div class="card" style="margin-bottom: 30px;">
+                <div style="padding: 20px;">
+                    <h3 style="margin-bottom: 20px;">Detalles de la Reserva</h3>
+                    <div class="info-panel" style="margin-bottom: 20px;">
+                        @if (ReservaValida)
+                        {
+                            <p style="margin-bottom: 8px;"><strong>Alojamiento:</strong> @Alojamiento!.Nombre</p>
+                            <p style="margin-bottom: 8px;"><strong>Fechas:</strong> @RangoFechasTexto (@Noches @(Noches == 1 ? "noche" : "noches"))</p>
+                            <p style="margin-bottom: 8px;"><strong>Huéspedes:</strong> @Huespedes</p>
+                            <p><strong>Anfitrión:</strong> @Alojamiento.AnfitrionNombre</p>
+                        }
+                        else
+                        {
+                            <p class="card-text">No se encontró información válida de la reserva. Vuelve a seleccionar un alojamiento.</p>
+                            <a href="/explorar" class="btn btn-primary btn-small" style="margin-top: 12px;">Volver a explorar</a>
+                        }
+                    </div>
+
+                    @if (ReservaValida)
+                    {
+                        <table>
+                            <tr>
+                                <td>@Money(Alojamiento!.PrecioNoche) x @Noches @(Noches == 1 ? "noche" : "noches")</td>
+                                <td style="text-align: right;">@Money(Subtotal)</td>
+                            </tr>
+                            <tr>
+                                <td>Limpieza</td>
+                                <td style="text-align: right;">@Money(Limpieza)</td>
+                            </tr>
+                            <tr>
+                                <td>Comisión de servicio</td>
+                                <td style="text-align: right;">@Money(Comision)</td>
+                            </tr>
+                            <tr style="font-weight: bold;">
+                                <td>Total</td>
+                                <td style="text-align: right;"><span class="price">@Money(Total)</span></td>
+                            </tr>
+                        </table>
+                    }
+                </div>
+            </div>
+
+            <div class="card">
+                <div style="padding: 20px;">
+                    <h3 style="margin-bottom: 20px;">Método de Pago</h3>
+
+                    <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+                        @foreach (var metodo in MetodosPago)
+                        {
+                            <label class="radio-card @(Formulario.MetodoPago == metodo.Key ? "selected" : "")">
+                                <input type="radio" name="payment" value="@metodo.Key"
+                                       checked="@(Formulario.MetodoPago == metodo.Key)"
+                                       @onchange="() => Formulario.MetodoPago = metodo.Key" />
+                                <i class="fas @metodo.Icono"></i>
+                                <span>@metodo.Nombre</span>
+                            </label>
+                        }
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(ErrorPago))
+                    {
+                        <div style="margin-bottom: 14px;">
+                            <AlertMessage Tipo="danger" Mensaje="@ErrorPago" />
+                        </div>
+                    }
+
+                    @if (Formulario.MetodoPago == "niubiz")
+                    {
+                        <div class="info-panel" style="text-align: center;">
+                            <i class="fas fa-shield-halved" style="font-size: 40px; color: var(--gold); margin-bottom: 16px; display: block;"></i>
+                            <p class="card-text" style="margin-bottom: 8px;">
+                                Pago con tarjeta procesado por <strong>Niubiz</strong> (entorno sandbox de pruebas).
+                            </p>
+                            <p class="card-text" style="font-size: 12px; margin-bottom: 4px;">
+                                Tarjeta de prueba (aprobada): <strong>4919 1481 0785 9067</strong> · venc. futuro · CVV 123.
+                            </p>
+                            <p class="card-text" style="font-size: 11px; color: var(--ink-faint); margin-bottom: 20px;">
+                                Para probar un rechazo: 4111 1111 1111 1111.
+                            </p>
+                            <button class="btn btn-primary btn-large" @onclick="IniciarNiubiz" disabled="@(Procesando || !ReservaValida)">
+                                @if (Procesando)
+                                {
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    <span>Procesando pago...</span>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-lock"></i>
+                                    <span>Pagar @Money(Total) con Niubiz</span>
+                                }
+                            </button>
+                        </div>
+                    }
+                    else if (Formulario.MetodoPago == "tarjeta")
+                    {
+                        <EditForm Model="Formulario" OnValidSubmit="Pagar">
+                            <DataAnnotationsValidator />
+
+                            <h4 style="margin-bottom: 15px;">Datos de la Tarjeta</h4>
+                            <p class="card-text" style="font-size: 11px; color: var(--ink-faint); margin-bottom: 14px;">
+                                Demo: cualquier tarjeta aprueba; usa <strong>4111 1111 1111 1111</strong> para simular un rechazo.
+                            </p>
+
+                            <div class="form-group">
+                                <label>Número de Tarjeta</label>
+                                <InputText @bind-Value="Formulario.NumeroTarjeta" placeholder="1234 5678 9012 3456"
+                                           maxlength="19" />
+                                <ValidationMessage For="() => Formulario.NumeroTarjeta" class="validation-message" />
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Vencimiento</label>
+                                    <InputText @bind-Value="Formulario.Vencimiento" placeholder="MM/YY" maxlength="5" />
+                                    <ValidationMessage For="() => Formulario.Vencimiento" class="validation-message" />
+                                </div>
+                                <div class="form-group">
+                                    <label>CVV</label>
+                                    <InputText @bind-Value="Formulario.Cvv" placeholder="123" maxlength="4" />
+                                    <ValidationMessage For="() => Formulario.Cvv" class="validation-message" />
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Nombre en la Tarjeta</label>
+                                <InputText @bind-Value="Formulario.NombreTarjeta" placeholder="Juan Pérez" />
+                                <ValidationMessage For="() => Formulario.NombreTarjeta" class="validation-message" />
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-large" disabled="@(Procesando || !ReservaValida)">
+                                @if (Procesando)
+                                {
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    <span>Procesando pago...</span>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-lock"></i>
+                                    <span>Completar Pago - @Money(Total)</span>
+                                }
+                            </button>
+                        </EditForm>
+                    }
+                    else
+                    {
+                        <div class="info-panel" style="text-align: center;">
+                            <i class="fas fa-@(Formulario.MetodoPago == "billetera" ? "mobile-alt" : "university")"
+                               style="font-size: 40px; color: var(--gold); margin-bottom: 16px; display: block;"></i>
+                            <p class="card-text" style="margin-bottom: 20px;">
+                                @(Formulario.MetodoPago == "billetera"
+                                    ? "Serás redirigido a Yape/Plin para completar el pago."
+                                    : "Se mostrarán los datos de cuenta bancaria para realizar la transferencia.")
+                            </p>
+                            <button class="btn btn-primary btn-large" @onclick="PagarOtroMetodo" disabled="@(Procesando || !ReservaValida)">
+                                @if (Procesando)
+                                {
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                }
+                                Continuar
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <h3 style="margin-bottom: 20px;">Resumen</h3>
+
+            <div class="info-panel" style="margin-bottom: 20px;">
+                <div class="summary-row">
+                    <span>Subtotal</span><strong>@Money(Subtotal + Limpieza)</strong>
+                </div>
+                <div class="summary-row">
+                    <span>Comisión</span><strong>@Money(Comision)</strong>
+                </div>
+                <div class="summary-row summary-row--total">
+                    <span>Total</span>
+                    <span class="price price-lg">@Money(Total)</span>
+                </div>
+                @if (AppState.MonedaEsReferencial)
+                {
+                    <p class="summary-note">Conversión referencial. El cobro se realiza en S/ (PEN).</p>
+                }
+            </div>
+
+            <AlertMessage Tipo="success" Mensaje="Los pagos son 100% seguros y protegidos." Cerrable="false" />
+
+            <div class="card" style="margin-bottom: 16px;">
+                <div style="padding: 16px;">
+                    <h4 style="margin-bottom: 10px;">Política de Cancelación</h4>
+                    <p class="card-text">Puedes cancelar tu reserva sin penalización hasta 48 horas antes del check-in.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div style="padding: 16px;">
+                    <h4 style="margin-bottom: 10px;"><i class="fas fa-shield-alt" style="color: var(--success);"></i> Protección de Privacidad</h4>
+                    <p class="card-text" style="font-size: 12px;">Tu información de pago está protegida con encriptación SSL de 256 bits.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (PagoCompletado)
+{
+    <div class="modal-overlay">
+        <div class="modal-panel">
+            <div class="empty-state-icon" style="background: var(--success-tint); color: var(--success); margin-bottom: 18px;">
+                <i class="fas fa-check"></i>
+            </div>
+            <h2 style="margin-bottom: 12px;">¡Pago Completado!</h2>
+            <p class="card-text" style="margin-bottom: 24px;">
+                Tu reserva ha sido confirmada. Recibirás un correo de confirmación en breve.
+            </p>
+            <button class="btn btn-primary btn-large" @onclick='() => Navigation.NavigateTo("/mis-reservas")'>
+                Ver Mis Reservas
+            </button>
+            @* Comprobante de lo recién pagado: solo si tenemos el id de la reserva creada en este flujo.
+               El enlace abre el endpoint del comprobante por id de reserva; el backend devuelve el PDF con
+               Content-Disposition attachment, por lo que el navegador lo descarga directo (target="_blank"
+               para no perder esta pantalla de confirmación). *@
+            @if (_reservaCreadaId > 0)
+            {
+                <a class="btn btn-outline btn-large"
+                   href="@($"http://localhost:8080/BunkiBackend/webresources/PagoRS/reserva/{_reservaCreadaId}/comprobante")"
+                   target="_blank" style="margin-top: 12px;">
+                    <i class="fas fa-file-pdf"></i> Descargar comprobante
+                </a>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, SupplyParameterFromQuery(Name = "alojamientoId")]
+    public int? AlojamientoIdQuery { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "entrada")]
+    public DateTime? EntradaQuery { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "salida")]
+    public DateTime? SalidaQuery { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "huespedes")]
+    public int? HuespedesQuery { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "reservaId")]
+    public int? ReservaIdQuery { get; set; }
+
+    // Regreso del callback de Niubiz (/niubiz/callback): resultado del pago.
+    [Parameter, SupplyParameterFromQuery(Name = "pagoOk")]
+    public int? PagoOkQuery { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "pagoError")]
+    public int? PagoErrorQuery { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "reservaCreada")]
+    public int? ReservaCreadaQuery { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "motivo")]
+    public string? MotivoQuery { get; set; }
+
+    private PagoForm Formulario = new();
+    private bool Procesando = false;
+    private bool PagoCompletado = false;
+    private string ErrorPago = "";
+
+    // Id de la reserva recién creada: lo guardamos para ofrecer el comprobante PDF de lo que se acaba de pagar
+    // en la pantalla de "¡Pago Completado!". 0 = aún no hay reserva creada en este flujo.
+    private int _reservaCreadaId = 0;
+
+    private Alojamiento? Alojamiento;
+    private DateTime? FechaEntrada;
+    private DateTime? FechaSalida;
+    private int Huespedes = 1;
+
+    private bool ReservaValida =>
+        Alojamiento is not null &&
+        FechaEntrada.HasValue &&
+        FechaSalida.HasValue &&
+        FechaSalida > FechaEntrada &&
+        Huespedes > 0;
+
+    private int Noches => ReservaValida
+        ? (FechaSalida!.Value - FechaEntrada!.Value).Days
+        : 0;
+
+    private decimal Subtotal => ReservaValida
+        ? Alojamiento!.PrecioNoche * Noches
+        : 0;
+
+    private decimal Limpieza => ReservaValida
+        ? Alojamiento!.TarifaLimpieza
+        : 0;
+
+    private decimal Comision => ReservaValida
+        ? Subtotal * 0.10m
+        : 0;
+
+    private decimal Total => Subtotal + Limpieza + Comision;
+
+    private string RangoFechasTexto =>
+        FechaEntrada.HasValue && FechaSalida.HasValue
+            ? $"{FechaEntrada.Value.ToString("dd MMM", new CultureInfo("es-PE"))} - {FechaSalida.Value.ToString("dd MMM yyyy", new CultureInfo("es-PE"))}"
+            : "Fechas no seleccionadas";
+
+    private static readonly (string Key, string Nombre, string Icono)[] MetodosPago =
+    {
+        ("niubiz", "Tarjeta vía Niubiz (pasarela)", "fa-shield-halved"),
+        ("tarjeta", "Tarjeta de Crédito/Débito", "fa-credit-card"),
+        ("transferencia", "Transferencia Bancaria", "fa-university"),
+        ("billetera", "Billetera Digital (Yape/Plin)", "fa-mobile-alt")
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!AppState.EstaAutenticado)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        AppState.OnChange += OnMonedaChanged;
+
+        if (AlojamientoIdQuery.HasValue)
+        {
+            Alojamiento = await AlojamientoProvider.ObtenerPorIdAsync(AlojamientoIdQuery.Value);
+        }
+
+        FechaEntrada = EntradaQuery;
+        FechaSalida = SalidaQuery;
+
+        if (HuespedesQuery.HasValue)
+        {
+            Huespedes = Alojamiento is not null
+                ? Math.Clamp(HuespedesQuery.Value, 1, Alojamiento.MaxHuespedes)
+                : Math.Max(1, HuespedesQuery.Value);
+        }
+
+        // Volvimos del lightbox de Niubiz vía /niubiz/callback.
+        if (PagoOkQuery == 1)
+        {
+            PagoCompletado = true;
+            _reservaCreadaId = ReservaCreadaQuery ?? 0;
+        }
+        else if (PagoErrorQuery == 1)
+        {
+            ErrorPago = string.IsNullOrWhiteSpace(MotivoQuery)
+                ? "El pago fue rechazado por la pasarela. Verifica los datos de la tarjeta o intenta de nuevo."
+                : $"El pago fue rechazado por la pasarela: {MotivoQuery}";
+            Formulario.MetodoPago = "niubiz";   // deja visible el método para reintentar
+        }
+    }
+
+    public void Dispose()
+    {
+        AppState.OnChange -= OnMonedaChanged;
+        _ref?.Dispose();
+    }
+    private void OnMonedaChanged() => InvokeAsync(StateHasChanged);
+
+    // ===== Pago con Niubiz (sandbox) =====
+    private DotNetObjectReference<Pagos>? _ref;
+
+    // Crea la sesión en el backend y abre el lightbox de Niubiz. El resto del flujo se cierra
+    // en los callbacks OnNiubizToken / OnNiubizError que invoca el JS.
+    private async Task IniciarNiubiz()
+    {
+        if (!ReservaValida) return;
+        ErrorPago = "";
+        Procesando = true;
+        try
+        {
+            var sesion = await NiubizService.CrearSesionAsync(Total);
+            if (sesion is null || string.IsNullOrEmpty(sesion.SessionKey))
+            {
+                ErrorPago = "No se pudo iniciar el pago con Niubiz. Intenta de nuevo.";
+                Procesando = false;
+                return;
+            }
+            // URL a la que el lightbox hará POST del transactionToken (modelo "action" de Niubiz).
+            // Lleva el contexto de la reserva por query; el endpoint /niubiz/callback autoriza y persiste.
+            var action = $"{Navigation.BaseUri}niubiz/callback"
+                + $"?aloj={Alojamiento!.Id}"
+                + $"&entrada={FechaEntrada:yyyy-MM-dd}"
+                + $"&salida={FechaSalida:yyyy-MM-dd}"
+                + $"&huespedes={Huespedes}"
+                + $"&huesped={AppState.UsuarioActual!.Id}"
+                + $"&pn={sesion.PurchaseNumber}"
+                + $"&amount={Total.ToString(CultureInfo.InvariantCulture)}"
+                + $"&reservaId={ReservaIdQuery ?? 0}";
+
+            _ref ??= DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("bunkiNiubiz.pagar", new
+            {
+                merchantId = sesion.MerchantId,
+                sessionKey = sesion.SessionKey,
+                purchaseNumber = sesion.PurchaseNumber,
+                amount = sesion.Amount,
+                action = action
+            }, _ref);
+            // El lightbox YA está abierto: liberamos el botón. Si el usuario lo cierra sin pagar, el botón
+            // queda normal (Niubiz no avisa el cierre); si paga, el POST a /niubiz/callback navega la página.
+            Procesando = false;
+        }
+        catch (Exception)
+        {
+            ErrorPago = "No se pudo iniciar el pago con Niubiz.";
+            Procesando = false;
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnNiubizError(string mensaje)
+    {
+        ErrorPago = "No se pudo abrir la pasarela de pago. " + (mensaje ?? "");
+        Procesando = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    // Formateo centralizado (respeta la moneda seleccionada en AppState).
+    private string Money(decimal monto) => AppState.FormatearPrecio(monto);
+
+    private async Task Pagar()
+    {
+        if (!ReservaValida) return;
+        ErrorPago = "";
+        Procesando = true;
+        await Task.Delay(2000);                 // pago simulado (mock)
+
+        // Si la tarjeta es la de RECHAZO (4111 1111 1111 1111), el pago "falla": no se confirma nada
+        // y, si se estaba pagando una reserva existente, se CANCELA (no dejamos reservas sin pagar).
+        if (PagoRechazadoSimulado())
+        {
+            await CancelarPorPagoFallidoAsync("La tarjeta fue rechazada.");
+            Procesando = false;
+            return;
+        }
+
+        var ok = await PersistirReservaAsync();
+        Procesando = false;
+        if (ok) PagoCompletado = true;
+    }
+
+    // Pago simulado: rechaza solo con la tarjeta de prueba de rechazo (misma convención que Niubiz).
+    private bool PagoRechazadoSimulado()
+    {
+        var digitos = new string((Formulario.NumeroTarjeta ?? "").Where(char.IsDigit).ToArray());
+        return digitos == "4111111111111111";
+    }
+
+    // Si el pago falla y se estaba pagando una reserva YA creada (reservaId), se cancela.
+    // Para una reserva nueva no hay nada que cancelar (aún no se creó: se crea recién al aprobar).
+    private async Task CancelarPorPagoFallidoAsync(string motivo)
+    {
+        if (ReservaIdQuery is > 0)
+        {
+            try
+            {
+                await ReservaProvider.CancelarAsync(ReservaIdQuery.Value);
+                ErrorPago = $"{motivo} La reserva fue cancelada; puedes reservar de nuevo cuando quieras.";
+            }
+            catch
+            {
+                ErrorPago = $"{motivo} No se pudo cancelar la reserva automáticamente; gestiónala desde Mis Reservas.";
+            }
+        }
+        else
+        {
+            ErrorPago = $"{motivo} No se creó ninguna reserva. Intenta con otra tarjeta.";
+        }
+    }
+
+    private async Task PagarOtroMetodo()
+    {
+        if (!ReservaValida) return;
+        ErrorPago = "";
+        Procesando = true;
+        await Task.Delay(1500);                 // pago simulado (mock)
+        var ok = await PersistirReservaAsync();
+        Procesando = false;
+        if (ok) PagoCompletado = true;
+    }
+
+    // Si viene reservaId -> confirma la reserva existente (PUT, solo cambia el estado).
+    // Si no -> crea una reserva nueva (POST).
+    private async Task<bool> PersistirReservaAsync()
+    {
+        try
+        {
+            if (ReservaIdQuery is > 0)
+            {
+                var existente = await ReservaProvider.ObtenerPorIdAsync(ReservaIdQuery.Value);
+                if (existente is null)
+                {
+                    ErrorPago = "No encontramos la reserva a pagar. Intenta de nuevo.";
+                    return false;
+                }
+                existente.Estado = "Confirmada";       // el pago se completó
+                await ReservaProvider.ActualizarAsync(existente);
+                return true;
+            }
+
+            var nueva = new Reserva
+            {
+                AlojamientoId = Alojamiento!.Id,          // ReservaValida garantiza Alojamiento != null
+                HuespedId = AppState.UsuarioActual!.Id,
+                FechaEntrada = FechaEntrada!.Value,
+                FechaSalida = FechaSalida!.Value,
+                NumHuespedes = Huespedes,                // el backend lo ignora, pero lo enviamos completo
+                Total = Total,
+                Estado = "Pendiente"               // nace pendiente: el anfitrión la acepta/rechaza
+            };
+
+            // Crear la reserva primero: necesitamos su id para registrar el pago de ESA reserva.
+            int idReserva = await ReservaProvider.RegistrarAsync(nueva);
+            _reservaCreadaId = idReserva;   // lo guardamos para ofrecer el botón de comprobante tras pagar
+
+            // El pago se registra DESPUÉS de crear la reserva, porque referencia a una reserva
+            // existente (el backend la carga por id y calcula comisión 10%, neto/bruto y moneda).
+            // Si el registro del pago falla, NO tumbamos el flujo: la reserva ya quedó creada
+            // (el provider devuelve bool y no propaga).
+            if (idReserva > 0)
+            {
+                await PagoProvider.RegistrarPagoDeReservaAsync(idReserva);
+            }
+            return true;
+        }
+        catch (Exception)
+        {
+            ErrorPago = "No se pudo procesar el pago. Inténtalo de nuevo en unos segundos.";
+            return false;
+        }
+    }
+}

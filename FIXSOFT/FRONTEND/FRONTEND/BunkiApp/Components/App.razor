@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    @* Marca y metadatos (fallbacks; cada página puede sobreescribir el <title> con <PageTitle>). *@
+    <title>Bunki · Estadías en Perú</title>
+    <meta name="description" content="Bunki — espacios elegidos a mano en todo el Perú. Reserva en minutos, paga con confianza y llega a un lugar que ya se siente tuyo." />
+    <meta name="theme-color" content="#F3F0EA" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    @* Open Graph: preview al compartir el enlace (WhatsApp / redes). *@
+    <meta property="og:title" content="Bunki · Estadías en Perú" />
+    <meta property="og:description" content="Espacios elegidos a mano en todo el Perú. Hospitalidad con criterio." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/images/premium/hero-bunki-premium.png" />
+    @* Splash de intro: se carga en el <head> A PROPÓSITO (no al final del body) para ejecutarse ANTES
+       del primer paint y ocultar el overlay si ya se vio / hay reduced-motion → evita el parpadeo en F5. *@
+    <script src="/js/intro.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    @* Sistema "Porcelana": una sola familia Hanken Grotesk (titulares en 800, interfaz en 500–600)
+       + Instrument Serif en cursiva solo como acento editorial puntual. *@
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+    @* rangePlugin: habilita la selección de RANGO (entrada/salida) en un solo calendario tipo Airbnb.
+       Debe cargarse DESPUÉS de flatpickr y ANTES de bunki-flatpickr.js (que lo usa en initDetalleRango). *@
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/rangePlugin.js"></script>
+    @* ?v=rf30: cache-bust para que los navegadores carguen la versión con initBloqueoRango (RF30)
+       en vez de una copia cacheada anterior. Sube este número si vuelves a tocar este archivo. *@
+    <script src="/js/bunki-flatpickr.js?v=rf30"></script>
+    @* Lightbox de pago Niubiz (sandbox): carga checkout.js bajo demanda. *@
+    <script src="/js/niubiz.js?v=2"></script>
+    @* Accesibilidad de modales (role=dialog, foco, Escape) para toda la app. *@
+    <script src="/js/modal-a11y.js?v=2"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="css/styles.css?v=3" />
+    <HeadOutlet />
+</head>
+<body>
+    @* Overlay del splash "BUNKI" como HTML estático (primer hijo del body, visible por defecto): aparece
+       antes de que Blazor hidrate, sin flash del Home. /js/intro.js (en el <head>) lo oculta si ya se vio
+       en esta sesión (sessionStorage) o si se pide menos movimiento; en sesión nueva corre la secuencia y
+       se auto-descarta por CSS.
+       Secuencia: las letras aparecen UNA A UNA (cada <span> con su --i para el stagger) mientras la barra
+       de abajo se llena; sostén; palabra+barra se desvanecen; el fondo hace fade-out y revela el Home. *@
+    <div id="bunki-intro" class="bunki-intro" aria-hidden="true">
+        <div class="bunki-intro-content">
+            <div class="bunki-intro-word">
+                <span class="bunki-intro-letter" style="--i:0">B</span>
+                <span class="bunki-intro-letter" style="--i:1">U</span>
+                <span class="bunki-intro-letter" style="--i:2">N</span>
+                <span class="bunki-intro-letter" style="--i:3">K</span>
+                <span class="bunki-intro-letter" style="--i:4">I</span>
+            </div>
+            <div class="bunki-intro-bar">
+                <span class="bunki-intro-bar-fill"></span>
+            </div>
+        </div>
+    </div>
+
+    <Routes @rendermode="InteractiveServer" />
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/js/mapa.js"></script>
+    <script src="/js/carrusel.js"></script>
+    <script src="/js/scroll-reveal.js"></script>
+    <script src="/js/countup.js"></script>
+    <script src="/js/pw.js"></script>
+    <script src="_framework/blazor.web.js"></script>
+</body>
+</html>

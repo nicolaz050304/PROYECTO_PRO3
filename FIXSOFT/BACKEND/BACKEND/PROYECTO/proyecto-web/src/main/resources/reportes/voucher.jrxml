@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="voucher" pageWidth="595" pageHeight="842" columnWidth="535"
+              leftMargin="30" rightMargin="30" topMargin="30" bottomMargin="30"
+              whenNoDataType="AllSectionsNoDetail">
+
+    <style name="base" isDefault="true" fontName="SansSerif" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+
+    <parameter name="P_NUM_RESERVA" class="java.lang.String"/>
+    <parameter name="P_ESTADO" class="java.lang.String"/>
+    <parameter name="P_HUESPED" class="java.lang.String"/>
+    <parameter name="P_ALOJAMIENTO" class="java.lang.String"/>
+    <parameter name="P_UBICACION" class="java.lang.String"/>
+    <parameter name="P_ANFITRION" class="java.lang.String"/>
+    <parameter name="P_ENTRADA" class="java.lang.String"/>
+    <parameter name="P_SALIDA" class="java.lang.String"/>
+    <parameter name="P_NOCHES" class="java.lang.String"/>
+    <parameter name="P_TOTAL" class="java.lang.String"/>
+    <parameter name="P_GENERADO" class="java.lang.String"/>
+
+    <title>
+        <band height="430">
+            <staticText><reportElement x="0" y="0" width="300" height="34" forecolor="#1F6B5E"/><textElement verticalAlignment="Middle"><font size="26" isBold="true"/></textElement><text><![CDATA[bunki]]></text></staticText>
+            <staticText><reportElement x="320" y="6" width="215" height="16" forecolor="#9A9488"/><textElement textAlignment="Right" verticalAlignment="Middle"><font size="9"/></textElement><text><![CDATA[Voucher de reserva]]></text></staticText>
+
+            <staticText><reportElement x="0" y="42" width="460" height="26" forecolor="#1C1A17"/><textElement verticalAlignment="Middle"><font size="18" isBold="true"/></textElement><text><![CDATA[Comprobante de Reserva]]></text></staticText>
+
+            <!-- Cabecera: nº de reserva + estado -->
+            <textField><reportElement x="0" y="74" width="300" height="18" forecolor="#9A9488"/><textElement verticalAlignment="Middle"><font size="11"/></textElement><textFieldExpression><![CDATA["Reserva " + $P{P_NUM_RESERVA}]]></textFieldExpression></textField>
+            <frame>
+                <reportElement x="400" y="72" width="135" height="22" mode="Opaque" backcolor="#1F6B5E"/>
+                <textField><reportElement x="0" y="0" width="135" height="22" forecolor="#FFFFFF"/><textElement textAlignment="Center" verticalAlignment="Middle"><font size="10" isBold="true"/></textElement><textFieldExpression><![CDATA[$P{P_ESTADO}]]></textFieldExpression></textField>
+            </frame>
+
+            <line><reportElement x="0" y="104" width="535" height="1" forecolor="#E3DFD5"/></line>
+
+            <!-- Detalle en clave-valor -->
+            <staticText><reportElement x="0" y="118" width="140" height="20" forecolor="#9A9488"/><textElement verticalAlignment="Middle"><font size="10"/></textElement><text><![CDATA[Huésped]]></text></staticText>
+            <textField><reportElement x="140" y="118" width="395" height="20" forecolor="#1C1A17"/><textElement verticalAlignment="Middle"><font size="11" isBold="true"/></textElement><textFieldExpression><![CDATA[$P{P_HUESPED}]]></textFieldExpression></textField>
+
+            <staticText><reportElement x="0" y="142" width="140" height="20" forecolor="#9A9488"/><textElement verticalAlignment="Middle"><font size="10"/></textElement><text><![CDATA[Alojamiento]]></text></staticText>
+            <textField><reportElement x="140" y="142" width="395" height="20" forecolor="#1C1A17"/><textElement verticalAlignment="Middle"><font size="11" isBold="true"/></textElement><textFieldExpression><![CDATA[$P{P_ALOJAMIENTO}]]></textFieldExpression></textField>
+
+            <staticText><reportElement x="0" y="166" width="140" height="20" forecolor="#9A9488"/><textElement verticalAlignment="Middle"><font size="10"/></textElement><text><![CDATA[Ubicación]]></text></staticText>
+            <textField><reportElement x="140" y="166" width="395" height="20" forecolor="#1C1A17"/><textElement verticalAlignment="Middle"><font size="11"/></textElement><textFieldExpression><![CDATA[$P{P_UBICACION}]]></textFieldExpression></textField>
+
+            <staticText><reportElement x="0" y="190" width="140" height="20" forecolor="#9A9488"/><textElement verticalAlignment="Middle"><font size="10"/></textElement><text><![CDATA[Anfitrión]]></text></staticText>
+            <textField><reportElement x="140" y="190" width="395" height="20" forecolor="#1C1A17"/><textElement verticalAlignment="Middle"><font size="11"/></textElement><textFieldExpression><![CDATA[$P{P_ANFITRION}]]></textFieldExpression></textField>
+
+            <staticText><reportElement x="0" y="214" width="140" height="20" forecolor="#9A9488"/><textElement verticalAlignment="Middle"><font size="10"/></textElement><text><![CDATA[Check-in]]></text></staticText>
+            <textField><reportElement x="140" y="214" width="180" height="20" forecolor="#1C1A17"/><textElement verticalAlignment="Middle"><font size="11" isBold="true"/></textElement><textFieldExpression><![CDATA[$P{P_ENTRADA}]]></textFieldExpression></textField>
+
+            <staticText><reportElement x="0" y="238" width="140" height="20" forecolor="#9A9488"/><textElement verticalAlignment="Middle"><font size="10"/></textElement><text><![CDATA[Check-out]]></text></staticText>
+            <textField><reportElement x="140" y="238" width="180" height="20" forecolor="#1C1A17"/><textElement verticalAlignment="Middle"><font size="11" isBold="true"/></textElement><textFieldExpression><![CDATA[$P{P_SALIDA}]]></textFieldExpression></textField>
+
+            <staticText><reportElement x="0" y="262" width="140" height="20" forecolor="#9A9488"/><textElement verticalAlignment="Middle"><font size="10"/></textElement><text><![CDATA[Noches]]></text></staticText>
+            <textField><reportElement x="140" y="262" width="180" height="20" forecolor="#1C1A17"/><textElement verticalAlignment="Middle"><font size="11"/></textElement><textFieldExpression><![CDATA[$P{P_NOCHES}]]></textFieldExpression></textField>
+
+            <!-- Total -->
+            <frame>
+                <reportElement x="0" y="296" width="535" height="44" mode="Opaque" backcolor="#1F6B5E"/>
+                <staticText><reportElement x="14" y="0" width="200" height="44" forecolor="#FFFFFF"/><textElement verticalAlignment="Middle"><font size="13" isBold="true"/></textElement><text><![CDATA[Total pagado]]></text></staticText>
+                <textField><reportElement x="285" y="0" width="236" height="44" forecolor="#FFFFFF"/><textElement textAlignment="Right" verticalAlignment="Middle"><font size="17" isBold="true"/></textElement><textFieldExpression><![CDATA[$P{P_TOTAL}]]></textFieldExpression></textField>
+            </frame>
+
+            <staticText><reportElement x="0" y="352" width="535" height="16" forecolor="#9A9488"/><textElement verticalAlignment="Middle"><font size="9"/></textElement><text><![CDATA[Presenta este voucher al momento del check-in. Cobro procesado en S/ (PEN).]]></text></staticText>
+            <textField><reportElement x="0" y="370" width="535" height="14" forecolor="#9A9488"/><textElement verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA["Bunki - Plataforma de alojamientos - Perú    -    Emitido: " + $P{P_GENERADO}]]></textFieldExpression></textField>
+        </band>
+    </title>
+
+</jasperReport>

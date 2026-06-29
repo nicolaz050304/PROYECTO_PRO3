@@ -1,0 +1,813 @@
+@page "/alojamiento/{Id:int}"
+@rendermode InteractiveServer
+@inject DataService Data
+@inject AlojamientoProvider AlojamientoProvider
+@inject ResenaProvider ResenaProvider
+@inject ReservaProvider ReservaProvider
+@inject NavigationManager Navigation
+@inject BunkiApp.Models.AppState AppState
+@inject BunkiApp.Services.DenunciaServiceRest Denuncia
+@using System.Globalization
+@inject IJSRuntime JS
+@implements IDisposable
+
+<PageTitle>Bunki - @(Alojamiento?.Nombre ?? "Detalle Alojamiento")</PageTitle>
+
+@if (Cargando)
+{
+    <div class="section">
+        <div class="container">
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="fas fa-spinner fa-spin"></i></div>
+                <h2>Cargando...</h2>
+                <p>Un momento, estamos obteniendo la información.</p>
+            </div>
+        </div>
+    </div>
+}
+else if (Alojamiento is null)
+{
+    <div class="section">
+        <div class="container">
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="fas fa-magnifying-glass"></i></div>
+                <h2>Alojamiento no encontrado</h2>
+                <p>El alojamiento que buscas no existe o ya no está disponible.</p>
+                <div class="empty-state-actions">
+                    <a href="/explorar" class="btn btn-primary">Volver al explorar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="section">
+        <div class="container">
+
+            @if (VieneDeMisReservas)
+            {
+                <button type="button" class="detail-back-pill" @onclick="VolverAMisReservas" style="margin-bottom: 20px;">
+                    <span class="detail-back-icon">
+                        <i class="fas fa-arrow-left"></i>
+                    </span>
+                    <span>Volver a Mis Reservas</span>
+                </button>
+            }
+            else
+            {
+                <div class="breadcrumb">
+                    <a href="/explorar">Explorar</a>
+                    <span>/</span>
+                    <a href="/explorar">@Alojamiento.Distrito</a>
+                    <span>/</span>
+                    <span>@Alojamiento.Nombre</span>
+                </div>
+            }
+
+            <div class="two-column">
+                <div>
+                    <div class="gallery">
+                        @if (!string.IsNullOrWhiteSpace(Alojamiento.ImagenUrl))
+                        {
+                            <img src="@Alojamiento.ImagenUrl" alt="@Alojamiento.Nombre" style="width: 100%; height: 400px; object-fit: cover; border-radius: 12px;" />
+                        }
+                        else
+                        {
+                            <div class="gallery-image" style="background: @Alojamiento.GradienteColor; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; height: 400px; border-radius: 12px;">
+                                <span style="font-size: 72px; line-height: 1;">🏠</span>
+                                <span style="font-size: 15px; font-weight: 500; color: rgba(255,255,255,0.9);">Sin imagen</span>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="mt-40">
+                        <h2 style="margin-bottom: 12px;">@Alojamiento.Nombre</h2>
+                        <StarRating Valor="Alojamiento.Rating" TotalResenas="Alojamiento.TotalResenas" />
+
+                        <p style="margin-top: 20px; margin-bottom: 20px; color: var(--text-light); line-height: 1.8;">
+                            @Alojamiento.Descripcion
+                        </p>
+
+                        <div class="grid grid-3" style="margin-bottom: 20px;">
+                            <div class="stat-box">
+                                <div class="stat-number">@Alojamiento.MaxHuespedes</div>
+                                <div class="stat-label">Huéspedes</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-number">@Alojamiento.Habitaciones</div>
+                                <div class="stat-label">Habitaciones</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-number">@Alojamiento.TotalResenas</div>
+                                <div class="stat-label">Reseñas</div>
+                            </div>
+                        </div>
+
+                        @if (Alojamiento.Servicios.Any())
+                        {
+                            <h3 style="margin-top: 30px; margin-bottom: 15px;">Características</h3>
+                            <div class="grid grid-2" style="margin-bottom: 30px;">
+                                @foreach (var servicio in Alojamiento.Servicios)
+                                {
+                                    <p>
+                                        <i class="fas fa-check" style="color: var(--success); margin-right: 10px;"></i>
+                                        @servicio
+                                    </p>
+                                }
+                            </div>
+                        }
+
+                        @if (Alojamiento.Reglas.Any())
+                        {
+                            <h3 style="margin-top: 30px; margin-bottom: 15px;">Reglas de la casa</h3>
+                            <div class="grid grid-2" style="margin-bottom: 30px;">
+                                @foreach (var regla in Alojamiento.Reglas)
+                                {
+                                    <p>
+                                        <i class="fas fa-circle-info" style="color: var(--ink-muted); margin-right: 10px;"></i>
+                                        @regla
+                                    </p>
+                                }
+                            </div>
+                        }
+
+                        <h3 style="margin-top: 30px; margin-bottom: 15px;">Sobre el Anfitrión</h3>
+                        <div class="info-panel flex flex-between" style="align-items: center;">
+                            <div class="flex gap-15 items-center" style="cursor: pointer;"
+                                 @onclick='() => Navigation.NavigateTo($"/usuario/{Alojamiento.AnfitrionId}")'>
+                                <div class="avatar avatar-large">@Alojamiento.AnfitrionInicial</div>
+                                <div>
+                                    <h4>@Alojamiento.AnfitrionNombre</h4>
+                                    <p class="card-text">Anfitrión desde @Alojamiento.AnfitrionDesde</p>
+                                    <p style="margin-top: 8px;">
+                                        <span class="badge badge-success">Anfitrión Verificado</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <button class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/mensajes")'>
+                                Contactar
+                            </button>
+                        </div>
+
+                        @* RF31: reportar el alojamiento. Solo para usuarios autenticados que NO sean
+                           el propio anfitrión (uno no se reporta a sí mismo). *@
+                        @if (AppState.EstaAutenticado && AppState.UsuarioActual?.Id != Alojamiento.AnfitrionId)
+                        {
+                            <div style="margin-top: 14px; text-align: right;">
+                                <button @onclick="() => _showReporte = true"
+                                        style="background: none; border: none; cursor: pointer; padding: 4px;
+                                               font: inherit; font-size: 13px; color: var(--ink-muted);
+                                               display: inline-flex; align-items: center; gap: 6px;">
+                                    <i class="fas fa-flag" style="color: var(--danger);"></i> Reportar este alojamiento
+                                </button>
+                            </div>
+                        }
+
+                        <h3 style="margin-top: 30px; margin-bottom: 15px;">Reseñas (@Alojamiento.TotalResenas)</h3>
+                        <div style="border-top: 1px solid var(--border); padding-top: 20px;">
+                            @if (Alojamiento.Resenas.Any())
+                            {
+                                @foreach (var resena in Alojamiento.Resenas)
+                                {
+                                    <div style="padding: 15px 0; border-bottom: 1px solid var(--border);">
+                                        <div class="flex flex-between">
+                                            <div>
+                                                <strong>@resena.AutorNombre</strong>
+                                                <div class="rating" style="margin-top: 5px;">
+                                                    <span class="star">@GenerarEstrellas(resena.Estrellas)</span>
+                                                </div>
+                                            </div>
+                                            <span class="card-text">@(resena.FechaPublicacion?.ToString("dd MMM yyyy") ?? "")</span>
+                                        </div>
+                                        <p class="card-text" style="margin-top: 10px;">@resena.Comentario</p>
+
+                                        @* El autor puede editar/eliminar su propia reseña. *@
+                                        @if (AppState.UsuarioActual is not null && resena.AutorId == AppState.UsuarioActual.Id)
+                                        {
+                                            <div style="display: flex; gap: 10px; margin-top: 6px;">
+                                                <button class="btn btn-small btn-outline" @onclick="() => AbrirEditarResena(resena)">
+                                                    <i class="fas fa-pen"></i> Editar
+                                                </button>
+                                                <button class="btn btn-small btn-outline" style="color: var(--danger);" @onclick="() => EliminarResena(resena)">
+                                                    <i class="fas fa-trash"></i> Eliminar
+                                                </button>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <p class="card-text">Aún no hay reseñas para este alojamiento.</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar">
+                    <div class="info-panel" style="padding: 24px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid var(--border);">
+
+                        @if (VieneDeMisReservas)
+                        {
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <div style="color: @ColorEstado; font-size: 40px; margin-bottom: 10px;">
+                                    <i class="@IconoEstado"></i>
+                                </div>
+                                <h3 style="margin: 0;">@TituloEstado</h3>
+                                <p style="font-size: 13px; opacity: 0.7;">Estás viendo los detalles de tu estadía.</p>
+                            </div>
+
+                            <div style="border-top: 1px solid var(--border); padding-top: 20px; display: flex; flex-direction: column; gap: 15px;">
+                                <div class="flex flex-between"><span>Estado:</span> <strong>@TextoEstado</strong></div>
+                                <div class="flex flex-between"><span>Entrada:</span> <strong>@FechaEntrada?.ToString("dd/MM/yyyy")</strong></div>
+                                <div class="flex flex-between"><span>Salida:</span> <strong>@FechaSalida?.ToString("dd/MM/yyyy")</strong></div>
+                                <div class="flex flex-between"><span>Huéspedes:</span> <strong>@NumHuespedes</strong></div>
+
+                                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-top: 10px;">
+                                    <div class="flex flex-between">
+                                        <span style="font-weight: 600;">Total Pagado</span>
+                                        <span class="price" style="font-size: 18px;">@AppState.FormatearPrecio(Total)</span>
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-primary btn-large" style="width: 100%;" @onclick="HacerOtraReserva">
+                                    Hacer otra reserva
+                                </button>
+                            </div>
+                        }
+                        else if (EsPropietario)
+                        {
+                            <div style="text-align: center; padding: 8px 0;">
+                                <div class="empty-state-icon" style="background: var(--gold-tint); color: var(--gold); margin: 0 auto 16px;">
+                                    <i class="fas fa-house-user"></i>
+                                </div>
+                                <h3 style="margin-bottom: 8px;">Este es tu alojamiento</h3>
+                                <p class="card-text" style="margin-bottom: 20px;">
+                                    No puedes reservar tu propia propiedad. Desde "Mis alojamientos" puedes editarlo,
+                                    pausarlo o bloquear fechas.
+                                </p>
+                                <button class="btn btn-primary btn-large" style="width: 100%;"
+                                        @onclick='() => Navigation.NavigateTo("/mis-alojamientos")'>
+                                    <i class="fas fa-sliders"></i> Gestionar mis alojamientos
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <h3 class="price price-lg" style="margin-bottom: 20px;">
+                                @AppState.FormatearPrecio(Alojamiento.PrecioNoche)<span class="price-unit"> por noche</span>
+                            </h3>
+
+                            <div class="form-group">
+                                <label>Fecha de Entrada</label>
+                                <input type="text" id="detalle-fecha-entrada" class="detalle-flatpickr" placeholder="dd/mm/aaaa" value="@FormatPickerDate(FechaEntrada)" readonly autocomplete="off" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Fecha de Salida</label>
+                                <input type="text" id="detalle-fecha-salida" class="detalle-flatpickr" placeholder="dd/mm/aaaa" value="@FormatPickerDate(FechaSalida)" readonly autocomplete="off" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Número de Huéspedes</label>
+                                <InputSelect @bind-Value="NumHuespedes">
+                                    @for (int i = 1; i <= Alojamiento.MaxHuespedes; i++)
+                                    {
+                                        <option value="@i">@i @(i == 1 ? "huésped" : "huéspedes")</option>
+                                    }
+                                </InputSelect>
+                            </div>
+
+                            @if (Noches > 0)
+                            {
+                                <div class="info-panel" style="margin-bottom: 20px; background: rgba(255,255,255,0.03);">
+                                    <div class="summary-row"><span>@AppState.FormatearPrecio(Alojamiento.PrecioNoche) × @Noches noches</span> <span>@AppState.FormatearPrecio(Subtotal)</span></div>
+                                    <div class="summary-row"><span>Limpieza</span> <span>@AppState.FormatearPrecio(Alojamiento.TarifaLimpieza)</span></div>
+                                    <div class="summary-row"><span>Comisión</span> <span>@AppState.FormatearPrecio(Comision)</span></div>
+                                    <div class="summary-row summary-row--total"><span>Total</span> <span class="price">@AppState.FormatearPrecio(Total)</span></div>
+                                </div>
+                            }
+
+                            @if (!AppState.EstaAutenticado)
+                            {
+                                <div class="info-panel info-panel--gold">
+                                    <p>Debes iniciar sesión para reservar.</p>
+                                    <a href="/login" class="btn btn-primary btn-small">Iniciar Sesión</a>
+                                </div>
+                            }
+                            else
+                            {
+                                <button class="btn btn-primary btn-large" style="width: 100%;" @onclick="Reservar" disabled="@(Noches == 0)">
+                                    @(Noches > 0 ? "Reservar Ahora" : "Selecciona las fechas")
+                                </button>
+                            }
+                        }
+
+                        <div style="margin-top: 15px;">
+                            <button class="btn btn-outline" style="width: 100%;" @onclick="ToggleFavorito">
+                                <i class="fas fa-heart" style="color: @(EsFavorito ? "var(--danger)" : "inherit");"></i>
+                                @(EsFavorito ? "Guardado" : "Guardar")
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL REPORTAR ALOJAMIENTO (RF31) -->
+    @if (_showReporte)
+    {
+        <div class="modal-overlay">
+            <div class="modal-panel" style="max-width: 480px; text-align: left;">
+                <h2 style="margin-bottom: 6px;">Reportar alojamiento</h2>
+                <p class="card-text" style="margin-bottom: 18px;">@Alojamiento.Nombre</p>
+
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label>Motivo</label>
+                    <SelectMenu @bind-Value="_reporteMotivo" Options="_motivos" Placeholder="Elige un motivo" />
+                </div>
+
+                <div class="form-group" style="margin-bottom: 8px;">
+                    <label>Descripción (opcional)</label>
+                    <textarea rows="4" maxlength="1000" placeholder="Cuéntanos qué ocurrió..."
+                              @bind="_reporteDescripcion" @bind:event="oninput"></textarea>
+                </div>
+
+                @if (!string.IsNullOrEmpty(_reporteError))
+                {
+                    <p style="color: var(--danger); margin-bottom: 12px;">@_reporteError</p>
+                }
+
+                <div style="display: flex; gap: 12px; margin-top: 14px;">
+                    <button class="btn btn-outline" style="flex: 1;" @onclick="CerrarReporte" disabled="@_enviandoReporte">Cancelar</button>
+                    <button class="btn btn-danger" style="flex: 1;"
+                            disabled="@(_enviandoReporte || string.IsNullOrWhiteSpace(_reporteMotivo))"
+                            @onclick="EnviarReporte">
+                        <i class="fas @(_enviandoReporte ? "fa-spinner fa-spin" : "fa-flag")"></i>
+                        @(_enviandoReporte ? "Enviando..." : "Enviar reporte")
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@if (!string.IsNullOrEmpty(_reporteMensaje))
+{
+    <div style="position: fixed; bottom: 24px; right: 24px; z-index: var(--z-toast);">
+        <AlertMessage Tipo="success" Mensaje="@_reporteMensaje" AutoDismissMs="4000" />
+    </div>
+}
+
+@* Modal: el autor edita su propia reseña. *@
+@if (_resenaEditar is not null)
+{
+    <div class="modal-overlay" @onclick="() => _resenaEditar = null">
+        <div class="modal-panel" style="max-width: 460px; text-align: left;" @onclick:stopPropagation="true">
+            <h2 style="margin-bottom: 16px;">Editar tu reseña</h2>
+
+            <div class="form-group">
+                <label>Tu calificación</label>
+                <div class="rating" style="font-size: 28px; gap: 4px;">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        var estrella = i;
+                        <span class="star" style="cursor: pointer;" @onclick="() => _editEstrellas = estrella">
+                            @(estrella <= _editEstrellas ? "★" : "☆")
+                        </span>
+                    }
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Tu comentario</label>
+                <textarea rows="4" maxlength="500" @bind="_editComentario" @bind:event="oninput"
+                          placeholder="Mínimo 10 caracteres..."></textarea>
+                <p class="field-help">@(_editComentario?.Trim().Length ?? 0) / 10 caracteres mínimos</p>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_editError))
+            {
+                <div style="margin-bottom: 12px;"><AlertMessage Tipo="danger" Mensaje="@_editError" /></div>
+            }
+
+            <div style="display: flex; gap: 12px; margin-top: 8px;">
+                <button class="btn btn-outline" style="flex: 1;" @onclick="() => _resenaEditar = null" disabled="@_guardandoEdit">Cancelar</button>
+                <button class="btn btn-primary" style="flex: 1;" @onclick="GuardarEditarResena" disabled="@_guardandoEdit">
+                    @(_guardandoEdit ? "Guardando..." : "Guardar cambios")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    // --- Edición/eliminación de la reseña propia ---
+    private Resena? _resenaEditar;
+    private int _editEstrellas;
+    private string _editComentario = "";
+    private string _editError = "";
+    private bool _guardandoEdit;
+
+    private void AbrirEditarResena(Resena r)
+    {
+        _resenaEditar = r;
+        _editEstrellas = r.Estrellas;
+        _editComentario = r.Comentario;
+        _editError = "";
+    }
+
+    private async Task GuardarEditarResena()
+    {
+        _editError = "";
+        if (_resenaEditar is null) return;
+        if (_editEstrellas < 1 || _editEstrellas > 5) { _editError = "Elige una calificación de 1 a 5 estrellas."; return; }
+        if (string.IsNullOrWhiteSpace(_editComentario) || _editComentario.Trim().Length < 10)
+        { _editError = "El comentario debe tener al menos 10 caracteres."; return; }
+
+        _guardandoEdit = true;
+        try
+        {
+            _resenaEditar.Estrellas = _editEstrellas;
+            _resenaEditar.Comentario = _editComentario.Trim();
+            await ResenaProvider.ActualizarAsync(_resenaEditar);
+            _resenaEditar = null;
+            await RecargarResenasAsync();
+        }
+        catch { _editError = "No se pudo guardar la reseña. Intenta de nuevo."; }
+        finally { _guardandoEdit = false; }
+    }
+
+    private async Task EliminarResena(Resena r)
+    {
+        try
+        {
+            await ResenaProvider.EliminarAsync(r.Id);   // baja lógica (activo=0)
+            await RecargarResenasAsync();
+        }
+        catch { /* si falla, la reseña sigue visible; el usuario puede reintentar */ }
+    }
+
+    // Recarga las reseñas del lugar tras editar/eliminar (mismo filtro que la carga inicial; limpia si quedan 0).
+    private async Task RecargarResenasAsync()
+    {
+        if (Alojamiento is null) return;
+        try
+        {
+            var resenas = await ResenaProvider.ListarPorAlojamientoAsync(Id);
+            var resenasLugar = (resenas ?? new())
+                .Where(r => string.Equals(r.TipoAutor, "INVITADO", StringComparison.OrdinalIgnoreCase)
+                         && string.Equals(r.Objetivo, "ALOJAMIENTO", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            Alojamiento.Resenas = resenasLugar;
+            Alojamiento.TotalResenas = resenasLugar.Count;
+            Alojamiento.Rating = resenasLugar.Count > 0 ? resenasLugar.Average(r => (double)r.Estrellas) : 0;
+        }
+        catch { /* deja lo que haya en pantalla */ }
+    }
+
+    [Parameter, SupplyParameterFromQuery(Name = "entrada")]
+    public DateTime? EntradaQuery { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "salida")]
+    public DateTime? SalidaQuery { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "huespedes")]
+    public int? HuespedesQuery { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "origen")]
+    public string? OrigenQuery { get; set; }
+
+    // NUEVO: Agregamos el parámetro EstadoQuery para leer de la URL
+    [Parameter, SupplyParameterFromQuery(Name = "estado")]
+    public string? EstadoQuery { get; set; }
+
+    private bool VieneDeMisReservas =>
+        string.Equals(OrigenQuery, "mis-reservas", StringComparison.OrdinalIgnoreCase);
+
+    // El usuario logueado es el dueño de este alojamiento: no puede reservarse a sí mismo.
+    private bool EsPropietario =>
+        AppState.EstaAutenticado && Alojamiento is not null
+        && AppState.UsuarioActual?.Id == Alojamiento.AnfitrionId;
+
+    // NUEVAS PROPIEDADES DINÁMICAS PARA LA UI DEL ESTADO
+    private string TituloEstado => (EstadoQuery?.ToLower()) switch
+    {
+        "cancelada" => "Reserva cancelada",
+        "completada" => "Estadía finalizada",
+        _ => "¡Reserva confirmada!"
+    };
+
+    private string TextoEstado => (EstadoQuery?.ToLower()) switch
+    {
+        "cancelada" => "Cancelada",
+        "completada" => "Completada",
+        _ => "Confirmada"
+    };
+
+    private string ColorEstado => (EstadoQuery?.ToLower()) switch
+    {
+        "cancelada" => "var(--danger)",            // Terracota apagado para cancelado
+        "completada" => "var(--ink-faint)",        // Piedra para finalizado (sin azul/teal)
+        _ => "var(--success)"                       // Verde salvia por defecto
+    };
+
+    private string IconoEstado => (EstadoQuery?.ToLower()) switch
+    {
+        "cancelada" => "fas fa-times-circle",
+        "completada" => "fas fa-check-double",
+        _ => "fas fa-check-circle"
+    };
+
+    private bool queryAplicada = false;
+
+    protected override void OnInitialized() => AppState.OnChange += OnMonedaChanged;
+
+    public void Dispose()
+    {
+        AppState.OnChange -= OnMonedaChanged;
+        _ref?.Dispose();   // liberamos la referencia usada por flatpickr para llamar a SetRango
+    }
+
+    private void OnMonedaChanged() => InvokeAsync(StateHasChanged);
+
+    // Referencia a este componente que flatpickr usa para llamar a SetRango (modo rango).
+    private DotNetObjectReference<DetalleAlojamiento>? _ref;
+
+    private bool Cargando = true;
+    private Alojamiento? Alojamiento;
+    private DateTime? FechaEntrada;
+    private DateTime? FechaSalida;
+    private int NumHuespedes = 1;
+    private bool EsFavorito => AppState.EsFavorito(Id);
+    private int FotoActiva = 0;
+    private bool _pickerInicializado = false;
+
+    // --- RF31: reportar alojamiento ---
+    private bool _showReporte;
+    private bool _enviandoReporte;
+    private string _reporteMotivo = "";
+    private string _reporteDescripcion = "";
+    private string _reporteError = "";
+    private string _reporteMensaje = "";
+    private readonly List<SelectMenu.Opcion> _motivos = new()
+    {
+        new("Contenido engañoso", "Contenido engañoso (fotos/datos no coinciden)"),
+        new("Información falsa o estafa", "Información falsa o estafa"),
+        new("Contenido inapropiado", "Contenido inapropiado u ofensivo"),
+        new("Problema de seguridad", "Problema de seguridad"),
+        new("Otro", "Otro")
+    };
+
+    private void CerrarReporte()
+    {
+        _showReporte = false;
+        _reporteMotivo = "";
+        _reporteDescripcion = "";
+        _reporteError = "";
+    }
+
+    private async Task EnviarReporte()
+    {
+        if (Alojamiento is null || string.IsNullOrWhiteSpace(_reporteMotivo)) return;
+        var denuncianteId = AppState.UsuarioActual?.Id ?? 0;
+        if (denuncianteId <= 0) { _reporteError = "Debes iniciar sesión para reportar."; return; }
+
+        _enviandoReporte = true;
+        _reporteError = "";
+        try
+        {
+            await Denuncia.AgregarAsync(denuncianteId, Alojamiento.Id, _reporteMotivo,
+                                        string.IsNullOrWhiteSpace(_reporteDescripcion) ? null : _reporteDescripcion.Trim());
+            CerrarReporte();
+            _reporteMensaje = "Gracias. Tu reporte fue enviado al equipo de Bunki.";
+            StateHasChanged();
+            await Task.Delay(3500);
+            _reporteMensaje = "";
+        }
+        catch (Exception)
+        {
+            _reporteError = "No se pudo enviar el reporte. Inténtalo de nuevo.";
+        }
+        finally
+        {
+            _enviandoReporte = false;
+        }
+    }
+
+    // Fechas ya ocupadas del alojamiento (reservas CONFIRMADA + PENDIENTE). Se piden al backend
+    // al cargar el detalle y se deshabilitan en el calendario para que el huésped solo pueda elegir
+    // días libres. Si la petición falla, queda vacía y el calendario no bloquea nada (no rompe la reserva).
+    private List<RangoFecha> FechasOcupadas = new();
+
+    private string FechaMinima => DateTime.Today.ToString("yyyy-MM-dd");
+    private int Noches => (FechaSalida.HasValue && FechaEntrada.HasValue && FechaSalida > FechaEntrada)
+        ? (FechaSalida.Value - FechaEntrada.Value).Days : 0;
+
+    private decimal Subtotal => Alojamiento is null ? 0 : Alojamiento.PrecioNoche * Noches;
+    private decimal Comision => Subtotal * 0.10m;
+    private decimal Total => Subtotal + (Alojamiento?.TarifaLimpieza ?? 0) + Comision;
+
+    // El anfitrión no puede reservar su propia propiedad.
+    private bool EsMiPropioAlojamiento =>
+        AppState.EstaAutenticado
+        && Alojamiento is not null
+        && AppState.UsuarioActual!.Id == Alojamiento.AnfitrionId;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Cargando = true;
+        try
+        {
+            // Fuente de datos: REST con fallback automático a mock (provider).
+            Alojamiento = await AlojamientoProvider.ObtenerPorIdAsync(Id);
+
+            // Reseñas reales vía REST (GET ResenaRS/alojamiento/{id}); con fallback en el provider.
+            // Si algo falla, la página sigue mostrando el alojamiento, solo sin reseñas.
+            if (Alojamiento is not null)
+            {
+                try
+                {
+                    var resenas = await ResenaProvider.ListarPorAlojamientoAsync(Id);
+                    // Solo reseñas SOBRE EL LUGAR (huésped→alojamiento): se excluyen las del anfitrión al
+                    // huésped (tipoAutor=ANFITRION) y las del huésped al anfitrión (objetivo=ANFITRION, RF19),
+                    // que comparten la misma reserva pero no califican el alojamiento.
+                    var resenasLugar = (resenas ?? new())
+                        .Where(r => string.Equals(r.TipoAutor, "INVITADO", StringComparison.OrdinalIgnoreCase)
+                                 && string.Equals(r.Objetivo, "ALOJAMIENTO", StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+                    if (resenasLugar.Count > 0)
+                    {
+                        Alojamiento.Resenas = resenasLugar;
+                        Alojamiento.TotalResenas = resenasLugar.Count;
+                        Alojamiento.Rating = resenasLugar.Average(r => (double)r.Estrellas);
+                    }
+                }
+                catch (Exception)
+                {
+                    // No rompemos la página si el REST de reseñas falla.
+                }
+
+                // Fechas ocupadas (CONFIRMADA + PENDIENTE) para bloquearlas en el calendario.
+                // Se piden AQUÍ (antes del primer render del picker en OnAfterRenderAsync) para tenerlas
+                // listas al inicializar flatpickr. El provider ya devuelve lista vacía si el REST falla,
+                // así que esto nunca rompe la reserva: a lo sumo no se bloquea ningún día.
+                FechasOcupadas = await ReservaProvider.ObtenerFechasOcupadasAsync(Id);
+            }
+
+            if (!queryAplicada && Alojamiento is not null)
+            {
+                if (EntradaQuery.HasValue)
+                    FechaEntrada = EntradaQuery.Value;
+
+                if (SalidaQuery.HasValue)
+                    FechaSalida = SalidaQuery.Value;
+
+                if (HuespedesQuery.HasValue)
+                    NumHuespedes = Math.Clamp(HuespedesQuery.Value, 1, Alojamiento.MaxHuespedes);
+
+                queryAplicada = true;
+            }
+        }
+        finally
+        {
+            Cargando = false;
+        }
+    }
+
+    private string GenerarEstrellas(double rating)
+    {
+        int llenas = (int)Math.Round(rating);
+        return string.Concat(Enumerable.Range(0, 5).Select(i => i < llenas ? "★" : "☆"));
+    }
+
+    private void ToggleFavorito() => AppState.ToggleFavorito(Id);
+
+    private void Reservar()
+    {
+        if (!AppState.EstaAutenticado)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        // Seguridad: el anfitrión no puede reservar su propia propiedad,
+        // aunque alguien intente forzar el botón.
+        if (EsMiPropioAlojamiento) return;
+
+        if (Alojamiento is null || Noches == 0 || !FechaEntrada.HasValue || !FechaSalida.HasValue)
+            return;
+
+        var url = $"/pagos?alojamientoId={Alojamiento.Id}" +
+                  $"&entrada={FechaEntrada.Value:yyyy-MM-dd}" +
+                  $"&salida={FechaSalida.Value:yyyy-MM-dd}" +
+                  $"&huespedes={NumHuespedes}";
+
+        Navigation.NavigateTo(url);
+    }
+
+    // Nueva función para el botón "Hacer Otra Reserva"
+    private void HacerOtraReserva()
+    {
+        // Redireccionamos a la página de catálogo para que el usuario inicie una nueva búsqueda
+        Navigation.NavigateTo("/explorar");
+    }
+
+    // minDate por campo: "today" para reservar nuevo; si la fecha precargada es
+    // anterior a hoy (reserva existente desde Mis Reservas), usamos esa fecha como
+    // mínimo para que Flatpickr pueda mostrarla en vez de descartarla.
+    private string MinDateFor(DateTime? fecha) =>
+        fecha.HasValue && fecha.Value.Date < DateTime.Today
+            ? fecha.Value.ToString("yyyy-MM-dd")
+            : "today";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Solo inicializamos el selector si el alojamiento existe,
+        // si no lo hemos inicializado aún, Y SI NO ES UNA RESERVA CONFIRMADA.
+        if (Alojamiento is not null && !_pickerInicializado && !VieneDeMisReservas && !EsPropietario)
+        {
+            _pickerInicializado = true;
+
+            try
+            {
+                _ref ??= DotNetObjectReference.Create(this);
+                var ocupadas = RangosOcupadosParaFlatpickr();
+
+                await JS.InvokeVoidAsync("bunkiDatePicker.initDetalleRango",
+                    "#detalle-fecha-entrada", "#detalle-fecha-salida",
+                    new
+                    {
+                        minDate = MinDateFor(FechaEntrada),
+                        disable = ocupadas,
+                        fechaEntrada = FechaEntrada?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                        fechaSalida = FechaSalida?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+                    },
+                    _ref);
+            }
+            catch (Exception ex)
+            {
+                // Esto evita que la página se quede en blanco si el JS falla
+                Console.WriteLine($"Error al inicializar calendario: {ex.Message}");
+            }
+        }
+    }
+
+    // [JSInvokable] SetRango: ÚNICA fuente de verdad de las fechas. flatpickr (modo rango) la llama
+    // cada vez que cambia la selección; parseamos el ISO y reusamos la validación existente
+    // (si fin <= inicio, se descarta fin). Noches/Subtotal/Total se recalculan solos al renderizar.
+    [JSInvokable]
+    public void SetRango(string? isoInicio, string? isoFin)
+    {
+        FechaEntrada = ParsePickerDate(isoInicio);
+        FechaSalida = ParsePickerDate(isoFin);
+
+        if (FechaEntrada.HasValue && FechaSalida.HasValue && FechaSalida <= FechaEntrada)
+        {
+            FechaSalida = null;
+        }
+
+        StateHasChanged();
+    }
+
+    // Convierte las fechas ocupadas al formato que flatpickr espera en "disable":
+    // un array de { from: "yyyy-MM-dd", to: "yyyy-MM-dd" }. El JS las pasa a Date locales.
+    private object[] RangosOcupadosParaFlatpickr() =>
+        FechasOcupadas
+            .Where(r => !string.IsNullOrWhiteSpace(r.FechaInicio) && !string.IsNullOrWhiteSpace(r.FechaFin))
+            .Select(r => (object)new { from = r.FechaInicio, to = r.FechaFin })
+            .ToArray();
+
+    private string FormatPickerDate(DateTime? fecha)
+    {
+        // Formato visible del input de Detalle (coincide con dateFormat "d/m/Y").
+        return fecha?.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) ?? "";
+    }
+
+    private DateTime? ParsePickerDate(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+
+        // Formato visible del picker de Detalle.
+        if (DateTime.TryParseExact(value, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var fecha))
+            return fecha;
+
+        // Formato ISO (por si llega desde query/value en yyyy-MM-dd).
+        if (DateTime.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out fecha))
+            return fecha;
+
+        // Fallback genérico.
+        if (DateTime.TryParse(value, out fecha))
+            return fecha;
+
+        return null;
+    }
+
+    private async Task VolverAMisReservas()
+    {
+        await JS.InvokeVoidAsync("history.back");
+    }
+}

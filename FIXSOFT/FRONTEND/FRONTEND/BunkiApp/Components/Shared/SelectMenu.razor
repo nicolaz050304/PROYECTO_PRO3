@@ -1,0 +1,141 @@
+@* SelectMenu — dropdown personalizado que reemplaza al <select> nativo para evitar el resaltado
+   AZUL del sistema operativo en la lista abierta (que no se puede tematizar con CSS). Soporta
+   @bind-Value. La lista se cierra al elegir una opción o al hacer click fuera (overlay). *@
+
+<div class="selmenu @(_open ? "selmenu--open" : "")">
+    <button type="button" class="selmenu-trigger" @onclick="Toggle" disabled="@Disabled">
+        <span class="selmenu-value @(SelectedLabel is null ? "is-placeholder" : "")">@(SelectedLabel ?? Placeholder)</span>
+        <i class="fas fa-chevron-down selmenu-chevron @(_open ? "rot" : "")"></i>
+    </button>
+
+    @if (_open)
+    {
+        <div class="selmenu-list" role="listbox">
+            @foreach (var opt in Options)
+            {
+                <button type="button" role="option"
+                        class="selmenu-item @(opt.Value == Value ? "active" : "")"
+                        @onclick="() => Select(opt.Value)">
+                    <span>@opt.Label</span>
+                    @if (opt.Value == Value)
+                    {
+                        <i class="fas fa-check"></i>
+                    }
+                </button>
+            }
+        </div>
+        <div class="selmenu-overlay" @onclick="Close"></div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Value { get; set; } = "";
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter, EditorRequired] public List<Opcion> Options { get; set; } = new();
+    [Parameter] public string Placeholder { get; set; } = "Seleccionar";
+    [Parameter] public bool Disabled { get; set; }
+
+    public record Opcion(string Value, string Label);
+
+    private bool _open;
+    private string? SelectedLabel => Options.FirstOrDefault(o => o.Value == Value)?.Label;
+
+    private void Toggle() { if (!Disabled) _open = !_open; }
+    private void Close() => _open = false;
+
+    private async Task Select(string v)
+    {
+        _open = false;
+        if (v != Value)
+        {
+            Value = v;
+            await ValueChanged.InvokeAsync(v);
+        }
+    }
+}
+
+<style>
+    .selmenu { position: relative; width: 100%; }
+
+    .selmenu-trigger {
+        width: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px 14px;
+        border-radius: var(--radius);
+        border: 1px solid var(--hairline-strong);
+        background: var(--surface-2);
+        color: var(--ink);
+        font-family: inherit;
+        font-size: 14px;
+        cursor: pointer;
+        text-align: left;
+        transition: border-color var(--t), box-shadow var(--t);
+    }
+
+        .selmenu-trigger:hover { border-color: var(--ink-faint); }
+        .selmenu-trigger:focus-visible { outline: none; box-shadow: var(--ring); }
+        .selmenu-trigger:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .selmenu-value.is-placeholder { color: var(--ink-faint); }
+
+    .selmenu-chevron {
+        font-size: 11px;
+        color: var(--ink-faint);
+        transition: transform var(--t);
+        flex-shrink: 0;
+    }
+        .selmenu-chevron.rot { transform: rotate(180deg); }
+
+    .selmenu-list {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        z-index: 60;
+        background: var(--surface);
+        border: 1px solid var(--hairline);
+        border-radius: var(--radius);
+        box-shadow: 0 16px 40px rgba(28, 26, 23, 0.16);
+        padding: 6px;
+        max-height: 280px;
+        overflow-y: auto;
+    }
+
+    .selmenu-item {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 10px 12px;
+        border: none;
+        background: none;
+        border-radius: var(--radius-sm);
+        color: var(--ink);
+        font-family: inherit;
+        font-size: 14px;
+        text-align: left;
+        cursor: pointer;
+        transition: background var(--t), color var(--t);
+    }
+
+        .selmenu-item:hover { background: var(--surface-3); }
+
+        .selmenu-item.active {
+            background: var(--gold-tint);
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        .selmenu-item i { font-size: 12px; color: var(--gold); }
+
+    .selmenu-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 55;
+        background: transparent;
+    }
+</style>

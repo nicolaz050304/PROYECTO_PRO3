@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="estado_anfitrion" pageWidth="595" pageHeight="842" columnWidth="535"
+              leftMargin="30" rightMargin="30" topMargin="30" bottomMargin="30"
+              whenNoDataType="NoDataSection">
+
+    <style name="base" isDefault="true" fontName="SansSerif" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+
+    <parameter name="P_ANFITRION" class="java.lang.String"/>
+    <parameter name="P_GENERADO" class="java.lang.String"/>
+    <parameter name="P_TOTAL_BRUTO" class="java.lang.String"/>
+    <parameter name="P_TOTAL_COMISION" class="java.lang.String"/>
+    <parameter name="P_TOTAL_NETO" class="java.lang.String"/>
+    <parameter name="P_NUM_TX" class="java.lang.String"/>
+
+    <field name="fecha" class="java.lang.String"/>
+    <field name="concepto" class="java.lang.String"/>
+    <field name="montoBruto" class="java.lang.Double"/>
+    <field name="comision" class="java.lang.Double"/>
+    <field name="montoNeto" class="java.lang.Double"/>
+
+    <title>
+        <band height="100">
+            <staticText><reportElement x="0" y="0" width="300" height="34" forecolor="#1F6B5E"/><textElement verticalAlignment="Middle"><font size="26" isBold="true"/></textElement><text><![CDATA[bunki]]></text></staticText>
+            <staticText><reportElement x="0" y="38" width="460" height="22" forecolor="#1C1A17"/><textElement verticalAlignment="Middle"><font size="15" isBold="true"/></textElement><text><![CDATA[Estado de Cuenta del Anfitrión]]></text></staticText>
+            <textField><reportElement x="0" y="60" width="460" height="18" forecolor="#1F6B5E"/><textElement verticalAlignment="Middle"><font size="11" isBold="true"/></textElement><textFieldExpression><![CDATA[$P{P_ANFITRION}]]></textFieldExpression></textField>
+            <staticText><reportElement x="320" y="6" width="215" height="16" forecolor="#9A9488"/><textElement textAlignment="Right" verticalAlignment="Middle"><font size="9"/></textElement><text><![CDATA[Plataforma de alojamientos - Perú]]></text></staticText>
+            <line><reportElement x="0" y="92" width="535" height="1" forecolor="#1F6B5E"/></line>
+        </band>
+    </title>
+
+    <pageHeader>
+        <band height="26">
+            <staticText><reportElement x="0" y="6" width="350" height="16" forecolor="#1C1A17"/><textElement verticalAlignment="Middle"><font size="9" isBold="true"/></textElement><text><![CDATA[Pagos recibidos por tus alojamientos]]></text></staticText>
+            <textField><reportElement x="285" y="6" width="250" height="16" forecolor="#9A9488"/><textElement textAlignment="Right" verticalAlignment="Middle"><font size="9"/></textElement><textFieldExpression><![CDATA["Generado: " + $P{P_GENERADO}]]></textFieldExpression></textField>
+        </band>
+    </pageHeader>
+
+    <columnHeader>
+        <band height="24">
+            <frame>
+                <reportElement x="0" y="0" width="535" height="24" mode="Opaque" backcolor="#1F6B5E"/>
+                <staticText><reportElement x="8" y="0" width="70" height="24" forecolor="#FFFFFF"/><textElement verticalAlignment="Middle"><font size="9" isBold="true"/></textElement><text><![CDATA[FECHA]]></text></staticText>
+                <staticText><reportElement x="82" y="0" width="210" height="24" forecolor="#FFFFFF"/><textElement verticalAlignment="Middle"><font size="9" isBold="true"/></textElement><text><![CDATA[CONCEPTO]]></text></staticText>
+                <staticText><reportElement x="295" y="0" width="73" height="24" forecolor="#FFFFFF"/><textElement textAlignment="Right" verticalAlignment="Middle"><font size="9" isBold="true"/></textElement><text><![CDATA[BRUTO]]></text></staticText>
+                <staticText><reportElement x="372" y="0" width="73" height="24" forecolor="#FFFFFF"/><textElement textAlignment="Right" verticalAlignment="Middle"><font size="9" isBold="true"/></textElement><text><![CDATA[COMISIÓN]]></text></staticText>
+                <staticText><reportElement x="449" y="0" width="78" height="24" forecolor="#FFFFFF"/><textElement textAlignment="Right" verticalAlignment="Middle"><font size="9" isBold="true"/></textElement><text><![CDATA[A COBRAR]]></text></staticText>
+            </frame>
+        </band>
+    </columnHeader>
+
+    <detail>
+        <band height="22">
+            <textField><reportElement x="8" y="0" width="70" height="22" forecolor="#1C1A17"/><textElement verticalAlignment="Middle"><font size="9"/></textElement><textFieldExpression><![CDATA[$F{fecha}]]></textFieldExpression></textField>
+            <textField isStretchWithOverflow="true"><reportElement x="82" y="0" width="210" height="22" forecolor="#1C1A17"/><textElement verticalAlignment="Middle"><font size="9"/></textElement><textFieldExpression><![CDATA[$F{concepto}]]></textFieldExpression></textField>
+            <textField pattern="S/ #,##0.00"><reportElement x="295" y="0" width="73" height="22" forecolor="#1C1A17"/><textElement textAlignment="Right" verticalAlignment="Middle"><font size="9"/></textElement><textFieldExpression><![CDATA[$F{montoBruto}]]></textFieldExpression></textField>
+            <textField pattern="S/ #,##0.00"><reportElement x="372" y="0" width="73" height="22" forecolor="#9A9488"/><textElement textAlignment="Right" verticalAlignment="Middle"><font size="9"/></textElement><textFieldExpression><![CDATA[$F{comision}]]></textFieldExpression></textField>
+            <textField pattern="S/ #,##0.00"><reportElement x="449" y="0" width="78" height="22" forecolor="#1F6B5E"/><textElement textAlignment="Right" verticalAlignment="Middle"><font size="9" isBold="true"/></textElement><textFieldExpression><![CDATA[$F{montoNeto}]]></textFieldExpression></textField>
+            <line><reportElement x="0" y="21" width="535" height="1" forecolor="#E3DFD5"/></line>
+        </band>
+    </detail>
+
+    <pageFooter>
+        <band height="24">
+            <line><reportElement x="0" y="0" width="535" height="1" forecolor="#E3DFD5"/></line>
+            <staticText><reportElement x="0" y="6" width="300" height="14" forecolor="#9A9488"/><textElement verticalAlignment="Middle"><font size="8"/></textElement><text><![CDATA[Bunki - Plataforma de alojamientos - Perú]]></text></staticText>
+            <textField><reportElement x="435" y="6" width="100" height="14" forecolor="#9A9488"/><textElement textAlignment="Right" verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA["Página " + $V{PAGE_NUMBER}]]></textFieldExpression></textField>
+        </band>
+    </pageFooter>
+
+    <summary>
+        <band height="120">
+            <staticText><reportElement x="295" y="14" width="160" height="18" forecolor="#1C1A17"/><textElement verticalAlignment="Middle"><font size="10"/></textElement><text><![CDATA[Total facturado (bruto)]]></text></staticText>
+            <textField><reportElement x="385" y="14" width="150" height="18" forecolor="#1C1A17"/><textElement textAlignment="Right" verticalAlignment="Middle"><font size="10"/></textElement><textFieldExpression><![CDATA[$P{P_TOTAL_BRUTO}]]></textFieldExpression></textField>
+            <staticText><reportElement x="295" y="36" width="160" height="18" forecolor="#9A9488"/><textElement verticalAlignment="Middle"><font size="10"/></textElement><text><![CDATA[Comisión plataforma]]></text></staticText>
+            <textField><reportElement x="385" y="36" width="150" height="18" forecolor="#9A9488"/><textElement textAlignment="Right" verticalAlignment="Middle"><font size="10"/></textElement><textFieldExpression><![CDATA["- " + $P{P_TOTAL_COMISION}]]></textFieldExpression></textField>
+            <line><reportElement x="295" y="58" width="240" height="1" forecolor="#1F6B5E"/></line>
+            <frame>
+                <reportElement x="295" y="64" width="240" height="30" mode="Opaque" backcolor="#1F6B5E"/>
+                <staticText><reportElement x="10" y="0" width="120" height="30" forecolor="#FFFFFF"/><textElement verticalAlignment="Middle"><font size="11" isBold="true"/></textElement><text><![CDATA[Total a cobrar]]></text></staticText>
+                <textField><reportElement x="90" y="0" width="140" height="30" forecolor="#FFFFFF"/><textElement textAlignment="Right" verticalAlignment="Middle"><font size="12" isBold="true"/></textElement><textFieldExpression><![CDATA[$P{P_TOTAL_NETO}]]></textFieldExpression></textField>
+            </frame>
+            <textField><reportElement x="0" y="70" width="250" height="16" forecolor="#9A9488"/><textElement verticalAlignment="Middle"><font size="9"/></textElement><textFieldExpression><![CDATA[$P{P_NUM_TX} + " pagos en total"]]></textFieldExpression></textField>
+        </band>
+    </summary>
+
+    <noData>
+        <band height="40">
+            <staticText><reportElement x="0" y="12" width="535" height="20" forecolor="#9A9488"/><textElement textAlignment="Center"><font size="11"/></textElement><text><![CDATA[Aún no tienes pagos registrados.]]></text></staticText>
+        </band>
+    </noData>
+
+</jasperReport>

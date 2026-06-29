@@ -1,0 +1,188 @@
+@page "/admin/perfil"
+@layout AdminLayout
+@rendermode InteractiveServer
+@inject NavigationManager Nav
+@inject BunkiApp.Models.AppState AppState
+@inject UsuarioProvider UsuarioProvider
+
+<PageTitle>Bunki Admin · Mi Perfil</PageTitle>
+
+@* Título quitado: ya lo muestra el topbar del AdminLayout (evitamos el doble título). *@
+<p class="admin-page-sub">Datos de la cuenta de administración y seguridad.</p>
+
+@if (!string.IsNullOrEmpty(_mensaje))
+{
+    <AlertMessage Tipo="success" Mensaje="@_mensaje" />
+}
+
+<div class="perfil-grid">
+
+    <!-- DATOS -->
+    <div class="admin-card">
+        <div class="perfil-head">
+            <span class="admin-avatar perfil-avatar">@(_admin?.Iniciales ?? "AD")</span>
+            <div>
+                <div class="perfil-name">@(_admin?.NombreCompleto ?? "Administrador")</div>
+                <div class="perfil-role"><i class="fas fa-shield-halved"></i> Administrador del sistema</div>
+            </div>
+        </div>
+
+        <dl class="perfil-dl">
+            <div><dt>Nombre</dt><dd>@(_admin?.NombreCompleto ?? "—")</dd></div>
+            <div><dt>Email</dt><dd>@(_admin?.Email ?? "—")</dd></div>
+            <div><dt>Rol</dt><dd><span class="badge badge-primary">Admin</span></dd></div>
+            <div><dt>Miembro desde</dt><dd>@(string.IsNullOrWhiteSpace(_admin?.MiembroDesde) ? "—" : _admin!.MiembroDesde)</dd></div>
+        </dl>
+
+        <button class="btn btn-danger" style="width: 100%; margin-top: 4px;" @onclick="CerrarSesion">
+            <i class="fas fa-right-from-bracket"></i> Cerrar sesión
+        </button>
+    </div>
+
+    <!-- CAMBIO DE CONTRASEÑA -->
+    <div class="admin-card">
+        <h2 class="admin-card-title"><i class="fas fa-lock"></i> Cambiar contraseña</h2>
+
+        <div class="form-group">
+            <label>Contraseña actual</label>
+            <input type="password" placeholder="••••••••" value="@_actual" @oninput='e => _actual = e.Value?.ToString() ?? ""' />
+        </div>
+        <div class="form-group">
+            <label>Nueva contraseña</label>
+            <input type="password" placeholder="••••••••" value="@_nueva" @oninput='e => _nueva = e.Value?.ToString() ?? ""' />
+            <p class="field-help">Mínimo 8 caracteres.</p>
+        </div>
+        <div class="form-group">
+            <label>Confirmar nueva contraseña</label>
+            <input type="password" placeholder="••••••••" value="@_confirmar" @oninput='e => _confirmar = e.Value?.ToString() ?? ""' />
+        </div>
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="validation-message" style="margin-bottom: 14px;">@_error</p>
+        }
+
+        <button class="btn btn-primary" style="width: 100%;" disabled="@_guardando" @onclick="CambiarPassword">
+            <i class="fas @(_guardando ? "fa-spinner fa-spin" : "fa-check")"></i> Actualizar contraseña
+        </button>
+    </div>
+</div>
+
+<style>
+    .perfil-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.2fr;
+        gap: 24px;
+        align-items: start;
+    }
+
+    @@media (max-width: 900px) {
+        .perfil-grid { grid-template-columns: 1fr; }
+    }
+
+    .perfil-head {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding-bottom: 18px;
+        margin-bottom: 18px;
+        border-bottom: 1px solid var(--hairline);
+    }
+
+    .perfil-avatar { width: 56px; height: 56px; font-size: 18px; cursor: default; }
+    .perfil-name { font-family: var(--font-display); font-size: 18px; font-weight: 800; color: var(--ink); }
+
+    .perfil-role {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 13px;
+        color: var(--ink-muted);
+        margin-top: 3px;
+    }
+
+        .perfil-role i { color: var(--gold); font-size: 12px; }
+
+    .perfil-dl { margin: 0 0 22px; }
+
+        .perfil-dl > div {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 11px 0;
+            border-bottom: 1px solid var(--hairline);
+            font-size: 14px;
+        }
+
+            .perfil-dl > div:last-child { border-bottom: none; }
+
+        .perfil-dl dt { color: var(--ink-muted); }
+        .perfil-dl dd { margin: 0; color: var(--ink); font-weight: 600; }
+</style>
+
+@code {
+    private string _actual = "";
+    private string _nueva = "";
+    private string _confirmar = "";
+    private string _mensaje = "";
+    private string _error = "";
+    private bool _guardando;
+
+    // Admin logueado (sesión real), no datos quemados.
+    private BunkiApp.Models.Usuario? _admin;
+
+    protected override void OnInitialized()
+    {
+        _admin = AppState.UsuarioActual;
+        if (!AppState.EstaAutenticado || !AppState.EsAdmin())
+        {
+            Nav.NavigateTo("/");
+        }
+    }
+
+    private async Task CambiarPassword()
+    {
+        _error = "";
+        _mensaje = "";
+
+        if (string.IsNullOrWhiteSpace(_actual) || string.IsNullOrWhiteSpace(_nueva))
+        {
+            _error = "Completa la contraseña actual y la nueva.";
+            return;
+        }
+        if (_nueva.Length < 8)
+        {
+            _error = "La nueva contraseña debe tener al menos 8 caracteres.";
+            return;
+        }
+        if (_nueva != _confirmar)
+        {
+            _error = "La confirmación no coincide.";
+            return;
+        }
+        var id = _admin?.Id ?? 0;
+        if (id <= 0) { _error = "Sesión no válida. Inicia sesión de nuevo."; return; }
+
+        // Persiste de verdad vía UsuarioRS/{id}/cambiar-password (valida la contraseña actual en el backend).
+        _guardando = true;
+        var (ok, err) = await UsuarioProvider.CambiarPasswordAsync(id, _actual, _nueva);
+        _guardando = false;
+
+        if (ok)
+        {
+            _actual = _nueva = _confirmar = "";
+            _mensaje = "Contraseña actualizada correctamente.";
+        }
+        else
+        {
+            _error = err ?? "No se pudo cambiar la contraseña.";
+        }
+    }
+
+    private void CerrarSesion()
+    {
+        AppState.Logout();
+        Nav.NavigateTo("/login");
+    }
+}

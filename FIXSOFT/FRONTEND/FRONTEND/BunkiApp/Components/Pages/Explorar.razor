@@ -1,0 +1,611 @@
+@page "/explorar"
+@page "/buscar"
+@rendermode InteractiveServer
+@inject DataService Data
+@inject AlojamientoProvider AlojamientoProvider
+@inject Services.MapInterop MapInterop
+@inject IJSRuntime JS
+@using System.Globalization
+@implements IDisposable
+
+<PageTitle>Bunki - Explorar Alojamientos</PageTitle>
+
+<div class="section">
+    <div class="container">
+
+        <!-- ===== CABECERA COMPACTA + TOGGLE VISTA ===== -->
+        <div class="explorar-head">
+            <div>
+                <span class="eyebrow">Explorar</span>
+                <h1 class="explorar-title">Alojamientos en Perú</h1>
+                <p class="explorar-count">
+                    <strong>@AlojamientosFiltrados.Count</strong>
+                    @(AlojamientosFiltrados.Count == 1 ? "alojamiento disponible" : "alojamientos disponibles")
+                </p>
+            </div>
+
+            <div style="display: flex; gap: 12px; align-items: center;">
+                @* Orden de los resultados (vista lista). *@
+                <select aria-label="Ordenar resultados" style="width: auto; padding: 8px 12px;"
+                        @bind="_orden" @bind:after="() => PaginaActual = 1">
+                    <option value="recomendados">Recomendados</option>
+                    <option value="precio-asc">Precio: menor a mayor</option>
+                    <option value="precio-desc">Precio: mayor a menor</option>
+                    <option value="rating">Mejor calificados</option>
+                </select>
+
+            <div class="view-toggle">
+                <button type="button"
+                        class="view-toggle-btn @(Vista == "lista" ? "active" : "")"
+                        aria-pressed="@(Vista == "lista" ? "true" : "false")"
+                        @onclick="MostrarLista">
+                    <i class="fas fa-table-cells-large"></i> Lista
+                </button>
+                <button type="button"
+                        class="view-toggle-btn @(Vista == "mapa" ? "active" : "")"
+                        aria-pressed="@(Vista == "mapa" ? "true" : "false")"
+                        @onclick="MostrarMapa">
+                    <i class="fas fa-map-location-dot"></i> Mapa
+                </button>
+            </div>
+            </div>
+        </div>
+
+        <div class="explorar-layout">
+
+            <!-- ===== FILTROS ===== -->
+            <aside class="filter-panel">
+                <div class="filter-panel-head">
+                    <h2>Filtros</h2>
+                    <button type="button" class="filter-clear" @onclick="LimpiarFiltros">Limpiar</button>
+                </div>
+
+                <!-- Ubicación -->
+                <div class="filter-group">
+                    <label class="filter-group-label">Ubicación</label>
+                    <div class="filter-input-icon">
+                        <i class="fas fa-location-dot"></i>
+                        <input type="text" placeholder="Ej: Miraflores"
+                               value="@Filtros.Ubicacion"
+                               @oninput="@(e => Filtros.Ubicacion = e.Value?.ToString() ?? string.Empty)" />
+                    </div>
+                </div>
+
+                @* RF08: filtro por país. Los países se derivan de los alojamientos cargados (no una
+                   lista quemada), así solo aparecen los que existen. Si solo hay uno, igual se muestra. *@
+                @if (PaisesDisponibles.Count > 0)
+                {
+                    <div class="filter-group">
+                        <label class="filter-group-label">País</label>
+                        <div class="filter-chips">
+                            <button type="button"
+                                    class="filter-btn @(string.IsNullOrEmpty(Filtros.Pais) ? "active" : "")"
+                                    @onclick='() => Filtros.Pais = ""'>
+                                Todos
+                            </button>
+                            @foreach (var p in PaisesDisponibles)
+                            {
+                                var pais = p;
+                                <button type="button"
+                                        class="filter-btn @(Filtros.Pais == pais ? "active" : "")"
+                                        @onclick="() => Filtros.Pais = pais">
+                                    @pais
+                                </button>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <!-- Fechas (Flatpickr, consistente con Home; no filtran) -->
+                <div class="filter-group">
+                    <label class="filter-group-label">Fechas</label>
+                    <div class="filter-dates">
+                        <input id="explorar-fecha-entrada"
+                               class="flatpickr-date"
+                               type="text"
+                               placeholder="Entrada"
+                               aria-label="Fecha de entrada"
+                               value="@FormatPickerDate(Filtros.FechaEntrada)"
+                               readonly
+                               autocomplete="off" />
+
+                        <input id="explorar-fecha-salida"
+                               class="flatpickr-date"
+                               type="text"
+                               placeholder="Salida"
+                               aria-label="Fecha de salida"
+                               value="@FormatPickerDate(Filtros.FechaSalida)"
+                               readonly
+                               autocomplete="off" />
+                    </div>
+                </div>
+
+                <!-- Huéspedes (chips, consistente con Home) -->
+                <div class="filter-group">
+                    <label class="filter-group-label">Huéspedes</label>
+                    <div class="guest-chip-group">
+                        @for (int g = 1; g <= 4; g++)
+                        {
+                            int n = g;
+                            <button type="button"
+                                    class="guest-chip @(Filtros.Huespedes == n ? "active" : "")"
+                                    @onclick="() => Filtros.Huespedes = n">
+                                @(n == 4 ? "4+" : n.ToString())
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                <!-- Precio máximo -->
+                <div class="filter-group">
+                    <label class="filter-group-label">
+                        <span>Precio máximo</span>
+                        <span class="price-value">S/ @Filtros.PrecioMaximo<span class="price-value-unit"> /noche</span></span>
+                    </label>
+                    <div class="price-range">
+                        <input type="range" min="50" max="500" step="10"
+                               value="@Filtros.PrecioMaximo"
+                               @oninput="@(e => Filtros.PrecioMaximo = decimal.Parse(e.Value!.ToString()!))" />
+                    </div>
+                </div>
+
+                <!-- Tipo de alojamiento (chips multi-selección) -->
+                <div class="filter-group">
+                    <label class="filter-group-label">Tipo de alojamiento</label>
+                    <div class="filter-chips">
+                        @foreach (var tipo in TiposAlojamiento)
+                        {
+                            var t = tipo;
+                            <button type="button"
+                                    class="filter-btn @(Filtros.TiposSeleccionados.Contains(t) ? "active" : "")"
+                                    @onclick="() => ToggleTipo(t)">
+                                @t
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                <!-- Clasificación mínima (chips) -->
+                <div class="filter-group">
+                    <label class="filter-group-label">Clasificación mínima</label>
+                    <div class="filter-chips">
+                        @foreach (var r in RatingsOpciones)
+                        {
+                            var opt = r;
+                            <button type="button"
+                                    class="filter-btn @(Filtros.RatingMinimo == opt ? "active" : "")"
+                                    @onclick="() => Filtros.RatingMinimo = opt">
+                                @(opt == "Cualquiera" ? opt : opt.Replace(" estrellas", "") + " ★")
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                @* Filtro por servicios/amenidades, derivados de los alojamientos cargados (solo aparecen
+                   los que existen). El alojamiento debe tener TODOS los marcados. *@
+                @if (ServiciosDisponibles.Count > 0)
+                {
+                    <div class="filter-group">
+                        <label class="filter-group-label">Servicios</label>
+                        <div class="filter-chips">
+                            @foreach (var s in ServiciosDisponibles)
+                            {
+                                var serv = s;
+                                <button type="button"
+                                        class="filter-btn @(Filtros.ServiciosSeleccionados.Contains(serv) ? "active" : "")"
+                                        @onclick="() => ToggleServicio(serv)">
+                                    @serv
+                                </button>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <button class="btn btn-primary btn-block" @onclick="AplicarFiltros">
+                    <i class="fas fa-sliders"></i> Aplicar filtros
+                </button>
+            </aside>
+
+            <!-- ===== RESULTADOS ===== -->
+            <div class="explorar-results">
+                @if (Vista == "mapa")
+                {
+                    <!-- Mapa real (Leaflet + OpenStreetMap). Refleja AlojamientosFiltrados. -->
+                    <div id="mapaExplorar" class="mapa-explorar"></div>
+                }
+                else if (Cargando)
+                {
+                    <!-- Estado de carga: skeleton cards mientras llega la respuesta del provider.
+                         Usa la MISMA rejilla (.explorar-grid) que los resultados para que no haya salto
+                         de maquetación al pasar de skeleton a tarjetas reales. -->
+                    <div class="explorar-grid" aria-busy="true" aria-label="Cargando alojamientos">
+                        @for (int s = 0; s < ElementosPorPagina; s++)
+                        {
+                            <div class="card skeleton-card" aria-hidden="true">
+                                <div class="skeleton skeleton-image"></div>
+                                <div class="card-body">
+                                    <div class="skeleton skeleton-line skeleton-title"></div>
+                                    <div class="skeleton skeleton-line skeleton-short"></div>
+                                    <div class="skeleton skeleton-line"></div>
+                                    <div class="skeleton skeleton-line skeleton-short"></div>
+                                    <div class="skeleton skeleton-line skeleton-footer"></div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else if (AlojamientosFiltrados.Count == 0)
+                {
+                    @* Empty state real (no una alerta): ícono + mensaje + acción directa para recuperarse.
+                       "Limpiar filtros" reusa LimpiarFiltros (sin tocar la lógica de filtrado). *@
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><i class="fas fa-magnifying-glass"></i></div>
+                        <h3>Sin resultados</h3>
+                        <p>No hay alojamientos que coincidan con estos filtros. Prueba ampliar el precio máximo o quitar algún filtro.</p>
+                        <div class="empty-state-actions">
+                            <button type="button" class="btn btn-secondary" @onclick="LimpiarFiltros">
+                                <i class="fas fa-rotate-left"></i> Limpiar filtros
+                            </button>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    @* Rejilla densa y responsive sin breakpoints: auto-fill + minmax deja 3 tarjetas con el
+                       panel de filtros y hasta 4 cuando el panel colapsa, cayendo solo a 2/1 en pantallas
+                       chicas. La entrada escalonada al montar da la transición suave al filtrar. *@
+                    <div class="explorar-grid">
+                        @foreach (var item in AlojamientosPaginados)
+                        {
+                            <AlojamientoCard Alojamiento="item" UrlDetalle="@ConstruirUrlDetalle(item.Id)" />
+                        }
+                    </div>
+
+                    @if (TotalPaginas > 1)
+                    {
+                        <div class="pagination">
+                            @if (PaginaActual > 1)
+                            {
+                                <a href="#" @onclick:preventDefault @onclick="() => CambiarPagina(PaginaActual - 1)" aria-label="Página anterior">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            }
+                            @for (int i = 1; i <= TotalPaginas; i++)
+                            {
+                                int num = i;
+                                @if (num == PaginaActual)
+                                {
+                                    <span class="active">@num</span>
+                                }
+                                else
+                                {
+                                    <a href="#" @onclick:preventDefault @onclick="() => CambiarPagina(num)">@num</a>
+                                }
+                            }
+                            @if (PaginaActual < TotalPaginas)
+                            {
+                                <a href="#" @onclick:preventDefault @onclick="() => CambiarPagina(PaginaActual + 1)" aria-label="Página siguiente">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@code {
+    // Lee el query string que envía la Home (Buscar). No cambia servicios ni modelos.
+    [Parameter, SupplyParameterFromQuery(Name = "ubicacion")] public string? UbicacionQuery { get; set; }
+    [Parameter, SupplyParameterFromQuery(Name = "huespedes")] public int? HuespedesQuery { get; set; }
+    [Parameter, SupplyParameterFromQuery(Name = "entrada")] public DateTime? EntradaQuery { get; set; }
+    [Parameter, SupplyParameterFromQuery(Name = "salida")] public DateTime? SalidaQuery { get; set; }
+
+    private BusquedaFiltros Filtros = new() { PrecioMaximo = 500 };
+    private List<Alojamiento> AlojamientosFiltrados = new();
+    // Lista completa cargada una vez desde el provider (REST con fallback a mock).
+    // El filtrado se aplica localmente sobre ella para que funcione con cualquier fuente.
+    private List<Alojamiento> _todos = new();
+    private int PaginaActual = 1;
+    private int ElementosPorPagina = 6;
+    private string Vista = "lista";
+    // Estado de carga mientras el provider (REST con fallback) responde.
+    private bool Cargando = true;
+    // Evita reinicializar el mapa en cada render; se resetea al entrar a la vista mapa.
+    private bool _mapaInicializado = false;
+    // Hubo query string de búsqueda (Home → Buscar): cubre ambos órdenes init/parámetros.
+    private bool _hayQuery = false;
+
+    // Calendario en modo rango (mismo que el detalle) para el filtro de fechas. _ref permite que
+    // flatpickr llame a SetRango (fuente de verdad de las fechas del filtro); _pickerInicializado
+    // evita re-inicializarlo (la precarga ahora la hace initDetalleRango vía setDate, una sola vez).
+    private DotNetObjectReference<Explorar>? _ref;
+    private bool _pickerInicializado = false;
+
+    private static readonly string[] TiposAlojamiento = { "Casa", "Departamento", "Habitación" };
+    private static readonly string[] RatingsOpciones = { "Cualquiera", "4+ estrellas", "4.5+ estrellas", "5 estrellas" };
+
+    // Orden de los resultados (selector de la cabecera).
+    private string _orden = "recomendados";
+
+    private IEnumerable<Alojamiento> Ordenar(IEnumerable<Alojamiento> lista) => _orden switch
+    {
+        "precio-asc"  => lista.OrderBy(a => a.PrecioNoche),
+        "precio-desc" => lista.OrderByDescending(a => a.PrecioNoche),
+        "rating"      => lista.OrderByDescending(a => a.Rating).ThenByDescending(a => a.TotalResenas),
+        // "recomendados" (default): mejor calificados primero, igual que antes.
+        _             => lista.OrderByDescending(a => a.Rating).ThenByDescending(a => a.TotalResenas),
+    };
+
+    private List<Alojamiento> AlojamientosPaginados =>
+        Ordenar(AlojamientosFiltrados)
+            .Skip((PaginaActual - 1) * ElementosPorPagina)
+            .Take(ElementosPorPagina)
+            .ToList();
+
+    private int TotalPaginas => (int)Math.Ceiling((double)AlojamientosFiltrados.Count / ElementosPorPagina);
+
+    // RF08: países presentes en los alojamientos cargados (distinct, ordenados), para el filtro.
+    private List<string> PaisesDisponibles =>
+        _todos.Select(a => a.Pais)
+              .Where(p => !string.IsNullOrWhiteSpace(p))
+              .Distinct(StringComparer.OrdinalIgnoreCase)
+              .OrderBy(p => p)
+              .ToList();
+
+    // Servicios presentes en los alojamientos cargados (distinct, ordenados), para el filtro.
+    private List<string> ServiciosDisponibles =>
+        _todos.SelectMany(a => a.Servicios ?? new())
+              .Where(s => !string.IsNullOrWhiteSpace(s))
+              .Distinct(StringComparer.OrdinalIgnoreCase)
+              .OrderBy(s => s)
+              .ToList();
+
+    private void ToggleServicio(string servicio)
+    {
+        if (!Filtros.ServiciosSeleccionados.Remove(servicio))
+            Filtros.ServiciosSeleccionados.Add(servicio);
+    }
+
+
+    // Carga la lista BASE según haya fechas o no. Cuando el usuario eligió fechas (entrada Y salida
+    // válidas, salida posterior a entrada) consultamos el backend de DISPONIBILIDAD, porque depende
+    // de las reservas (que viven en BD) y no se puede resolver en memoria. Sin fechas, traemos todos.
+    // Los demás filtros (ubicación/huéspedes/precio) se aplican localmente ENCIMA de esta base.
+    private async Task<List<Alojamiento>> CargarBaseSegunFechas()
+    {
+        if (Filtros.FechaEntrada.HasValue && Filtros.FechaSalida.HasValue
+            && Filtros.FechaSalida.Value.Date > Filtros.FechaEntrada.Value.Date)
+        {
+            return await AlojamientoProvider.ListarDisponiblesAsync(
+                Filtros.FechaEntrada.Value, Filtros.FechaSalida.Value);
+        }
+        return await AlojamientoProvider.ListarAsync();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Las fechas pueden venir por query (Home → Buscar). OnParametersSet también las setea,
+            // pero corre DESPUÉS de OnInitializedAsync; las leemos aquí para que la carga base ya pueda
+            // consultar disponibilidad si hay fechas en el query.
+            if (EntradaQuery.HasValue) Filtros.FechaEntrada = EntradaQuery;
+            if (SalidaQuery.HasValue) Filtros.FechaSalida = SalidaQuery;
+
+            // Fuente de datos: si hay fechas -> disponibles (REST); si no -> todos. Con fallback a mock.
+            _todos = await CargarBaseSegunFechas();
+            AlojamientosFiltrados = _todos;
+
+            // Los query params los lee OnParametersSet (más fiable ante carrera de render).
+            // Si ya había query pero los datos aún no estaban, reaplica el filtro ahora.
+            if (_hayQuery)
+            {
+                PaginaActual = 1;
+                AlojamientosFiltrados = FiltrarLocal(Filtros);
+            }
+        }
+        finally
+        {
+            // Siempre termina la carga, incluso si el provider cae al fallback o lanza.
+            Cargando = false;
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Lee el query string (Home → Buscar). Corre en cada set de parámetros, así que
+        // captura los valores aunque lleguen después del primer render (evita la carrera).
+        _hayQuery = false;
+        if (!string.IsNullOrWhiteSpace(UbicacionQuery)) { Filtros.Ubicacion = UbicacionQuery; _hayQuery = true; }
+        if (HuespedesQuery is > 0) { Filtros.Huespedes = HuespedesQuery.Value; _hayQuery = true; }
+        if (EntradaQuery.HasValue) { Filtros.FechaEntrada = EntradaQuery; _hayQuery = true; }
+        if (SalidaQuery.HasValue) { Filtros.FechaSalida = SalidaQuery; _hayQuery = true; }
+
+        if (_hayQuery)
+        {
+            PaginaActual = 1;
+            // Solo si los datos ya cargaron; si no, OnInitializedAsync lo reaplicará al terminar.
+            if (_todos.Count > 0) AlojamientosFiltrados = FiltrarLocal(Filtros);
+        }
+        // La precarga visual del rango (Home → Buscar) la hace initDetalleRango vía setDate al
+        // inicializar el picker; la lectura de EntradaQuery/SalidaQuery hacia Filtros ya quedó arriba.
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_pickerInicializado)
+        {
+            _pickerInicializado = true;
+            _ref ??= DotNetObjectReference.Create(this);
+
+            // Mismo calendario de rango que el detalle PERO sin disable: el filtro no apunta a un
+            // alojamiento concreto, así que no se bloquean ocupadas; solo el pasado (minDate hoy).
+            // Las fechas que llegan de Home → Buscar se precargan en ISO (initDetalleRango -> setDate).
+            string? fe = Filtros.FechaEntrada?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            string? fs = Filtros.FechaSalida?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+            await JS.InvokeVoidAsync("bunkiDatePicker.initDetalleRango",
+                "#explorar-fecha-entrada", "#explorar-fecha-salida",
+                new { minDate = "today", fechaEntrada = fe, fechaSalida = fs },
+                _ref);
+        }
+
+        // El div #mapaExplorar solo existe cuando Vista=="mapa": inicializar DESPUÉS
+        // del render. La bandera evita repetir la init en cada render.
+        if (Vista == "mapa" && !_mapaInicializado)
+        {
+            _mapaInicializado = true;
+            await MapInterop.InitAsync("mapaExplorar");
+            // Deja que el contenedor termine de montar/medir antes de medir tamaño.
+            await Task.Delay(300);
+            await MapInterop.InvalidarTamanoAsync();
+            await MapInterop.ActualizarMarcadoresAsync(AlojamientosFiltrados);
+        }
+    }
+
+    private void MostrarLista()
+    {
+        // Volver a lista no requiere acción especial sobre el mapa.
+        Vista = "lista";
+    }
+
+    private void MostrarMapa()
+    {
+        Vista = "mapa";
+        // Resetea la bandera para que OnAfterRenderAsync reinicialice el mapa y
+        // pinte los marcadores con la lista filtrada actual (lo que se ve).
+        _mapaInicializado = false;
+    }
+
+    // async: al confirmar filtros, RE-CONSULTAMOS la disponibilidad si hay fechas (la base puede
+    // cambiar respecto al primer load), y luego aplicamos los filtros locales sobre esa base.
+    private async Task AplicarFiltros()
+    {
+        Cargando = true;
+        _todos = await CargarBaseSegunFechas();          // re-consulta disponibilidad si hay fechas
+        AlojamientosFiltrados = FiltrarLocal(Filtros);   // ubicación/huéspedes/precio sobre la base
+        PaginaActual = 1;
+        Cargando = false;
+    }
+
+    private void LimpiarFiltros()
+    {
+        Filtros = new BusquedaFiltros { PrecioMaximo = 500 };
+        PaginaActual = 1;
+        AlojamientosFiltrados = _todos;
+    }
+
+    // Filtrado local sobre la lista del provider (ubicación, precio, tipos, rating, huéspedes).
+    // NO filtra por FECHAS: la disponibilidad por fecha ya la resolvió el backend al cargar la base
+    // (CargarBaseSegunFechas -> /disponibles), así que aquí no se filtra fecha en memoria.
+    private List<Alojamiento> FiltrarLocal(BusquedaFiltros filtros)
+    {
+        var lista = _todos.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(filtros.Ubicacion))
+            lista = lista.Where(a => a.Distrito.Contains(filtros.Ubicacion, StringComparison.OrdinalIgnoreCase)
+                                  || a.Nombre.Contains(filtros.Ubicacion, StringComparison.OrdinalIgnoreCase));
+
+        // RF08: filtro por país (igualdad exacta, case-insensitive).
+        if (!string.IsNullOrWhiteSpace(filtros.Pais))
+            lista = lista.Where(a => string.Equals(a.Pais, filtros.Pais, StringComparison.OrdinalIgnoreCase));
+
+        // Servicios: el alojamiento debe tener TODOS los servicios marcados (case-insensitive).
+        if (filtros.ServiciosSeleccionados.Count > 0)
+            lista = lista.Where(a => filtros.ServiciosSeleccionados.All(sel =>
+                (a.Servicios ?? new()).Any(have => string.Equals(have, sel, StringComparison.OrdinalIgnoreCase))));
+
+        if (filtros.PrecioMaximo < 500)
+            lista = lista.Where(a => a.PrecioNoche <= filtros.PrecioMaximo);
+
+        if (filtros.TiposSeleccionados.Count > 0)
+            lista = lista.Where(a => filtros.TiposSeleccionados.Contains(a.Tipo));
+
+        if (filtros.RatingMinimo == "4+ estrellas")
+            lista = lista.Where(a => a.Rating >= 4.0);
+        else if (filtros.RatingMinimo == "4.5+ estrellas")
+            lista = lista.Where(a => a.Rating >= 4.5);
+        else if (filtros.RatingMinimo == "5 estrellas")
+            lista = lista.Where(a => a.Rating >= 5.0);
+
+        if (filtros.Huespedes > 1)
+            lista = lista.Where(a => a.MaxHuespedes >= filtros.Huespedes);
+
+        return lista.ToList();
+    }
+
+    private void ToggleTipo(string tipo)
+    {
+        if (Filtros.TiposSeleccionados.Contains(tipo))
+            Filtros.TiposSeleccionados.Remove(tipo);
+        else
+            Filtros.TiposSeleccionados.Add(tipo);
+    }
+
+    private void CambiarPagina(int pagina)
+    {
+        PaginaActual = pagina;
+    }
+    private string ConstruirUrlDetalle(int id)
+    {
+        var query = new List<string>();
+
+        if (Filtros.FechaEntrada.HasValue)
+            query.Add($"entrada={Filtros.FechaEntrada.Value:yyyy-MM-dd}");
+
+        if (Filtros.FechaSalida.HasValue)
+            query.Add($"salida={Filtros.FechaSalida.Value:yyyy-MM-dd}");
+
+        if (Filtros.Huespedes > 0)
+            query.Add($"huespedes={Filtros.Huespedes}");
+
+        return query.Any()
+            ? $"/alojamiento/{id}?{string.Join("&", query)}"
+            : $"/alojamiento/{id}";
+    }
+
+    private string FormatPickerDate(DateTime? fecha)
+    {
+        // Mismo formato que muestra flatpickr (d/m/Y), para que entrada y salida se vean iguales.
+        return fecha?.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) ?? "";
+    }
+
+    // [JSInvokable] SetRango: ÚNICA fuente de verdad de las fechas del filtro. Replica EXACTAMENTE lo
+    // que hacían OnFecha*Changed (set + validación fin<=inicio); NO recarga disponibles aquí, igual que
+    // antes: la recarga por fechas la dispara "Aplicar filtros" (AplicarFiltros -> CargarBaseSegunFechas),
+    // así el filtrado por fechas queda idéntico al actual.
+    [JSInvokable]
+    public void SetRango(string? isoInicio, string? isoFin)
+    {
+        Filtros.FechaEntrada = ParsePickerDate(isoInicio);
+        Filtros.FechaSalida = ParsePickerDate(isoFin);
+
+        if (Filtros.FechaEntrada.HasValue &&
+            Filtros.FechaSalida.HasValue &&
+            Filtros.FechaSalida <= Filtros.FechaEntrada)
+        {
+            Filtros.FechaSalida = null;
+        }
+
+        StateHasChanged();
+    }
+
+    public void Dispose() => _ref?.Dispose();
+
+    private DateTime? ParsePickerDate(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+
+        if (DateTime.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var fecha))
+            return fecha;
+
+        if (DateTime.TryParse(value, out fecha))
+            return fecha;
+
+        return null;
+    }
+}
