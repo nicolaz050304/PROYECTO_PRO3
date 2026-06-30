@@ -68,9 +68,28 @@ else
             <div class="two-column">
                 <div>
                     <div class="gallery">
-                        @if (!string.IsNullOrWhiteSpace(Alojamiento.ImagenUrl))
+                        @{
+                            var fotos = (Alojamiento.Imagenes is { Count: > 0 })
+                                ? Alojamiento.Imagenes
+                                : (!string.IsNullOrWhiteSpace(Alojamiento.ImagenUrl)
+                                    ? new List<string> { Alojamiento.ImagenUrl }
+                                    : new List<string>());
+                            var heroSrc = _fotoActiva ?? fotos.FirstOrDefault();
+                        }
+                        @if (!string.IsNullOrWhiteSpace(heroSrc))
                         {
-                            <img src="@Alojamiento.ImagenUrl" alt="@Alojamiento.Nombre" style="width: 100%; height: 400px; object-fit: cover; border-radius: 12px;" />
+                            <img src="@heroSrc" alt="@Alojamiento.Nombre" style="width: 100%; height: 400px; object-fit: cover; border-radius: 12px;" />
+                            @if (fotos.Count > 1)
+                            {
+                                <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
+                                    @foreach (var f in fotos)
+                                    {
+                                        var src = f;
+                                        <img src="@src" alt="foto" @onclick="() => _fotoActiva = src"
+                                             style="width: 84px; height: 64px; object-fit: cover; border-radius: 8px; cursor: pointer; border: @(src == heroSrc ? "2px solid var(--accent)" : "2px solid transparent");" />
+                                    }
+                                </div>
+                            }
                         }
                         else
                         {
@@ -92,15 +111,15 @@ else
                         <div class="grid grid-3" style="margin-bottom: 20px;">
                             <div class="stat-box">
                                 <div class="stat-number">@Alojamiento.MaxHuespedes</div>
-                                <div class="stat-label">Huéspedes</div>
+                                <div class="stat-label">@(Alojamiento.MaxHuespedes == 1 ? "Huésped" : "Huéspedes")</div>
                             </div>
                             <div class="stat-box">
                                 <div class="stat-number">@Alojamiento.Habitaciones</div>
-                                <div class="stat-label">Habitaciones</div>
+                                <div class="stat-label">@(Alojamiento.Habitaciones == 1 ? "Habitación" : "Habitaciones")</div>
                             </div>
                             <div class="stat-box">
                                 <div class="stat-number">@Alojamiento.TotalResenas</div>
-                                <div class="stat-label">Reseñas</div>
+                                <div class="stat-label">@(Alojamiento.TotalResenas == 1 ? "Reseña" : "Reseñas")</div>
                             </div>
                         </div>
 
@@ -139,7 +158,7 @@ else
                                 <div class="avatar avatar-large">@Alojamiento.AnfitrionInicial</div>
                                 <div>
                                     <h4>@Alojamiento.AnfitrionNombre</h4>
-                                    <p class="card-text">Anfitrión desde @Alojamiento.AnfitrionDesde</p>
+                                    <p class="card-text">@(string.IsNullOrWhiteSpace(Alojamiento.AnfitrionDesde) ? "Anfitrión en Bunki" : $"Anfitrión desde {Alojamiento.AnfitrionDesde}")</p>
                                     <p style="margin-top: 8px;">
                                         <span class="badge badge-success">Anfitrión Verificado</span>
                                     </p>
@@ -539,6 +558,7 @@ else
 
     private bool Cargando = true;
     private Alojamiento? Alojamiento;
+    private string? _fotoActiva;   // foto seleccionada en la galería (null = portada/primera)
     private DateTime? FechaEntrada;
     private DateTime? FechaSalida;
     private int NumHuespedes = 1;

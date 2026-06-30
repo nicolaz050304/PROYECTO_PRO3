@@ -17,4 +17,10 @@ public interface ReservaIDAO extends IDAO<Reserva, Integer> {
     // Devuelve las reservas que OCUPAN fechas en un alojamiento: solo las que están
     // CONFIRMADA o PENDIENTE (las CANCELADA y FINALIZADA ya no bloquean el calendario).
     List<Reserva> listarOcupadasPorAlojamiento(int idAlojamiento);
+
+    // Reservas de un huésped, filtradas en SQL (no trae todas y filtra en memoria como antes).
+    List<Reserva> listarPorInvitado(int idInvitado);
+
+    // Reservas cuyos alojamientos pertenecen a un anfitrión (JOIN reserva-alojamiento por id_duenho).
+    List<Reserva> listarPorAnfitrion(int idAnfitrion);
 }

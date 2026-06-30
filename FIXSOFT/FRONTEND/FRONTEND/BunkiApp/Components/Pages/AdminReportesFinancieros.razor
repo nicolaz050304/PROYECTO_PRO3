@@ -6,6 +6,7 @@
 @inject IJSRuntime JS
 @inject DataService Data
 @inject ReservaProvider ReservaProvider
+@inject Services.BackendUrls Urls
 
 <PageTitle>Bunki Admin · Reportes financieros</PageTitle>
 
@@ -290,9 +291,9 @@
 
     // URLs de los reportes de Rentabilidad (RF20) generados en el backend (PDF con JasperReports, CSV limpio).
     private string RentabilidadPdfUrl =>
-        $"http://localhost:8080/BunkiBackend/webresources/ReporteRS/rentabilidad/pdf?desde={_desde:yyyy-MM-dd}&hasta={_hasta:yyyy-MM-dd}";
+        Urls.Para($"ReporteRS/rentabilidad/pdf?desde={_desde:yyyy-MM-dd}&hasta={_hasta:yyyy-MM-dd}");
     private string RentabilidadCsvUrl =>
-        $"http://localhost:8080/BunkiBackend/webresources/ReporteRS/rentabilidad/csv?desde={_desde:yyyy-MM-dd}&hasta={_hasta:yyyy-MM-dd}";
+        Urls.Para($"ReporteRS/rentabilidad/csv?desde={_desde:yyyy-MM-dd}&hasta={_hasta:yyyy-MM-dd}");
 
     // ---- Datos derivados de reservas reales (DataService) ----
     private List<Reserva> _reservasCobradas = new();

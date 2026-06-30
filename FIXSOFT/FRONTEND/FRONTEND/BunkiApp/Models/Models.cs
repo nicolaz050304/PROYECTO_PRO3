@@ -19,7 +19,9 @@ public class Alojamiento
     public int Habitaciones { get; set; }
     public double Rating { get; set; }
     public int TotalResenas { get; set; }
-    public string ImagenUrl { get; set; } = string.Empty;
+    public string ImagenUrl { get; set; } = string.Empty;   // portada (primera foto)
+    // Galería de fotos del alojamiento (la portada es ImagenUrl = Imagenes[0]). RF05.
+    [JsonPropertyName("imagenes")] public List<string> Imagenes { get; set; } = new();
     public string GradienteColor { get; set; } = "linear-gradient(135deg, #FF6B6B, #FFB3B3)";
     public string EstadoPublicacion { get; set; } = "Activo";
     // Moderación del admin (RF: aprobar/rechazar publicaciones). Calza con AlojamientoDTO.estadoValidacion.
@@ -216,13 +218,14 @@ public class NoLeidosDto
 }
 
 // DTO de transporte de Notificación real (RF18), separado del modelo de UI Notificacion.
-// Refleja el JSON del backend (NotificacionRS): { idNotificacion, titulo, mensaje, leido, idUsuario }.
+// Refleja el JSON del backend (NotificacionRS): { idNotificacion, titulo, mensaje, leido, categoria, idUsuario }.
 public class NotificacionDto
 {
     public int IdNotificacion { get; set; }
     public string Titulo { get; set; } = "";
     public string Mensaje { get; set; } = "";
     public bool Leido { get; set; }
+    public string Categoria { get; set; } = "GENERAL";   // RESERVA / MENSAJE / PAGO / GENERAL
     public int IdUsuario { get; set; }
 }
 
@@ -230,6 +233,20 @@ public class NotificacionDto
 public class NoLeidasDto
 {
     public int NoLeidas { get; set; }
+}
+
+// Registro de la bitácora de auditoría (RNF09). Refleja el JSON de AuditoriaRS:
+// { id, entidad, idEntidad, campo, estadoAnterior, estadoNuevo, detalle, fecha }.
+public class AuditoriaRegistro
+{
+    public int Id { get; set; }
+    public string Entidad { get; set; } = "";          // RESERVA | USUARIO
+    public int IdEntidad { get; set; }
+    public string Campo { get; set; } = "";            // estado | estado_validacion | estado_actual
+    public string? EstadoAnterior { get; set; }
+    public string EstadoNuevo { get; set; } = "";
+    public string? Detalle { get; set; }
+    public string Fecha { get; set; } = "";            // ISO "yyyy-MM-dd HH:mm:ss"
 }
 
 public class Notificacion
@@ -282,30 +299,6 @@ public class LoginForm
 
     [Required(ErrorMessage = "La contraseña es obligatoria")]
     public string Password { get; set; } = "";
-}
-
-// FIX: sin TipoUsuario — todo usuario puede hacer todo
-public class RegistroForm
-{
-    [Required(ErrorMessage = "El nombre es obligatorio")]
-    public string Nombre { get; set; } = "";
-
-    [Required(ErrorMessage = "El apellido es obligatorio")]
-    public string Apellido { get; set; } = "";
-
-    [Required(ErrorMessage = "El correo es obligatorio")]
-    [EmailAddress(ErrorMessage = "Correo inválido")]
-    public string Email { get; set; } = "";
-
-    [Required(ErrorMessage = "La contraseña es obligatoria")]
-    [MinLength(8, ErrorMessage = "Mínimo 8 caracteres")]
-    public string Password { get; set; } = "";
-
-    [Required(ErrorMessage = "Confirma tu contraseña")]
-    [Compare("Password", ErrorMessage = "Las contraseñas no coinciden")]
-    public string ConfirmarPassword { get; set; } = "";
-
-    public bool AceptaTerminos { get; set; } = false;
 }
 
 public class RecuperarPasswordForm

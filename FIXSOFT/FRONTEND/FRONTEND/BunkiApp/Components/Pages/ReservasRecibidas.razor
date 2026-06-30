@@ -3,6 +3,8 @@
 @inject DataService Data
 @inject ReservaProvider ReservaProvider
 @inject ResenaProvider ResenaProvider
+@inject UsuarioProvider UsuarioProvider
+@inject BunkiApp.Services.EmailService EmailSvc
 @inject NavigationManager Navigation
 @inject BunkiApp.Models.AppState AppState
 @implements IDisposable
@@ -250,12 +252,30 @@
         {
             await ReservaProvider.ActualizarAsync(r);   // PUT -> persiste
             _mensajeAccion = $"Reserva de {r.HuespedNombre} confirmada.";
+            await NotificarHuespedConfirmacionAsync(r); // correo al huésped (secundario, no rompe)
         }
         catch
         {
             r.Estado = anterior;                 // revierte si falla
             _mensajeAccion = "No se pudo confirmar la reserva. Inténtalo de nuevo.";
         }
+    }
+
+    // Correo de confirmación al huésped. SECUNDARIO: traga toda excepción para no afectar la
+    // confirmación (que ya se persistió). El modelo Reserva no trae el correo del huésped, así que
+    // se resuelve por su id (UsuarioRS/{id}); EmailService además es no-op si no hay credenciales.
+    private async Task NotificarHuespedConfirmacionAsync(Reserva r)
+    {
+        try
+        {
+            var huesped = await UsuarioProvider.ObtenerPorIdAsync(r.HuespedId);
+            var correo = huesped?.Email;
+            if (string.IsNullOrWhiteSpace(correo)) return;
+            await EmailSvc.EnviarConfirmacionReservaAsync(
+                correo, r.HuespedNombre, r.AlojamientoNombre, r.FechasTexto,
+                AppState.FormatearPrecio(r.Total));
+        }
+        catch { /* el correo es secundario; no debe afectar la confirmación */ }
     }
 
     private async Task Rechazar(Reserva r)

@@ -5,6 +5,16 @@ using BunkiApp.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// URL del backend REST. UNA sola fuente para TODO: las llamadas server-side (HttpClient de abajo)
+// y los enlaces de descarga del navegador (BackendUrls). Default localhost para desarrollo (todo en
+// una máquina). En el DEPLOY el frontend y el backend están en instancias distintas, así que se
+// setea la variable de entorno BUNKI_BACKEND_URL con la IP pública del backend, p. ej.:
+//   BUNKI_BACKEND_URL=http://3.89.203.116:8080/BunkiBackend/webresources/
+var backendUrl = Environment.GetEnvironmentVariable("BUNKI_BACKEND_URL")
+                 ?? builder.Configuration["Backend:Url"]
+                 ?? "http://localhost:8080/BunkiBackend/webresources/";
+if (!backendUrl.EndsWith("/")) backendUrl += "/";
+
 // Agregar servicios de Blazor
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -17,7 +27,7 @@ builder.Services.AddScoped<MapInterop>(); // Puente C#->JS del mapa (Leaflet)
 // --- Integración REST de Alojamiento ---
 builder.Services.AddHttpClient<AlojamientoServiceRest>(client =>
 {
-    client.BaseAddress = new Uri("http://localhost:8080/BunkiBackend/webresources/");
+    client.BaseAddress = new Uri(backendUrl);
     client.Timeout = TimeSpan.FromSeconds(20);
 });
 builder.Services.AddScoped<AlojamientoProvider>();
@@ -25,7 +35,7 @@ builder.Services.AddScoped<AlojamientoProvider>();
 // --- Integración REST de Reserva ---
 builder.Services.AddHttpClient<ReservaServiceRest>(client =>
 {
-    client.BaseAddress = new Uri("http://localhost:8080/BunkiBackend/webresources/");
+    client.BaseAddress = new Uri(backendUrl);
     client.Timeout = TimeSpan.FromSeconds(20);
 });
 builder.Services.AddScoped<ReservaProvider>();
@@ -33,7 +43,7 @@ builder.Services.AddScoped<ReservaProvider>();
 // --- Integración REST de Usuario ---
 builder.Services.AddHttpClient<UsuarioServiceRest>(client =>
 {
-    client.BaseAddress = new Uri("http://localhost:8080/BunkiBackend/webresources/");
+    client.BaseAddress = new Uri(backendUrl);
     client.Timeout = TimeSpan.FromSeconds(20);
 });
 builder.Services.AddScoped<UsuarioProvider>();
@@ -41,7 +51,7 @@ builder.Services.AddScoped<UsuarioProvider>();
 // --- Integración REST de Pago (transacción NO cableada; lista para historial futuro) ---
 builder.Services.AddHttpClient<PagoServiceRest>(client =>
 {
-    client.BaseAddress = new Uri("http://localhost:8080/BunkiBackend/webresources/");
+    client.BaseAddress = new Uri(backendUrl);
     client.Timeout = TimeSpan.FromSeconds(20);
 });
 builder.Services.AddScoped<PagoProvider>();
@@ -49,7 +59,7 @@ builder.Services.AddScoped<PagoProvider>();
 // --- Integración REST de Reseña (creación NO cableada; reseñas se leen vía Alojamiento) ---
 builder.Services.AddHttpClient<ResenaServiceRest>(client =>
 {
-    client.BaseAddress = new Uri("http://localhost:8080/BunkiBackend/webresources/");
+    client.BaseAddress = new Uri(backendUrl);
     client.Timeout = TimeSpan.FromSeconds(20);
 });
 builder.Services.AddScoped<ResenaProvider>();
@@ -57,70 +67,87 @@ builder.Services.AddScoped<ResenaProvider>();
 // --- Integración REST de Tipo de Cambio (tasas de moneda; AppState las carga una vez al inicio) ---
 builder.Services.AddHttpClient<TipoCambioServiceRest>(client =>
 {
-    client.BaseAddress = new Uri("http://localhost:8080/BunkiBackend/webresources/");
+    client.BaseAddress = new Uri(backendUrl);
     client.Timeout = TimeSpan.FromSeconds(20);
 });
 
 // --- Integración REST de Cuentas Bancarias del anfitrión (RF15) ---
 builder.Services.AddHttpClient<CuentaBancariaServiceRest>(client =>
 {
-    client.BaseAddress = new Uri("http://localhost:8080/BunkiBackend/webresources/");
+    client.BaseAddress = new Uri(backendUrl);
     client.Timeout = TimeSpan.FromSeconds(20);
 });
 
 // --- Integración REST de Mensajería (RF17): chat por reserva ---
 builder.Services.AddHttpClient<MensajeServiceRest>(client =>
 {
-    client.BaseAddress = new Uri("http://localhost:8080/BunkiBackend/webresources/");
+    client.BaseAddress = new Uri(backendUrl);
     client.Timeout = TimeSpan.FromSeconds(20);
 });
 
 // --- Integración REST de Notificaciones (RF18): feed y badge por usuario ---
 builder.Services.AddHttpClient<NotificacionServiceRest>(client =>
 {
-    client.BaseAddress = new Uri("http://localhost:8080/BunkiBackend/webresources/");
+    client.BaseAddress = new Uri(backendUrl);
     client.Timeout = TimeSpan.FromSeconds(20);
 });
 
 // --- Integración REST de Favoritos (RF27): wishlist persistente por usuario ---
 builder.Services.AddHttpClient<FavoritoServiceRest>(client =>
 {
-    client.BaseAddress = new Uri("http://localhost:8080/BunkiBackend/webresources/");
+    client.BaseAddress = new Uri(backendUrl);
     client.Timeout = TimeSpan.FromSeconds(20);
 });
 
 // --- Integración REST de Bloqueos de fecha (RF30): el anfitrión bloquea rangos del calendario ---
 builder.Services.AddHttpClient<BloqueoServiceRest>(client =>
 {
-    client.BaseAddress = new Uri("http://localhost:8080/BunkiBackend/webresources/");
+    client.BaseAddress = new Uri(backendUrl);
     client.Timeout = TimeSpan.FromSeconds(20);
 });
 
 // --- Integración REST de Denuncias (RF31): el huésped reporta alojamientos, el admin gestiona ---
 builder.Services.AddHttpClient<DenunciaServiceRest>(client =>
 {
-    client.BaseAddress = new Uri("http://localhost:8080/BunkiBackend/webresources/");
+    client.BaseAddress = new Uri(backendUrl);
     client.Timeout = TimeSpan.FromSeconds(20);
 });
 
 // --- Integración REST de Incidencias/soporte: usuarios abren tickets, el admin los gestiona ---
 builder.Services.AddHttpClient<IncidenciaServiceRest>(client =>
 {
-    client.BaseAddress = new Uri("http://localhost:8080/BunkiBackend/webresources/");
+    client.BaseAddress = new Uri(backendUrl);
     client.Timeout = TimeSpan.FromSeconds(20);
 });
 
 // --- Integración REST de validación documentaria (RF02): el usuario sube su DNI/pasaporte y el admin revisa ---
 builder.Services.AddHttpClient<ValidacionServiceRest>(client =>
 {
-    client.BaseAddress = new Uri("http://localhost:8080/BunkiBackend/webresources/");
+    client.BaseAddress = new Uri(backendUrl);
     client.Timeout = TimeSpan.FromSeconds(30);   // el documento viaja en base64 (puede ser grande)
 });
+
+builder.Services.AddHttpClient<AuditoriaServiceRest>(client =>
+{
+    client.BaseAddress = new Uri(backendUrl);
+});
+
+// Construye las rutas del proxy de descargas (comprobante, voucher, reportes). Ya NO son URLs al
+// backend: apuntan al endpoint local "/descargas" (ver más abajo), que reenvía la descarga.
+builder.Services.AddSingleton<BackendUrls>();
+
+// HttpClient server-side del PROXY de descargas: baja el archivo del backend por la red INTERNA
+// (mismo backendUrl que el resto de llamadas server-side). Así el backend no se expone a internet.
+builder.Services.AddHttpClient("backend-download", c => c.BaseAddress = new Uri(backendUrl));
+
+// Envío de correos (SMTP Gmail). Credenciales por env var BUNKI_GMAIL_USER/APP_PASSWORD; si no
+// están, el servicio queda desactivado (no envía, no rompe). Ver EmailService.
+builder.Services.AddSingleton<EmailService>();
 
 // --- Integración REST de pago Niubiz (sandbox): sesión + autorización de la pasarela ---
 builder.Services.AddHttpClient<NiubizServiceRest>(client =>
 {
-    client.BaseAddress = new Uri("http://localhost:8080/BunkiBackend/webresources/");
+    client.BaseAddress = new Uri(backendUrl);
     client.Timeout = TimeSpan.FromSeconds(45);   // la pasarela sandbox puede tardar
 });
 
@@ -151,6 +178,45 @@ app.MapRazorComponents<App>()
    .AddInteractiveServerRenderMode();
 
 app.MapAuthEndpoints();
+
+// --- Proxy de descargas: el navegador pide el PDF/CSV AL FRONTEND (que ya es público) y este lo
+// baja del backend por la red INTERNA y lo reenvía. Así el puerto del backend NO necesita abrirse a
+// internet (solo accesible desde el frontend). El `recurso` viaja URL-encoded e incluye su propio
+// query (p. ej. "ReporteRS/voucher/pdf?reserva=5"). Allowlist estricta para NO ser un proxy abierto
+// (evita SSRF): solo se permiten recursos de reportes y comprobantes. RequireAuthorization: la cookie
+// de sesión viaja en la navegación same-origin, así que un anónimo de internet no puede jalar nada. ---
+app.MapGet("/descargas", async (HttpContext http, IHttpClientFactory httpFactory, string? recurso) =>
+{
+    if (string.IsNullOrWhiteSpace(recurso)
+        || recurso.Contains("..") || recurso.Contains("://")
+        || !(recurso.StartsWith("ReporteRS/") || recurso.StartsWith("PagoRS/")))
+    {
+        return Results.BadRequest("Recurso de descarga no permitido.");
+    }
+
+    var client = httpFactory.CreateClient("backend-download");
+    HttpResponseMessage resp;
+    try
+    {
+        resp = await client.GetAsync(recurso, HttpCompletionOption.ResponseHeadersRead);
+    }
+    catch
+    {
+        // Backend caído o inalcanzable desde el frontend.
+        return Results.StatusCode(StatusCodes.Status502BadGateway);
+    }
+
+    if (!resp.IsSuccessStatusCode)
+        return Results.StatusCode((int)resp.StatusCode);
+
+    var bytes = await resp.Content.ReadAsByteArrayAsync();
+    var contentType = resp.Content.Headers.ContentType?.ToString() ?? "application/octet-stream";
+    // Preserva el nombre de archivo/adjunto que mande el backend (Content-Disposition), si lo trae.
+    var cd = resp.Content.Headers.ContentDisposition?.ToString();
+    if (!string.IsNullOrEmpty(cd))
+        http.Response.Headers.ContentDisposition = cd;
+    return Results.File(bytes, contentType);
+}).RequireAuthorization();
 
 // --- Callback de Niubiz (RF13): el lightbox hace POST del transactionToken aquí (modelo "action").
 // Autoriza el pago, crea/confirma la reserva y registra el pago, luego redirige al modal de Pagos.

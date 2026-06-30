@@ -250,6 +250,8 @@
 @code {
     private List<Alojamiento> AlojamientosDestacados = new();
     private List<Resena> _testimonios = new();
+    // Evita re-invocar bunkiReveal.init más de una vez cuando los testimonios async ya están en el DOM.
+    private bool _testimoniosRevelados = false;
 
     // Campos del buscador del hero (solo UI; no implementan búsqueda compleja).
     private string Ubicacion = "";
@@ -351,6 +353,14 @@
             await JS.InvokeVoidAsync("bunkiCarrusel.init", "#carruselDestacados");
             // Scroll reveal: DESPUÉS del datepicker y el carrusel (no los toca). Observa los [data-reveal]
             // y revela cada sección/tarjeta al entrar al viewport; respeta prefers-reduced-motion.
+            await JS.InvokeVoidAsync("bunkiReveal.init");
+        }
+        else if (_testimonios.Any() && !_testimoniosRevelados)
+        {
+            // Los testimonios se cargan async (ResenaProvider) y se renderizan DESPUÉS del primer
+            // render, así que el bunkiReveal.init de firstRender no alcanzó a observarlos. Lo
+            // re-invocamos una vez que ya están en el DOM; init() solo engancha los elementos nuevos.
+            _testimoniosRevelados = true;
             await JS.InvokeVoidAsync("bunkiReveal.init");
         }
     }

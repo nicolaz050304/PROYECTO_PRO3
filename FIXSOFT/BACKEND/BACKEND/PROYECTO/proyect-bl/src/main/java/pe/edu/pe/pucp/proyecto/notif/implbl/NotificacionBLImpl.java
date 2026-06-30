@@ -8,10 +8,22 @@ import pe.edu.pe.pucp.proyecto.users.Invitado;
 import pe.edu.pe.pucp.proyecto.users.Usuario;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class NotificacionBLImpl implements NotificacionBL {
 
     private NotificacionIDAO daoNotificacion = new NotificacionImpl();
+
+    // Pool de HILOS compartido para despachar notificaciones en segundo plano: así la petición REST
+    // (confirmar reserva, enviar mensaje, etc.) NO se bloquea esperando el INSERT de la notificación.
+    // Hilos daemon para no impedir el apagado del servidor. Tamaño fijo 3 (suficiente y acotado).
+    private static final ExecutorService POOL_NOTIFICACIONES =
+            Executors.newFixedThreadPool(3, r -> {
+                Thread t = new Thread(r, "notif-worker");
+                t.setDaemon(true);
+                return t;
+            });
 
     @Override
     public int insertar(Notificaciones notificacion) {
@@ -79,13 +91,32 @@ public class NotificacionBLImpl implements NotificacionBL {
     // El usuario destino se referencia como proxy solo-id (mismo patrón que el DAO con Invitado).
     @Override
     public int crear(String titulo, String mensaje, int idUsuario) {
+        return crear(titulo, mensaje, idUsuario, "GENERAL");
+    }
+
+    @Override
+    public int crear(String titulo, String mensaje, int idUsuario, String categoria) {
         Notificaciones n = new Notificaciones();
         n.setTitulo(titulo);
         n.setMensaje(mensaje);
         n.setLeido(false);   // nace no leída
+        n.setCategoria(categoria);
         Usuario u = new Invitado();
         u.setIdUsuario(idUsuario);
         n.setUsuario(u);
         return insertar(n);
+    }
+
+    // Despacha la creación en un HILO del pool (no bloquea al llamador). El error se traga y se loguea:
+    // una notificación es secundaria y no debe romper la operación de negocio que la disparó.
+    @Override
+    public void crearAsync(String titulo, String mensaje, int idUsuario, String categoria) {
+        POOL_NOTIFICACIONES.submit(() -> {
+            try {
+                crear(titulo, mensaje, idUsuario, categoria);
+            } catch (Exception e) {
+                System.err.println("[notif-worker] No se pudo crear la notificación async: " + e.getMessage());
+            }
+        });
     }
 }

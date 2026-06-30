@@ -63,6 +63,7 @@ public final class AlojamientoMapper {
         dto.setImagenUrl(al.getImagenUrl());
         dto.setServicios(al.getServicios());
         dto.setReglas(al.getReglas());
+        dto.setImagenes(al.getImagenes());
 
         // Atributos específicos por tipo (RF05): cada subtipo expone los suyos en el DTO.
         mapearEspecificos(al, dto);
@@ -222,15 +223,17 @@ public final class AlojamientoMapper {
         al.setImagenUrl(dto.getImagenUrl());
         al.setServicios(dto.getServicios());
         al.setReglas(dto.getReglas());
+        al.setImagenes(dto.getImagenes());
 
         // pais es NOT NULL en BD: ESTE era el campo que faltaba y disparaba el 500.
         // Default "Perú" si el DTO no lo trae (proyecto Perú; todos los sembrados son Perú).
         String pais = dto.getPais() != null && !dto.getPais().isBlank() ? dto.getPais() : "Perú";
         al.setPais(pais);
 
-        // estadoValidacion: el DTO no lo transporta; el constructor ya pone "PENDIENTE",
-        // pero lo fijamos explícito por si acaso (default seguro para la moderación).
-        al.setEstadoValidacion("PENDIENTE");
+        // estadoValidacion: el DTO no lo transporta. Se retiró la moderación de alojamientos
+        // (no hay panel admin que apruebe), así que el alojamiento nace APROBADO y se publica
+        // directo en el catálogo. (El gate de identidad del anfitrión, RF02, sigue vigente.)
+        al.setEstadoValidacion("APROBADO");
 
         // El DAO inserta/actualiza usando duenho.getIdUsuario().
         Anfitrion duenho = new Anfitrion();

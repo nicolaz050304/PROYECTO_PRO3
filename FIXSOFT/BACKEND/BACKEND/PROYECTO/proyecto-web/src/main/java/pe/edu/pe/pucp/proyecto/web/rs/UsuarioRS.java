@@ -36,6 +36,8 @@ import java.util.List;
 public class UsuarioRS {
 
     private final UsuarioBL usuarioBL = new UsuarioBLImpl();
+    private final pe.edu.pe.pucp.proyecto.auditoria.bl.AuditoriaEstadoBL auditoriaBL =
+            new pe.edu.pe.pucp.proyecto.auditoria.implbl.AuditoriaEstadoBLImpl();
 
     /** GET UsuarioRS -> todos los usuarios (sin password). Útil para admin/pruebas. */
     @GET
@@ -172,9 +174,14 @@ public class UsuarioRS {
                                .entity("{\"error\":\"Usuario no encontrado\"}").build();
             }
             // Convertir el string recibido al enum; valida que sea un valor permitido.
+            EstadoUsuario anterior = u.getEstadoActual();
             EstadoUsuario nuevo = EstadoUsuario.valueOf(req.getEstado());
             u.setEstadoActual(nuevo);
             usuarioBL.modificar(u);
+            // RNF09: el admin suspende/reactiva la cuenta -> transición de estado_actual auditada.
+            auditoriaBL.registrar(pe.edu.pe.pucp.proyecto.auditoria.AuditoriaEstado.ENTIDAD_USUARIO,
+                    id, "estado_actual", anterior != null ? anterior.name() : null, nuevo.name(),
+                    "Cambio de estado por administrador");
             return Response.ok(UsuarioMapper.toDTO(u)).build();
         } catch (IllegalArgumentException ex) {
             return Response.status(Response.Status.BAD_REQUEST)

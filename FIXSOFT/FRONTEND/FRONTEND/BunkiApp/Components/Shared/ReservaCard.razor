@@ -1,6 +1,7 @@
 @* Components/Shared/ReservaCard.razor *@
 @inject NavigationManager Navigation
 @inject BunkiApp.Models.AppState AppState
+@inject BunkiApp.Services.BackendUrls Urls
 @implements IDisposable
 
 <article class="rsv-card">
@@ -58,7 +59,7 @@
                 </button>
                 @* El enlace apunta al endpoint del comprobante por id de reserva: el backend devuelve el PDF con Content-Disposition attachment, así que el navegador lo descarga directo al abrir la URL. Solo aplica a reservas YA pagadas (Confirmada/Completada). target="_blank" para no sacar al usuario de Mis Reservas. *@
                 <a class="btn btn-small btn-outline"
-                   href="@($"http://localhost:8080/BunkiBackend/webresources/PagoRS/reserva/{Reserva.Id}/comprobante")"
+                   href="@Urls.Para($"PagoRS/reserva/{Reserva.Id}/comprobante")"
                    target="_blank">
                     <i class="fas fa-file-pdf"></i> Comprobante
                 </a>
@@ -74,13 +75,13 @@
                 <button class="btn btn-small btn-outline" @onclick="OnCancelar">Cancelar</button>
                 @* Comprobante de pago (PDF) de la reserva ya pagada; el header attachment fuerza la descarga. *@
                 <a class="btn btn-small btn-outline"
-                   href="@($"http://localhost:8080/BunkiBackend/webresources/PagoRS/reserva/{Reserva.Id}/comprobante")"
+                   href="@Urls.Para($"PagoRS/reserva/{Reserva.Id}/comprobante")"
                    target="_blank">
                     <i class="fas fa-file-pdf"></i> Comprobante
                 </a>
                 @* Voucher de reserva (RF26, JasperReports) para presentar en el check-in. *@
                 <a class="btn btn-small btn-outline"
-                   href="@($"http://localhost:8080/BunkiBackend/webresources/ReporteRS/voucher/pdf?reserva={Reserva.Id}")"
+                   href="@Urls.Para($"ReporteRS/voucher/pdf?reserva={Reserva.Id}")"
                    target="_blank">
                     <i class="fas fa-ticket"></i> Voucher
                 </a>

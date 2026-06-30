@@ -41,6 +41,13 @@ public class AuthFilter implements ContainerRequestFilter {
             new ReglaAdmin("DELETE", Pattern.compile("^UsuarioRS/\\d+/?$")),
             // Suspender / reactivar una cuenta de usuario.
             new ReglaAdmin("PUT", Pattern.compile("^UsuarioRS/\\d+/estado/?$")),
+            // RNF03: la cola de validaciones documentarias trae DNI/Pasaporte + imagen del documento;
+            // solo el administrador puede verla. (El acceso del titular a su propio documento se
+            // controla dentro de ValidacionRS/usuario/{id}, que admite dueño o admin.)
+            new ReglaAdmin("GET", Pattern.compile("^ValidacionRS/pendientes/?$")),
+            // RNF09: la bitácora de auditoría (transiciones de estado) es información sensible de
+            // gestión; toda lectura es solo para administradores.
+            new ReglaAdmin("GET", Pattern.compile("^AuditoriaRS(/.*)?$")),
     };
 
     @Override

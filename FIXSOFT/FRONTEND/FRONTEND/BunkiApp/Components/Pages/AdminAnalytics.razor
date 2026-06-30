@@ -5,6 +5,7 @@
 @using System.Text
 @inject AlojamientoProvider AlojamientoProvider
 @inject ResenaProvider ResenaProvider
+@inject BunkiApp.Services.BackendUrls Urls
 
 <PageTitle>Bunki Admin · Analytics</PageTitle>
 
@@ -24,8 +25,8 @@
                 <div class="an-card-sub" style="margin:2px 0 0;">@rep.Detalle</div>
             </div>
             <div style="display:flex; gap:10px;">
-                <a class="btn btn-primary btn-small" href="@($"http://localhost:8080/BunkiBackend/webresources/ReporteRS/{rep.Endpoint}/pdf")" target="_blank" rel="noopener"><i class="fas fa-file-pdf"></i> PDF</a>
-                <a class="btn btn-secondary btn-small" href="@($"http://localhost:8080/BunkiBackend/webresources/ReporteRS/{rep.Endpoint}/csv")" target="_blank" rel="noopener"><i class="fas fa-file-csv"></i> CSV</a>
+                <a class="btn btn-primary btn-small" href="@Urls.Para($"ReporteRS/{rep.Endpoint}/pdf")" target="_blank" rel="noopener"><i class="fas fa-file-pdf"></i> PDF</a>
+                <a class="btn btn-secondary btn-small" href="@Urls.Para($"ReporteRS/{rep.Endpoint}/csv")" target="_blank" rel="noopener"><i class="fas fa-file-csv"></i> CSV</a>
             </div>
         </div>
     }

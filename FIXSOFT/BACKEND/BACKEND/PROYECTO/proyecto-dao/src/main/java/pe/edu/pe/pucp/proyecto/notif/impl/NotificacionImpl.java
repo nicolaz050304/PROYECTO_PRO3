@@ -13,11 +13,42 @@ import java.util.List;
 public class NotificacionImpl implements NotificacionIDAO {
 
     // Consultas SQL sincronizadas con la tabla 'notificaciones'
-    private static final String SQL_INSERT = "INSERT INTO notificaciones (titulo, mensaje, leido, id_usuario) VALUES (?, ?, ?, ?)";
-    private static final String SQL_LOAD = "SELECT id_notificacion, titulo, mensaje, leido, id_usuario FROM notificaciones WHERE id_notificacion = ?";
-    private static final String SQL_UPDATE = "UPDATE notificaciones SET id_usuario = ?, titulo = ?, mensaje = ?, leido = ? WHERE id_notificacion = ?";
+    private static final String SQL_INSERT = "INSERT INTO notificaciones (titulo, mensaje, leido, categoria, id_usuario) VALUES (?, ?, ?, ?, ?)";
+    private static final String SQL_LOAD = "SELECT id_notificacion, titulo, mensaje, leido, categoria, id_usuario FROM notificaciones WHERE id_notificacion = ?";
+    private static final String SQL_UPDATE = "UPDATE notificaciones SET id_usuario = ?, titulo = ?, mensaje = ?, leido = ?, categoria = ? WHERE id_notificacion = ?";
     private static final String SQL_DELETE = "DELETE FROM notificaciones WHERE id_notificacion = ?";
-    private static final String SQL_SELECT_ALL = "SELECT id_notificacion, titulo, mensaje, leido, id_usuario FROM notificaciones";
+    private static final String SQL_SELECT_ALL = "SELECT id_notificacion, titulo, mensaje, leido, categoria, id_usuario FROM notificaciones";
+
+    // La tabla 'notificaciones' ya existía sin la columna 'categoria'; la auto-migramos una sola vez
+    // (chequeo en information_schema + ALTER) para no romper instalaciones previas. Mismo patrón que
+    // otras tablas del proyecto (ALTER ADD COLUMN sobre tabla existente).
+    private static boolean columnaCategoriaVerificada = false;
+
+    public NotificacionImpl() {
+        asegurarColumnaCategoria();
+    }
+
+    private static synchronized void asegurarColumnaCategoria() {
+        if (columnaCategoriaVerificada) return;
+        try (Connection con = DBManager.getInstance().getConnection()) {
+            boolean existe = false;
+            String check = "SELECT COUNT(*) FROM information_schema.COLUMNS " +
+                           "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'notificaciones' AND COLUMN_NAME = 'categoria'";
+            try (PreparedStatement ps = con.prepareStatement(check);
+                 ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) existe = rs.getInt(1) > 0;
+            }
+            if (!existe) {
+                try (Statement st = con.createStatement()) {
+                    st.executeUpdate("ALTER TABLE notificaciones ADD COLUMN categoria VARCHAR(20) NOT NULL DEFAULT 'GENERAL'");
+                }
+            }
+            columnaCategoriaVerificada = true;
+        } catch (SQLException e) {
+            // Si falla la migración (p. ej. permisos), no rompemos: las lecturas usan fallback 'GENERAL'.
+            columnaCategoriaVerificada = true;
+        }
+    }
 
     @Override
     public Notificaciones save(Notificaciones notificacion) {
@@ -29,7 +60,8 @@ public class NotificacionImpl implements NotificacionIDAO {
             ps.setString(1, notificacion.getTitulo());
             ps.setString(2, notificacion.getMensaje());
             ps.setBoolean(3, notificacion.isLeido());
-            ps.setInt(4, notificacion.getUsuario().getIdUsuario());
+            ps.setString(4, normalizarCategoria(notificacion.getCategoria()));
+            ps.setInt(5, notificacion.getUsuario().getIdUsuario());
             ps.executeUpdate();
 
             try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -86,7 +118,8 @@ public class NotificacionImpl implements NotificacionIDAO {
             ps.setString(2, notificacion.getTitulo());
             ps.setString(3, notificacion.getMensaje());
             ps.setBoolean(4, notificacion.isLeido());
-            ps.setInt(5, notificacion.getIdNotificacion());
+            ps.setString(5, normalizarCategoria(notificacion.getCategoria()));
+            ps.setInt(6, notificacion.getIdNotificacion());
 
             int filasAfectadas = ps.executeUpdate();
             if (filasAfectadas == 0) {
@@ -117,7 +150,7 @@ public class NotificacionImpl implements NotificacionIDAO {
     // Notificaciones de un usuario, más recientes primero (id desc): es el feed que ve el usuario.
     @Override
     public List<Notificaciones> listarPorUsuario(int idUsuario) {
-        String sql = "SELECT id_notificacion, titulo, mensaje, leido, id_usuario FROM notificaciones " +
+        String sql = "SELECT id_notificacion, titulo, mensaje, leido, categoria, id_usuario FROM notificaciones " +
                      "WHERE id_usuario = ? ORDER BY id_notificacion DESC";
         List<Notificaciones> lista = new ArrayList<>();
         try (Connection con = DBManager.getInstance().getConnection();
@@ -178,9 +211,17 @@ public class NotificacionImpl implements NotificacionIDAO {
         n.setTitulo(rs.getString("titulo"));
         n.setMensaje(rs.getString("mensaje"));
         n.setLeido(rs.getBoolean("leido"));
+        String cat = rs.getString("categoria");
+        n.setCategoria(normalizarCategoria(cat));
         n.setUsuario(usuario);
 
         return n;
+    }
+
+    // Garantiza un valor de categoría válido (mayúsculas); null/vacío -> GENERAL.
+    private static String normalizarCategoria(String c) {
+        if (c == null || c.isBlank()) return "GENERAL";
+        return c.trim().toUpperCase();
     }
 
     private void validarNotificacion(Notificaciones notificacion) {

@@ -6,7 +6,7 @@
         <span class="star">@Estrellas</span>
         @if (MostrarConteo)
         {
-            <span class="rating-text">(@TotalResenas reseñas)</span>
+            <span class="rating-text">(@TotalResenas @(TotalResenas == 1 ? "reseña" : "reseñas"))</span>
         }
     }
     else

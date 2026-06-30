@@ -53,6 +53,8 @@ public class AlojamientoDTO {
     // Servicios/amenities y reglas de la casa (RF05): el formulario los envía y el DAO los persiste.
     private List<String> servicios = new ArrayList<>();
     private List<String> reglas = new ArrayList<>();
+    // Galería de fotos (la portada va aparte en imagenUrl).
+    private List<String> imagenes = new ArrayList<>();
 
     public AlojamientoDTO() {
     }
@@ -62,6 +64,9 @@ public class AlojamientoDTO {
 
     public List<String> getReglas() { return reglas; }
     public void setReglas(List<String> reglas) { this.reglas = reglas != null ? reglas : new ArrayList<>(); }
+
+    public List<String> getImagenes() { return imagenes; }
+    public void setImagenes(List<String> imagenes) { this.imagenes = imagenes != null ? imagenes : new ArrayList<>(); }
 
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }

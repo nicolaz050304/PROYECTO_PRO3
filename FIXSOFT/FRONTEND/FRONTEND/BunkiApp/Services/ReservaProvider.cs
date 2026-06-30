@@ -24,10 +24,9 @@ namespace BunkiApp.Services
         {
             try
             {
-                var lista = await _rest.ListarAsync();
-                return (lista is null || lista.Count == 0)
-                    ? _mock.ObtenerTodasLasReservas()             // MÉTODO REAL de DataService
-                    : lista;
+                // Vacío = no hay reservas (resultado válido): NO mostramos las demo. El mock queda
+                // solo para CAÍDA del REST (catch), no para "0 resultados".
+                return await _rest.ListarAsync() ?? new();
             }
             catch (Exception ex)
             {
@@ -40,9 +39,7 @@ namespace BunkiApp.Services
         {
             try
             {
-                var lista = await _rest.ListarAsync();
-                if (lista is null || lista.Count == 0)
-                    return _mock.ObtenerReservasProximas();       // MÉTODO REAL
+                var lista = await _rest.ListarAsync() ?? new();
                 return lista.Where(r => r.Estado is "Confirmada" or "Pendiente").ToList();
             }
             catch (Exception ex)
@@ -56,9 +53,7 @@ namespace BunkiApp.Services
         {
             try
             {
-                var lista = await _rest.ListarAsync();
-                if (lista is null || lista.Count == 0)
-                    return _mock.ObtenerReservasPasadas();        // MÉTODO REAL
+                var lista = await _rest.ListarAsync() ?? new();
                 return lista.Where(r => r.Estado == "Completada").ToList();
             }
             catch (Exception ex)
@@ -72,9 +67,7 @@ namespace BunkiApp.Services
         {
             try
             {
-                var lista = await _rest.ListarAsync();
-                if (lista is null || lista.Count == 0)
-                    return _mock.ObtenerReservasCanceladas();     // MÉTODO REAL
+                var lista = await _rest.ListarAsync() ?? new();
                 return lista.Where(r => r.Estado == "Cancelada").ToList();
             }
             catch (Exception ex)
@@ -88,8 +81,8 @@ namespace BunkiApp.Services
         {
             try
             {
-                return await _rest.ObtenerPorIdAsync(id)
-                       ?? _mock.ObtenerTodasLasReservas().FirstOrDefault(r => r.Id == id);
+                // null del REST = no existe (resultado válido) -> null, no una reserva demo.
+                return await _rest.ObtenerPorIdAsync(id);
             }
             catch (Exception ex)
             {

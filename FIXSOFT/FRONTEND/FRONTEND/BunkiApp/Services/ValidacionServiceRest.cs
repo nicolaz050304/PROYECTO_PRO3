@@ -36,16 +36,24 @@ namespace BunkiApp.Services
         }
 
         // Documento/estado del usuario (para "Mis documentos"). 204 -> aún no subió nada -> null.
+        // RNF03: adjunta identidad; el backend solo devuelve el documento al titular o a un admin.
         public async Task<DocumentoValidacion?> ObtenerDeUsuarioAsync(int usuarioId)
         {
+            AplicarIdentidad();
             var resp = await _http.GetAsync($"{Endpoint}/usuario/{usuarioId}");
             if (resp.StatusCode == HttpStatusCode.NoContent || !resp.IsSuccessStatusCode) return null;
             return await resp.Content.ReadFromJsonAsync<DocumentoValidacion>();
         }
 
         // Cola de revisión del admin: documentos PENDIENTE con datos del usuario.
+        // RNF03: requiere rol ADMINISTRADOR (AuthFilter); adjunta identidad y tolera 401/403 -> lista vacía.
         public async Task<List<DocumentoValidacion>> ListarPendientesAsync()
-            => await _http.GetFromJsonAsync<List<DocumentoValidacion>>($"{Endpoint}/pendientes") ?? new();
+        {
+            AplicarIdentidad();
+            var resp = await _http.GetAsync($"{Endpoint}/pendientes");
+            if (!resp.IsSuccessStatusCode) return new();
+            return await resp.Content.ReadFromJsonAsync<List<DocumentoValidacion>>() ?? new();
+        }
 
         // El usuario sube su documento (data URL). Devuelve (ok, mensaje de error del backend).
         public async Task<(bool ok, string? error)> SubirAsync(

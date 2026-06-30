@@ -45,11 +45,13 @@ public final class UsuarioMapper {
         // Estado real de la cuenta (enum -> String) para que el admin lo vea tal cual en el panel.
         dto.setEstado(u.getEstadoActual() != null ? u.getEstadoActual().name() : "DISPONIBLE");
 
-        // Validación documentaria (RF02): estado + documento, para el badge "verificado", el gate de
-        // publicación y el perfil. estadoValidacion por defecto PENDIENTE si la entidad no lo trae.
+        // Validación documentaria (RF02): solo el ESTADO viaja (para el badge "verificado" y el gate
+        // de publicación). estadoValidacion por defecto PENDIENTE si la entidad no lo trae.
         dto.setEstadoValidacion(u.getEstadoValidacion() != null ? u.getEstadoValidacion() : "PENDIENTE");
-        dto.setTipoDocumento(u.getTipoDocumento() != null ? u.getTipoDocumento().name() : null);
-        dto.setNumeroDocumento(u.getNumeroDocumento());
+        // RNF03 (privacidad selectiva): el DNI/Pasaporte NO se expone en el DTO general de usuario
+        // (este endpoint es público/de usuario y cualquiera podía leerlo). El documento solo es
+        // visible para el ADMIN o el propio titular, a través de ValidacionRS con control de acceso.
+        // Por eso aquí tipoDocumento/numeroDocumento se dejan deliberadamente fuera.
         return dto;
     }
 

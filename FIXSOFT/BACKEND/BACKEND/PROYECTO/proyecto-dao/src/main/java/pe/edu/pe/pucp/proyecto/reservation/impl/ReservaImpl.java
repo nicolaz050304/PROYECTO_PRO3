@@ -16,9 +16,48 @@ import java.util.List;
 public class ReservaImpl implements ReservaIDAO {
 
     private static volatile boolean columnaHuespedesLista = false;
+    private static volatile boolean indicesListos = false;
 
     public ReservaImpl() {
         asegurarColumnaHuespedes();
+        asegurarIndices();
+    }
+
+    /**
+     * Índices para acelerar las consultas frecuentes (RNF05 / fluidez). Antes las búsquedas por
+     * huésped/anfitrión escaneaban toda la tabla; con estos índices van directo. Se crean una sola
+     * vez si faltan (MySQL no soporta CREATE INDEX IF NOT EXISTS, así que consultamos
+     * information_schema.STATISTICS). Si algo falla, no rompe nada: solo no acelera.
+     */
+    private static synchronized void asegurarIndices() {
+        if (indicesListos) return;
+        try (Connection con = DBManager.getInstance().getConnection()) {
+            crearIndiceSiFalta(con, "reserva", "idx_reserva_invitado", "id_invitado");
+            crearIndiceSiFalta(con, "reserva", "idx_reserva_alojamiento", "id_alojamiento");
+            crearIndiceSiFalta(con, "reserva", "idx_reserva_estado", "estado");
+            // Soporta el JOIN reserva-alojamiento por dueño (reservas del anfitrión).
+            crearIndiceSiFalta(con, "alojamiento", "idx_aloj_duenho", "id_duenho");
+            indicesListos = true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void crearIndiceSiFalta(Connection con, String tabla, String indice, String columnas) {
+        String check = "SELECT COUNT(*) FROM information_schema.STATISTICS " +
+                "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND INDEX_NAME = ?";
+        try (PreparedStatement ps = con.prepareStatement(check)) {
+            ps.setString(1, tabla);
+            ps.setString(2, indice);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next() && rs.getInt(1) > 0) return; // ya existe
+            }
+            try (Statement st = con.createStatement()) {
+                st.executeUpdate("CREATE INDEX " + indice + " ON " + tabla + " (" + columnas + ")");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // índice no crítico: la consulta funciona igual, solo más lenta
+        }
     }
 
     /**
@@ -275,5 +314,63 @@ public class ReservaImpl implements ReservaIDAO {
             // Propagar en vez de ocultar (ver nota en listAll).
             throw new RuntimeException("Error en ReservaImpl (eliminar): " + e.getMessage(), e);
         }
+    }
+
+    // Las 12 columnas que necesita el modelo Reserva (mismo orden que listAll).
+    private static final String COLS =
+            "id_reserva, fecha_inicio, fecha_fin, monto_total, id_invitado, id_alojamiento, " +
+            "fecha_contacto, estado, moneda, calificado_por_invitado, calificado_por_anfitrion, num_huespedes";
+
+    @Override
+    public List<Reserva> listarPorInvitado(int idInvitado) {
+        // Filtrado en SQL (no traemos toda la tabla para filtrar en memoria).
+        String sql = "SELECT " + COLS + " FROM reserva WHERE id_invitado = ?";
+        return consultarReservas(sql, idInvitado, "por invitado");
+    }
+
+    @Override
+    public List<Reserva> listarPorAnfitrion(int idAnfitrion) {
+        // JOIN reserva-alojamiento: las reservas cuyos alojamientos pertenecen al anfitrión.
+        String sql = "SELECT r." + COLS.replace(", ", ", r.") +
+                " FROM reserva r JOIN alojamiento a ON r.id_alojamiento = a.id_alojamiento " +
+                "WHERE a.id_duenho = ?";
+        return consultarReservas(sql, idAnfitrion, "por anfitrion");
+    }
+
+    // Ejecuta una consulta de reservas con un solo parámetro int y arma la lista.
+    private List<Reserva> consultarReservas(String sql, int param, String ctx) {
+        List<Reserva> reservas = new ArrayList<>();
+        try (Connection con = DBManager.getInstance().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, param);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) reservas.add(construir(rs));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error en ReservaImpl (" + ctx + "): " + e.getMessage(), e);
+        }
+        return reservas;
+    }
+
+    // Arma un objeto Reserva desde el ResultSet (mismas 12 columnas que listAll).
+    private static Reserva construir(ResultSet rs) throws SQLException {
+        Invitado inv = new Invitado();
+        inv.setIdUsuario(rs.getInt("id_invitado"));
+        Alojamiento alo = new Casa();
+        alo.setIdAlojamiento(rs.getInt("id_alojamiento"));
+        Reserva r = new Reserva(
+                rs.getInt("id_reserva"),
+                rs.getDate("fecha_inicio"),
+                rs.getDate("fecha_fin"),
+                rs.getDouble("monto_total"),
+                inv,
+                alo,
+                rs.getDate("fecha_contacto"),
+                EstadoReserva.valueOf(rs.getString("estado")),
+                TipoMoneda.valueOf(rs.getString("moneda")));
+        r.setCalificadoPorInvitado(rs.getBoolean("calificado_por_invitado"));
+        r.setCalificadoPorAnfitrion(rs.getBoolean("calificado_por_anfitrion"));
+        r.setNumHuespedes(rs.getInt("num_huespedes"));
+        return r;
     }
 }

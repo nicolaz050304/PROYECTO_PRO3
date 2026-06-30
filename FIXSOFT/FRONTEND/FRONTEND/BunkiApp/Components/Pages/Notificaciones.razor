@@ -7,8 +7,22 @@
 
 <div class="section">
     <div class="container" style="max-width: 700px;">
-        <div class="flex flex-between items-center mb-30">
-            <h2 style="font-size: 24px; font-weight: 700;">Notificaciones</h2>
+        <header class="page-head">
+            <span class="eyebrow">Tu actividad</span>
+            <h1 class="page-head-title">Notificaciones</h1>
+            <p class="page-head-sub">Avisos sobre tus reservas, mensajes y pagos, todo en un solo lugar.</p>
+        </header>
+
+        <div class="flex flex-between items-center mb-20" style="flex-wrap: wrap; gap: 12px;">
+            <div class="flex gap-10">
+                @foreach (var cat in Categorias)
+                {
+                    <button class="filter-btn @(CategoriaActiva == cat ? "active" : "")"
+                            @onclick="() => CategoriaActiva = cat">
+                        @cat
+                    </button>
+                }
+            </div>
             @if (ListaNotificaciones.Any(n => !n.Leida))
             {
                 <button class="btn btn-outline btn-small" @onclick="MarcarTodasLeidas">
@@ -17,19 +31,30 @@
             }
         </div>
 
-        <div class="flex gap-10 mb-20">
-            @foreach (var cat in Categorias)
-            {
-                <button class="filter-btn @(CategoriaActiva == cat ? "active" : "")"
-                        @onclick="() => CategoriaActiva = cat">
-                    @cat
-                </button>
-            }
-        </div>
-
         @if (!NotificacionesFiltradas.Any())
         {
-            <AlertMessage Tipo="warning" Mensaje="No hay notificaciones en esta categoría." Cerrable="false" />
+            @if (!ListaNotificaciones.Any())
+            {
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="fas fa-bell"></i></div>
+                    <h3>Sin notificaciones</h3>
+                    <p>Cuando tengas movimientos en tus reservas, mensajes o pagos, te avisaremos aquí.</p>
+                    <div class="empty-state-actions">
+                        <button class="btn btn-primary" @onclick='() => Navigation.NavigateTo("/explorar")'>Explorar alojamientos</button>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="fas fa-filter"></i></div>
+                    <h3>Nada en esta categoría</h3>
+                    <p>No hay notificaciones de @CategoriaActiva.ToLower() por ahora. Prueba con otra categoría.</p>
+                    <div class="empty-state-actions">
+                        <button class="btn btn-outline" @onclick='() => CategoriaActiva = "Todas"'>Ver todas</button>
+                    </div>
+                </div>
+            }
         }
 
         @foreach (var notif in NotificacionesFiltradas)
@@ -101,7 +126,7 @@
             Titulo = n.Titulo,
             Descripcion = n.Mensaje,
             Leida = n.Leido,
-            Categoria = "General",      // el backend aún no maneja categorías
+            Categoria = NormalizarCategoria(n.Categoria),  // RESERVA/MENSAJE/PAGO/GENERAL -> forma de la UI
             Tiempo = "",                // el backend no envía fecha
             AccionTexto = "",
             AccionUrl = ""
@@ -114,6 +139,16 @@
         "Mensajes" => "Mensaje",
         "Pagos" => "Pago",
         _ => cat
+    };
+
+    // El backend guarda la categoría en mayúsculas (RESERVA/MENSAJE/PAGO/GENERAL); la UI (filtros,
+    // íconos, color del botón) usa la forma capitalizada. Normalizamos al cargar.
+    private static string NormalizarCategoria(string? cat) => (cat ?? "").Trim().ToUpperInvariant() switch
+    {
+        "RESERVA" => "Reserva",
+        "MENSAJE" => "Mensaje",
+        "PAGO" => "Pago",
+        _ => "General"
     };
 
     private string ObtenerIcono(string categoria) => categoria switch

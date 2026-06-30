@@ -37,15 +37,6 @@
 <!-- PENDIENTES CRÍTICOS -->
 <h2 class="admin-section-label">Pendientes críticos</h2>
 <div class="admin-alerts">
-    <a href="/admin/moderacion" class="admin-card admin-alert">
-        <span class="admin-alert-icon"><i class="fas fa-clipboard-check"></i></span>
-        <span class="admin-alert-body">
-            <span class="admin-alert-count">@_porAprobar</span>
-            <span class="admin-alert-label">Alojamientos por aprobar</span>
-        </span>
-        <i class="fas fa-chevron-right admin-alert-arrow" aria-hidden="true"></i>
-    </a>
-
     <a href="/admin/moderacion?tab=denuncias" class="admin-card admin-alert">
         <span class="admin-alert-icon admin-alert-icon--warn"><i class="fas fa-flag"></i></span>
         <span class="admin-alert-body">
@@ -131,7 +122,6 @@
     private string _trendIngresos = "", _trendIngresosTono = "";
 
     // Pendientes críticos
-    private int _porAprobar;
     private int _denunciasNuevas;
     private int _incidenciasAbiertas;
 
@@ -151,7 +141,6 @@
         var usuarios = await Safe(() => UsuarioProv.ListarAsync());
         var alojamientos = await Safe(() => AlojamientoProv.ListarAsync());
         var reservas = await Safe(() => ReservaProv.ListarTodasAsync());
-        var pendientes = await Safe(() => AlojamientoProv.ListarPendientesAsync());
         var denuncias = await Safe(() => DenunciaSvc.ListarAsync());
 
         _usuarios = usuarios.Count;
@@ -161,7 +150,6 @@
 
         var incidencias = await Safe(() => IncidenciaSvc.ListarAsync());
 
-        _porAprobar = pendientes.Count;
         _denunciasNuevas = denuncias.Count(d => d.Estado == "EN_REVISION");
         // Incidencias "abiertas" = aún sin resolver/cerrar (ABIERTO o EN_PROCESO).
         _incidenciasAbiertas = incidencias.Count(i => i.Estado is "ABIERTO" or "EN_PROCESO");
@@ -189,8 +177,6 @@
             items.Add((ParseFecha(d.Fecha),
                 d.Estado == "EN_REVISION" ? "admin-activity-dot--warn" : "admin-activity-dot--success",
                 $"Denuncia #{d.Id} sobre \"{d.AlojamientoNombre}\" ({d.EstadoTexto})"));
-        foreach (var a in pendientes.Take(2))
-            items.Add((hoy, "admin-activity-dot--danger", $"\"{a.Nombre}\" espera aprobación"));
 
         _actividad = items.OrderByDescending(i => i.fecha).Take(5)
             .Select(i => new Actividad(i.dot, i.texto, TiempoRelativo(i.fecha)))

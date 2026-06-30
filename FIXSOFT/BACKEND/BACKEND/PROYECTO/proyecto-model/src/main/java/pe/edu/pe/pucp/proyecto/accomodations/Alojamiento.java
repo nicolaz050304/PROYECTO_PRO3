@@ -33,9 +33,11 @@ public abstract class Alojamiento implements IConsultable {
     // Servicios/amenities y reglas de la casa (columnas servicios/reglas como CSV). Default vacío.
     private List<String> servicios = new ArrayList<>();
     private List<String> reglas = new ArrayList<>();
+    // Galería de fotos del alojamiento (columna imagenes como CSV). La portada sigue en imagenUrl.
+    private List<String> imagenes = new ArrayList<>();
 
     public Alojamiento() {
-        this.estadoValidacion = "PENDIENTE"; // Valor por defecto
+        this.estadoValidacion = "APROBADO"; // Sin moderación: el alojamiento se publica directo
     }
 
     public Alojamiento(String nombre, String descripcion, double precioPorNoche, String direccion,
@@ -50,7 +52,7 @@ public abstract class Alojamiento implements IConsultable {
         this.disponibilidad = disponibilidad;
         this.duenho = duenho;
         this.pais = pais;
-        this.estadoValidacion = "PENDIENTE";
+        this.estadoValidacion = "APROBADO";
     }
 
     // --- NUEVOS GETTERS Y SETTERS ---
@@ -74,6 +76,9 @@ public abstract class Alojamiento implements IConsultable {
 
     public List<String> getReglas() { return reglas; }
     public void setReglas(List<String> reglas) { this.reglas = reglas != null ? reglas : new ArrayList<>(); }
+
+    public List<String> getImagenes() { return imagenes; }
+    public void setImagenes(List<String> imagenes) { this.imagenes = imagenes != null ? imagenes : new ArrayList<>(); }
 
     // --- TUS GETTERS Y SETTERS ORIGINALES ---
     public int getIdAlojamiento() { return idAlojamiento; }

@@ -22,9 +22,9 @@ namespace BunkiApp.Services
         {
             try
             {
-                var lista = await _rest.ListarAsync();
-                if (lista is null || lista.Count == 0)
-                    return _mock.ObtenerAlojamientos();          // MÉTODO REAL de DataService
+                var lista = await _rest.ListarAsync() ?? new();
+                // Vacío = catálogo realmente sin alojamientos (resultado válido): NO mostramos los
+                // de demostración. El mock es solo para cuando el REST CAE (catch), no para "0 resultados".
                 foreach (var a in lista) AplicarDefaultsVisuales(a);
                 return lista;
             }
@@ -75,8 +75,8 @@ namespace BunkiApp.Services
             try
             {
                 var a = await _rest.ObtenerPorIdAsync(id);
-                if (a is null)
-                    return _mock.ObtenerAlojamiento(id);         // MÉTODO REAL de DataService
+                // null del REST = no existe (resultado válido) -> null, no un alojamiento demo.
+                if (a is null) return null;
                 AplicarDefaultsVisuales(a);
                 return a;
             }
@@ -91,16 +91,21 @@ namespace BunkiApp.Services
         {
             try
             {
-                var lista = await _rest.ListarPorAnfitrionAsync(anfitrionId);
-                if (lista is null || lista.Count == 0)
-                    return _mock.ObtenerAlojamientosAnfitrion();   // MÉTODO REAL de DataService
+                var lista = await _rest.ListarPorAnfitrionAsync(anfitrionId) ?? new();
+                // Una lista VACÍA es un resultado VÁLIDO: el anfitrión simplemente no tiene
+                // alojamientos. NO caemos al mock por vacío (antes lo hacía y mostraba los
+                // alojamientos DEMO hardcodeados como si fueran suyos -> "cuenta nueva ya tiene
+                // alojamientos"). El mock NO distingue por dueño, así que nunca debe representar
+                // "los alojamientos de ESTE anfitrión".
                 foreach (var a in lista) AplicarDefaultsVisuales(a);
                 return lista;
             }
             catch (Exception ex)
             {
-                _log.LogWarning(ex, "REST no disponible (alojamientos del anfitrión {Id}); usando mock", anfitrionId);
-                return _mock.ObtenerAlojamientosAnfitrion();       // MÉTODO REAL de DataService
+                // REST caído: devolvemos vacío, no mock. Mostrar alojamientos ajenos/demo como
+                // "los tuyos" sería incorrecto y confuso (mismo criterio que las reservas del usuario).
+                _log.LogWarning(ex, "REST no disponible (alojamientos del anfitrión {Id}); lista vacía", anfitrionId);
+                return new();
             }
         }
 

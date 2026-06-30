@@ -12,6 +12,10 @@ public interface NotificacionBL extends IBL<Notificaciones, Integer> {
     void marcarLeida(int idNotificacion);
     // Nº de no leídas del usuario (badge).
     int contarNoLeidas(int idUsuario);
-    // Atajo para crear una notificación a un usuario (lo usará la generación automática en Fase 2).
+    // Atajo para crear una notificación a un usuario (categoría GENERAL por defecto).
     int crear(String titulo, String mensaje, int idUsuario);
+    // Igual pero con categoría explícita (RESERVA / MENSAJE / PAGO / GENERAL) para filtrar el feed.
+    int crear(String titulo, String mensaje, int idUsuario, String categoria);
+    // Crea la notificación en un HILO en segundo plano (no bloquea la petición REST que la dispara).
+    void crearAsync(String titulo, String mensaje, int idUsuario, String categoria);
 }

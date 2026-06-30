@@ -5,6 +5,7 @@
 @inject NavigationManager Navigation
 @inject BunkiApp.Models.AppState AppState
 @inject Services.PagoProvider PagoProvider
+@inject Services.BackendUrls Urls
 @inject IJSRuntime JS
 @using System.Globalization
 @implements IDisposable
@@ -114,7 +115,7 @@
                             </button>
                             @* RF23 · Estado de cuenta del anfitrión (PDF, JasperReports) con sus pagos y neto a cobrar. *@
                             <a class="btn btn-small btn-primary"
-                               href="@($"http://localhost:8080/BunkiBackend/webresources/ReporteRS/estado-anfitrion/pdf?anfitrion={AppState.UsuarioActual?.Id ?? 0}")"
+                               href="@Urls.Para($"ReporteRS/estado-anfitrion/pdf?anfitrion={AppState.UsuarioActual?.Id ?? 0}")"
                                target="_blank" rel="noopener">
                                 <i class="fas fa-file-pdf"></i> Estado de cuenta
                             </a>

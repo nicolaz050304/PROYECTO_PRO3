@@ -1,0 +1,114 @@
+@page "/admin/auditoria"
+@layout AdminLayout
+@rendermode InteractiveServer
+@inject BunkiApp.Services.AuditoriaServiceRest AuditoriaSvc
+
+<PageTitle>Bunki Admin · Auditoría</PageTitle>
+
+@* El título lo muestra el topbar del AdminLayout. *@
+<p class="admin-page-sub">Bitácora cronológica de transiciones de estado en reservas y perfiles (RNF09).</p>
+
+<div class="flex gap-10 mb-20" style="flex-wrap: wrap;">
+    @foreach (var f in _filtros)
+    {
+        <button class="filter-btn @(_filtro == f.valor ? "active" : "")" @onclick="() => _filtro = f.valor">
+            @f.etiqueta
+        </button>
+    }
+    <button class="btn btn-small btn-secondary" style="margin-left:auto;" @onclick="CargarAsync" disabled="@_cargando">
+        <i class="fas fa-rotate"></i> Refrescar
+    </button>
+</div>
+
+<div class="aud-card">
+    <div class="aud-scroll">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Fecha y hora</th><th>Entidad</th><th>Campo</th><th>Transición</th><th>Detalle</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (_cargando)
+                {
+                    <tr><td colspan="5" style="text-align:center; padding:32px; color: var(--ink-muted);">Cargando bitácora…</td></tr>
+                }
+                else if (!Filtradas.Any())
+                {
+                    <tr><td colspan="5" style="text-align:center; padding:32px; color: var(--ink-muted);">No hay registros de auditoría todavía.</td></tr>
+                }
+                else
+                {
+                    @foreach (var a in Filtradas)
+                    {
+                        <tr>
+                            <td class="aud-muted">@a.Fecha</td>
+                            <td>
+                                <span class="aud-ent aud-ent--@a.Entidad.ToLower()">
+                                    @(a.Entidad == "RESERVA" ? "Reserva" : "Usuario") #@a.IdEntidad
+                                </span>
+                            </td>
+                            <td class="aud-muted">@a.Campo</td>
+                            <td>
+                                <span class="aud-prev">@(string.IsNullOrEmpty(a.EstadoAnterior) ? "—" : a.EstadoAnterior)</span>
+                                <i class="fas fa-arrow-right aud-arrow"></i>
+                                <span class="aud-next">@a.EstadoNuevo</span>
+                            </td>
+                            <td class="aud-muted">@(string.IsNullOrWhiteSpace(a.Detalle) ? "—" : a.Detalle)</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if (!_cargando)
+{
+    <p class="aud-foot">@Filtradas.Count() de @_todos.Count registros · marca de tiempo del servidor.</p>
+}
+
+<style>
+    .aud-card { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius-lg); overflow: hidden; }
+    .aud-scroll { overflow-x: auto; }
+    .aud-muted { color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+    .aud-foot { margin-top: 12px; font-size: 12px; color: var(--ink-faint); }
+
+    .aud-ent {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 3px 10px; border-radius: var(--radius-pill);
+        font-size: 12px; font-weight: 700; white-space: nowrap;
+    }
+    .aud-ent--reserva { background: var(--blue-tint); color: var(--blue-strong); }
+    .aud-ent--usuario { background: var(--warning-tint); color: var(--warning); }
+
+    .aud-prev { color: var(--ink-muted); }
+    .aud-arrow { color: var(--ink-faint); font-size: 11px; margin: 0 6px; }
+    .aud-next { color: var(--ink); font-weight: 700; }
+</style>
+
+@code {
+    private List<AuditoriaRegistro> _todos = new();
+    private bool _cargando = true;
+    private string _filtro = "Todas";
+
+    private readonly (string valor, string etiqueta)[] _filtros =
+    {
+        ("Todas", "Todas"),
+        ("RESERVA", "Reservas"),
+        ("USUARIO", "Usuarios")
+    };
+
+    private IEnumerable<AuditoriaRegistro> Filtradas =>
+        _filtro == "Todas" ? _todos : _todos.Where(a => a.Entidad == _filtro);
+
+    protected override async Task OnInitializedAsync() => await CargarAsync();
+
+    private async Task CargarAsync()
+    {
+        _cargando = true;
+        try { _todos = await AuditoriaSvc.ListarRecientesAsync(300); }
+        catch { _todos = new(); }
+        finally { _cargando = false; }
+    }
+}

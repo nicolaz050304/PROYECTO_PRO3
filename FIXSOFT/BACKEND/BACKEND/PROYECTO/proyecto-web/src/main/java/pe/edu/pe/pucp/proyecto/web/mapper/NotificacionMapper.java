@@ -18,6 +18,7 @@ public final class NotificacionMapper {
         dto.setTitulo(n.getTitulo());
         dto.setMensaje(n.getMensaje());
         dto.setLeido(n.isLeido());
+        dto.setCategoria(n.getCategoria());
         dto.setIdUsuario(n.getUsuario() != null ? n.getUsuario().getIdUsuario() : 0);
         return dto;
     }

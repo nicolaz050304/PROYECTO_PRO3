@@ -1,7 +1,6 @@
 @page "/admin/moderacion"
 @layout AdminLayout
 @rendermode InteractiveServer
-@inject AlojamientoProvider AlojProv
 @inject BunkiApp.Services.DenunciaServiceRest DenunciaSvc
 @inject BunkiApp.Services.IncidenciaServiceRest IncidenciaSvc
 @inject BunkiApp.Services.ValidacionServiceRest ValidacionSvc
@@ -12,13 +11,12 @@
 <PageTitle>Bunki Admin · Moderación</PageTitle>
 
 @* Título quitado: ya lo muestra el topbar del AdminLayout (evitamos el doble título). *@
-<p class="admin-page-sub">Aprueba publicaciones, revisa denuncias y gestiona incidencias.</p>
+<p class="admin-page-sub">Revisa denuncias, gestiona incidencias y valida identidades.</p>
 
 <!-- TABS -->
+@* Se retiró la pestaña "Alojamientos pendientes": no hay moderación de alojamientos
+   (los nuevos se publican directo). Quedan denuncias, incidencias y validaciones. *@
 <div class="tabs">
-    <button class="tab-btn @(_tab == 1 ? "active" : "")" @onclick="() => _tab = 1">
-        Alojamientos pendientes <span class="tab-count">@_pendientes.Count</span>
-    </button>
     <button class="tab-btn @(_tab == 2 ? "active" : "")" @onclick="() => _tab = 2">
         Denuncias <span class="tab-count">@_denuncias.Count</span>
     </button>
@@ -29,52 +27,6 @@
         Validaciones <span class="tab-count">@_validaciones.Count</span>
     </button>
 </div>
-
-<!-- TAB 1: ALOJAMIENTOS PENDIENTES -->
-@if (_tab == 1)
-{
-    <div class="adm-table-card">
-        @if (!_pendientes.Any())
-        {
-            <div class="adm-empty"><i class="fas fa-circle-check" style="color: var(--success); margin-right: 8px;"></i> No hay alojamientos pendientes de revisión.</div>
-        }
-        else
-        {
-            <div class="adm-scroll">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Alojamiento</th><th>Anfitrión</th><th>Tipo</th><th>Fecha envío</th><th style="text-align: right;">Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var a in _pendientes)
-                        {
-                            <tr>
-                                <td><strong>@a.Nombre</strong></td>
-                                <td>@a.Anfitrion</td>
-                                <td>@a.Tipo</td>
-                                <td class="adm-muted">@a.Fecha</td>
-                                <td>
-                                    <div class="adm-row-actions" style="justify-content: flex-end;">
-                                        @* Acción primaria = botón de marca (dorado); el verde/rojo se reservan
-                                           para badges de estado, no para botones de acción. *@
-                                        <button class="btn btn-small btn-primary" @onclick='() => PedirConfirmacion(a, "aprobar")'>
-                                            <i class="fas fa-check"></i> Aprobar
-                                        </button>
-                                        <button class="btn btn-small btn-secondary" @onclick='() => PedirConfirmacion(a, "rechazar")'>
-                                            Rechazar
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
-    </div>
-}
 
 <!-- TAB 2: DENUNCIAS -->
 @if (_tab == 2)
@@ -250,31 +202,6 @@
     </div>
 }
 
-<!-- MODAL CONFIRMAR (aprobar / rechazar) -->
-@if (_showConfirm && _target is not null)
-{
-    bool aprobar = _accion == "aprobar";
-    <div class="modal-overlay">
-        <div class="modal-panel">
-            <div class="empty-state-icon"
-                 style="margin-bottom: 18px; background: @(aprobar ? "var(--success-tint)" : "var(--danger-tint)"); color: @(aprobar ? "var(--success)" : "var(--danger)");">
-                <i class="fas @(aprobar ? "fa-check" : "fa-xmark")"></i>
-            </div>
-            <h2 style="margin-bottom: 12px;">@(aprobar ? "¿Aprobar alojamiento?" : "¿Rechazar alojamiento?")</h2>
-            <p class="card-text" style="margin-bottom: 24px;">
-                @(aprobar ? "Se publicará " : "Se rechazará ")<strong>@_target.Nombre</strong> de @_target.Anfitrion.
-            </p>
-            <div class="adm-modal-actions">
-                <button class="btn btn-outline" style="flex: 1;" @onclick="CerrarConfirm">Cancelar</button>
-                @* Botón de marca para la acción primaria; verde/rojo solo para badges de estado, no botones. *@
-                <button class="btn @(aprobar ? "btn-primary" : "btn-secondary")" style="flex: 1;" @onclick="ConfirmarAccion">
-                    @(aprobar ? "Aprobar" : "Rechazar")
-                </button>
-            </div>
-        </div>
-    </div>
-}
-
 <!-- MODAL DETALLE DENUNCIA -->
 @if (_showDenuncia && _denunciaSel is not null)
 {
@@ -378,7 +305,7 @@
 </style>
 
 @code {
-    private int _tab = 1;
+    private int _tab = 2;   // arranca en Denuncias (la pestaña de moderación de alojamientos se retiró)
     private string _mensaje = "";
 
     // Permite abrir directamente una pestaña desde un enlace, p. ej.
@@ -387,10 +314,6 @@
     public string? TabQuery { get; set; }
 
     // ---- Datos ----
-    // PendingAloj ahora lleva Id real para poder aprobar/rechazar contra el backend.
-    private record PendingAloj(int Id, string Nombre, string Anfitrion, string Tipo, string Fecha);
-
-    private List<PendingAloj> _pendientes = new();
     // Denuncias e incidencias REALES del backend (antes eran mock de DataService).
     private List<Denuncia> _denuncias = new();
     private List<Incidencia> _incidencias = new();
@@ -404,10 +327,9 @@
             "denuncias" => 2,
             "incidencias" => 3,
             "validaciones" => 4,
-            _ => 1
+            _ => 2
         };
 
-        await CargarPendientesAsync();
         await CargarDenunciasAsync();
         await CargarIncidenciasAsync();
         await CargarValidacionesAsync();
@@ -431,61 +353,6 @@
     {
         try { _incidencias = await IncidenciaSvc.ListarAsync(); }
         catch { _incidencias = new(); }
-    }
-
-    // Cola de moderación: alojamientos PENDIENTE traídos del backend (GET AlojamientoRS/pendientes).
-    // Alojamiento no modela "fecha de envío", por eso se muestra "—".
-    private async Task CargarPendientesAsync()
-    {
-        var lista = await AlojProv.ListarPendientesAsync();
-        _pendientes = lista
-            .Select(a => new PendingAloj(a.Id, a.Nombre, a.AnfitrionNombre, a.Tipo, "—"))
-            .ToList();
-    }
-
-    // ---- Modal confirmar (aprobar/rechazar) ----
-    private bool _showConfirm;
-    private PendingAloj? _target;
-    private string _accion = "";
-
-    private void PedirConfirmacion(PendingAloj a, string accion)
-    {
-        _target = a;
-        _accion = accion;
-        _showConfirm = true;
-    }
-
-    private void CerrarConfirm()
-    {
-        _showConfirm = false;
-        _target = null;
-    }
-
-    private async Task ConfirmarAccion()
-    {
-        if (_target is null) return;
-        var nombre = _target.Nombre;
-        var aprobar = _accion == "aprobar";
-        var estado = aprobar ? "APROBADO" : "RECHAZADO";
-
-        try
-        {
-            // Persiste en el backend (PUT AlojamientoRS/{id}/validacion). Solo si tiene éxito
-            // quitamos la fila de la cola, para no mentir en pantalla si el REST falla.
-            await AlojProv.ValidarAsync(_target.Id, estado);
-            _pendientes.Remove(_target);
-            _mensaje = aprobar
-                ? $"\"{nombre}\" fue aprobado y publicado."
-                : $"\"{nombre}\" fue rechazado.";
-        }
-        catch (Exception)
-        {
-            _mensaje = $"No se pudo {(aprobar ? "aprobar" : "rechazar")} \"{nombre}\". Intenta de nuevo.";
-        }
-        finally
-        {
-            CerrarConfirm();
-        }
     }
 
     // ---- Modal detalle de denuncia ----

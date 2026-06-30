@@ -59,7 +59,8 @@ public class PagoBLImpl implements PagoBL {
                     int idAnfitrion = alo.getDuenho().getIdUsuario();
                     if (idAnfitrion > 0) {
                         new NotificacionBLImpl().crear("Pago recibido",
-                                "Has recibido un pago por una de tus reservas.", idAnfitrion);
+                                "Recibiste S/ " + String.format(java.util.Locale.US, "%.2f", nuevoPago.getMontoNeto())
+                                        + " por una de tus reservas.", idAnfitrion, "PAGO");
                     }
                 }
             }

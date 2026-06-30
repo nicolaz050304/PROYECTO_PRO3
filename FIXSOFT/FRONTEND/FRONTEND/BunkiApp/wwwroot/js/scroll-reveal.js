@@ -12,9 +12,19 @@ window.bunkiReveal = {
         var elementos = document.querySelectorAll('[data-reveal], [data-reveal-group]');
         if (!elementos.length) return; // robustez: si no hay nada que revelar, no hace nada
 
+        // init() puede llamarse más de una vez: en firstRender y de nuevo cuando llega contenido
+        // async (p.ej. los testimonios de la Home se renderizan tras cargar las reseñas, DESPUÉS
+        // del primer render). Solo enganchamos los elementos que todavía no procesamos —marcados
+        // con data-reveal-bound— para no crear observers duplicados sobre los ya revelados.
+        var pendientes = Array.prototype.filter.call(elementos, function (el) {
+            return !el.hasAttribute('data-reveal-bound');
+        });
+        if (!pendientes.length) return;
+        pendientes.forEach(function (el) { el.setAttribute('data-reveal-bound', ''); });
+
         // Revela todo de inmediato (sin observar ni animar). Helper para los casos de salida temprana.
         function revelarTodo() {
-            elementos.forEach(function (el) { el.classList.add('is-visible'); });
+            pendientes.forEach(function (el) { el.classList.add('is-visible'); });
         }
 
         // prefers-reduced-motion: respetamos la preferencia mostrando todo de una, sin movimiento.
@@ -36,6 +46,6 @@ window.bunkiReveal = {
             rootMargin: '0px 0px -5% 0px'    // dispara un poco antes de llegar al borde inferior
         });
 
-        elementos.forEach(function (el) { observer.observe(el); });
+        pendientes.forEach(function (el) { observer.observe(el); });
     }
 };

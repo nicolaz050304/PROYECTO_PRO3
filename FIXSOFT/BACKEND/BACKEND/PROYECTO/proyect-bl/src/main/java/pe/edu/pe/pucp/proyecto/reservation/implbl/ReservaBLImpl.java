@@ -69,6 +69,18 @@ public class ReservaBLImpl implements ReservaBL {
     }
 
     @Override
+    public List<Reserva> listarPorInvitado(int idInvitado) {
+        if (idInvitado <= 0) return new java.util.ArrayList<>();
+        return daoReserva.listarPorInvitado(idInvitado);
+    }
+
+    @Override
+    public List<Reserva> listarPorAnfitrion(int idAnfitrion) {
+        if (idAnfitrion <= 0) return new java.util.ArrayList<>();
+        return daoReserva.listarPorAnfitrion(idAnfitrion);
+    }
+
+    @Override
     public void marcarReservaComoCalificada(int idReserva, String tipoAutor) {
         // Obtenemos la reserva actual
         Reserva reservaBD = daoReserva.load(idReserva);

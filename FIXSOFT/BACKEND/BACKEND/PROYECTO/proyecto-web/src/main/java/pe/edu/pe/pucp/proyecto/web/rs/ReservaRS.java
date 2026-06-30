@@ -61,6 +61,8 @@ public class ReservaRS {
     private final BloqueoFechaBL bloqueoBL = new BloqueoFechaBLImpl();
     private final CuentaBancariaBL cuentaBL = new CuentaBancariaBLImpl();
     private final MovimientoCuentaBL movimientoBL = new MovimientoCuentaBLImpl();
+    private final pe.edu.pe.pucp.proyecto.auditoria.bl.AuditoriaEstadoBL auditoriaBL =
+            new pe.edu.pe.pucp.proyecto.auditoria.implbl.AuditoriaEstadoBLImpl();
 
     /** Comisión de la plataforma sobre el monto de la reserva (RF13). El anfitrión cobra el resto. */
     private static final double COMISION = 0.10;
@@ -103,12 +105,11 @@ public class ReservaRS {
         Map<Integer, Alojamiento> aloCache = new HashMap<>();
         Map<Integer, String> usuarioCache = new HashMap<>();
         List<ReservaDTO> salida = new ArrayList<>();
-        List<Reserva> lista = reservaBL.listarTodos();
+        // Filtrado en SQL (id_invitado): antes traía TODAS las reservas y filtraba en memoria.
+        List<Reserva> lista = reservaBL.listarPorInvitado(usuarioId);
         if (lista != null) {
             for (Reserva r : lista) {
-                if (r.getInvitado() != null && r.getInvitado().getIdUsuario() == usuarioId) {
-                    salida.add(ReservaMapper.toDTO(r, alojamientoBL, usuarioBL, aloCache, usuarioCache));
-                }
+                salida.add(ReservaMapper.toDTO(r, alojamientoBL, usuarioBL, aloCache, usuarioCache));
             }
         }
         return salida;
@@ -126,26 +127,13 @@ public class ReservaRS {
         Map<Integer, Alojamiento> aloCache = new HashMap<>();
         Map<Integer, String> usuarioCache = new HashMap<>();
         List<ReservaDTO> salida = new ArrayList<>();
-        List<Reserva> lista = reservaBL.listarTodos();
+        // Filtrado en SQL (JOIN reserva-alojamiento por dueño): antes traía TODAS las reservas y,
+        // por cada una, consultaba el alojamiento para ver el dueño (N+1). Ahora la BD devuelve
+        // directamente solo las reservas del anfitrión.
+        List<Reserva> lista = reservaBL.listarPorAnfitrion(anfitrionId);
         if (lista != null) {
             for (Reserva r : lista) {
-                int alojamientoId = r.getAlojamiento() != null ? r.getAlojamiento().getIdAlojamiento() : 0;
-                if (alojamientoId <= 0) {
-                    continue;
-                }
-                try {
-                    Alojamiento alo = aloCache.get(alojamientoId);
-                    if (alo == null && !aloCache.containsKey(alojamientoId)) {
-                        alo = alojamientoBL.obtenerPorId(alojamientoId);
-                        aloCache.put(alojamientoId, alo);
-                    }
-                    if (alo != null && alo.getDuenho() != null
-                            && alo.getDuenho().getIdUsuario() == anfitrionId) {
-                        salida.add(ReservaMapper.toDTO(r, alojamientoBL, usuarioBL, aloCache, usuarioCache));
-                    }
-                } catch (RuntimeException ex) {
-                    // Defensivo: si el lookup falla, esa reserva simplemente no se incluye.
-                }
+                salida.add(ReservaMapper.toDTO(r, alojamientoBL, usuarioBL, aloCache, usuarioCache));
             }
         }
         return salida;
@@ -216,6 +204,8 @@ public class ReservaRS {
         String desc = "Abono por reserva #" + reservaId
                 + (alo.getNombre() != null ? " · " + alo.getNombre() : "");
         movimientoBL.abonar(destino.getIdCuenta(), ganancia, desc, reservaId);
+        // Nota: la notificación de "Pago recibido" (categoría PAGO) al anfitrión la emite PagoBLImpl
+        // al registrarse el pago; no se duplica aquí.
     }
 
     /** Formatea a ISO "yyyy-MM-dd" (sin hora ni 'Z'), igual que el resto de fechas expuestas; null -> null. */
@@ -232,6 +222,9 @@ public class ReservaRS {
         Reserva entidad = ReservaMapper.toEntity(dto);
         int nuevoId = reservaBL.insertar(entidad);
         entidad.setIdReserva(nuevoId);
+        // RNF09: registra el estado inicial de la reserva (transición desde "nada" -> estado inicial).
+        auditoriaBL.registrar(pe.edu.pe.pucp.proyecto.auditoria.AuditoriaEstado.ENTIDAD_RESERVA,
+                nuevoId, "estado", null, nombreEstado(entidad.getEstadoReserva()), "Reserva creada");
         ReservaDTO creado = ReservaMapper.toDTO(entidad, alojamientoBL, usuarioBL, new HashMap<>(), new HashMap<>());
         return Response.status(Response.Status.CREATED).entity(creado).build();
     }
@@ -249,6 +242,13 @@ public class ReservaRS {
         entidad.setIdReserva(id);
         reservaBL.modificar(entidad);
 
+        // RNF09: si el estado de la reserva CAMBIÓ, lo registramos en la bitácora de auditoría.
+        if (estadoAnterior != entidad.getEstadoReserva()) {
+            auditoriaBL.registrar(pe.edu.pe.pucp.proyecto.auditoria.AuditoriaEstado.ENTIDAD_RESERVA,
+                    id, "estado", nombreEstado(estadoAnterior),
+                    nombreEstado(entidad.getEstadoReserva()), null);
+        }
+
         // EVENTO 1 (RF18): si la reserva PASA a CONFIRMADA (antes no lo estaba), notificamos al HUÉSPED.
         // La notificación es secundaria: va en try/catch para no romper la confirmación si algo falla.
         if (entidad.getEstadoReserva() == EstadoReserva.CONFIRMADA
@@ -257,7 +257,7 @@ public class ReservaRS {
             if (idHuesped > 0) {
                 try {
                     notificacionBL.crear("Reserva confirmada",
-                            "Tu reserva ha sido confirmada por el anfitrión.", idHuesped);
+                            "Tu reserva ha sido confirmada por el anfitrión.", idHuesped, "RESERVA");
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -294,9 +294,18 @@ public class ReservaRS {
         if (r == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
+        EstadoReserva estadoPrevio = r.getEstadoReserva();
         reservaBL.eliminar(r);
+        // RNF09: la baja lógica es una transición a CANCELADA; queda registrada en la auditoría.
+        auditoriaBL.registrar(pe.edu.pe.pucp.proyecto.auditoria.AuditoriaEstado.ENTIDAD_RESERVA,
+                id, "estado", nombreEstado(estadoPrevio), "CANCELADA", "Reserva cancelada");
         // RF15: cancelar (baja lógica) también revierte el abono al anfitrión si lo hubo. Secundario.
         try { movimientoBL.reembolsarPorReserva(id); } catch (Exception ex) { ex.printStackTrace(); }
         return Response.noContent().build();
+    }
+
+    /** Nombre del estado de reserva (enum -> String); null -> null. Para la bitácora de auditoría. */
+    private static String nombreEstado(EstadoReserva e) {
+        return e != null ? e.name() : null;
     }
 }

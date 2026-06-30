@@ -25,7 +25,7 @@ public class AlojamientoImpl implements AlojamientoIDAO {
         if (columnasListas) return;
         try (Connection c = DBManager.getInstance().getConnection();
              Statement st = c.createStatement()) {
-            for (String col : new String[]{"servicios", "reglas"}) {
+            for (String col : new String[]{"servicios", "reglas", "imagenes"}) {
                 String check = "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() " +
                         "AND TABLE_NAME = 'alojamiento' AND COLUMN_NAME = '" + col + "'";
                 try (ResultSet rs = st.executeQuery(check)) {
@@ -64,7 +64,7 @@ public class AlojamientoImpl implements AlojamientoIDAO {
                 "latitud, longitud, estado_validacion, id_admin_validador, " + // Nuevos campos
                 "num_pisos, con_patio, num_cocheras, num_habitaciones_casa, " +
                 "num_piso, nro_departamento, nro_habitaciones_departamento, " +
-                "nro_habitacion, tipo_cama, con_banho_privado, imagen_url, servicios, reglas FROM alojamiento WHERE id_alojamiento = ?";
+                "nro_habitacion, tipo_cama, con_banho_privado, imagen_url, servicios, reglas, imagenes FROM alojamiento WHERE id_alojamiento = ?";
 
         try (Connection connection = DBManager.getInstance().getConnection();
              PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -110,6 +110,7 @@ public class AlojamientoImpl implements AlojamientoIDAO {
                         alojamiento.setImagenUrl(rs.getString("imagen_url"));
                         alojamiento.setServicios(fromCsv(rs.getString("servicios")));
                         alojamiento.setReglas(fromCsv(rs.getString("reglas")));
+                        alojamiento.setImagenes(fromCsv(rs.getString("imagenes")));
                     }
                     return alojamiento;
                 }
@@ -127,8 +128,8 @@ public class AlojamientoImpl implements AlojamientoIDAO {
                 "calificacion_promedio, disponibilidad, pais, id_duenho, latitud, longitud, estado_validacion, " +
                 "tipo, num_pisos, con_patio, num_cocheras, num_habitaciones_casa, num_piso, " +
                 "nro_departamento, nro_habitaciones_departamento, nro_habitacion, tipo_cama, con_banho_privado, imagen_url, " +
-                "servicios, reglas) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "servicios, reglas, imagenes) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = DBManager.getInstance().getConnection();
              PreparedStatement pstmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -172,9 +173,10 @@ public class AlojamientoImpl implements AlojamientoIDAO {
 
             // 24: imagen_url (última columna; no afecta los índices anteriores)
             pstmt.setString(24, al.getImagenUrl());
-            // 25-26: servicios y reglas como CSV
+            // 25-27: servicios, reglas e imágenes (galería) como CSV
             pstmt.setString(25, toCsv(al.getServicios()));
             pstmt.setString(26, toCsv(al.getReglas()));
+            pstmt.setString(27, toCsv(al.getImagenes()));
 
             int affectedRows = pstmt.executeUpdate();
             if (affectedRows > 0) {
@@ -211,7 +213,7 @@ public class AlojamientoImpl implements AlojamientoIDAO {
                 "latitud, longitud, estado_validacion, id_admin_validador, " +
                 "num_pisos, con_patio, num_cocheras, num_habitaciones_casa, " +
                 "num_piso, nro_departamento, nro_habitaciones_departamento, " +
-                "nro_habitacion, tipo_cama, con_banho_privado, imagen_url, servicios, reglas FROM alojamiento";
+                "nro_habitacion, tipo_cama, con_banho_privado, imagen_url, servicios, reglas, imagenes FROM alojamiento";
 
         try (Connection connection = DBManager.getInstance().getConnection();
              Statement stm = connection.createStatement();
@@ -273,6 +275,7 @@ public class AlojamientoImpl implements AlojamientoIDAO {
             al.setImagenUrl(rs.getString("imagen_url"));
             al.setServicios(fromCsv(rs.getString("servicios")));
             al.setReglas(fromCsv(rs.getString("reglas")));
+            al.setImagenes(fromCsv(rs.getString("imagenes")));
         }
         return al;
     }
@@ -296,7 +299,7 @@ public class AlojamientoImpl implements AlojamientoIDAO {
                 "latitud, longitud, estado_validacion, id_admin_validador, " +
                 "num_pisos, con_patio, num_cocheras, num_habitaciones_casa, " +
                 "num_piso, nro_departamento, nro_habitaciones_departamento, " +
-                "nro_habitacion, tipo_cama, con_banho_privado, imagen_url, servicios, reglas FROM alojamiento a " +
+                "nro_habitacion, tipo_cama, con_banho_privado, imagen_url, servicios, reglas, imagenes FROM alojamiento a " +
                 "WHERE a.disponibilidad = 1 " +
                 "AND a.id_alojamiento NOT IN ( " +
                 "    SELECT r.id_alojamiento FROM reserva r " +
@@ -333,8 +336,8 @@ public class AlojamientoImpl implements AlojamientoIDAO {
                 "num_pisos=?, con_patio=?, num_cocheras=?, num_habitaciones_casa=?, " + // 13-16
                 "num_piso=?, nro_departamento=?, nro_habitaciones_departamento=?, " + // 17-19
                 "nro_habitacion=?, tipo_cama=?, con_banho_privado=?, " + // 20-22
-                "imagen_url=?, servicios=?, reglas=? " + // 23, 24, 25
-                "WHERE id_alojamiento=?"; // 26
+                "imagen_url=?, servicios=?, reglas=?, imagenes=? " + // 23, 24, 25, 26
+                "WHERE id_alojamiento=?"; // 27
 
         try (Connection connection = DBManager.getInstance().getConnection();
              PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -376,12 +379,13 @@ public class AlojamientoImpl implements AlojamientoIDAO {
 
             // 23: imagen_url
             pstmt.setString(23, al.getImagenUrl());
-            // 24-25: servicios y reglas como CSV
+            // 24-26: servicios, reglas e imágenes (galería) como CSV
             pstmt.setString(24, toCsv(al.getServicios()));
             pstmt.setString(25, toCsv(al.getReglas()));
+            pstmt.setString(26, toCsv(al.getImagenes()));
 
-            // 26: El ID para el WHERE
-            pstmt.setInt(26, al.getIdAlojamiento());
+            // 27: El ID para el WHERE
+            pstmt.setInt(27, al.getIdAlojamiento());
 
             pstmt.executeUpdate();
             return al;

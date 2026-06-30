@@ -4,6 +4,7 @@
 @inject BunkiApp.Models.AppState AppState
 @inject Services.AlojamientoProvider AlojamientoProvider
 @inject BunkiApp.Services.UsuarioServiceRest UsuarioSvc
+@inject BunkiApp.Services.ValidacionServiceRest ValidacionSvc
 @inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
 
 <PageTitle>Bunki - Crear Alojamiento</PageTitle>
@@ -22,10 +23,16 @@
                 Para proteger a los huéspedes, solo los anfitriones con identidad verificada pueden
                 publicar alojamientos (RF02).
             </p>
-            @if (_estadoValidacion == "PENDIENTE" && _verificacionLista)
+            @if (_estadoValidacion == "PENDIENTE" && _verificacionLista && _documentoEnviado)
             {
                 <p class="card-text" style="margin-bottom: 24px; color: var(--warning);">
                     <i class="fas fa-clock"></i> Tu documento está en revisión. Te avisaremos cuando se apruebe.
+                </p>
+            }
+            else if (_estadoValidacion == "PENDIENTE" && _verificacionLista)
+            {
+                <p class="card-text" style="margin-bottom: 24px;">
+                    <i class="fas fa-id-card"></i> Aún no has enviado tu documento. Súbelo para verificar tu identidad.
                 </p>
             }
             else if (_estadoValidacion == "RECHAZADO")
@@ -278,9 +285,9 @@
 
                         <label class="image-upload">
                             <i class="fas fa-cloud-upload-alt"></i>
-                            <p class="upload-text">Arrastra una foto aquí o haz clic</p>
-                            <p class="upload-hint">Una imagen principal • JPG, PNG • Máx. 5 MB</p>
-                            <InputFile OnChange="CargarImagen" accept="image/*" style="display: none;" />
+                            <p class="upload-text">Arrastra fotos aquí o haz clic</p>
+                            <p class="upload-hint">Una o varias imágenes • JPG, PNG • Máx. 5 MB c/u • la primera es la portada</p>
+                            <InputFile OnChange="CargarImagen" accept="image/*" multiple style="display: none;" />
                         </label>
 
                         @if (!string.IsNullOrWhiteSpace(MensajeImagen))
@@ -288,17 +295,24 @@
                             <p class="validation-message" style="margin-top: 8px;">@MensajeImagen</p>
                         }
 
-                        @if (!string.IsNullOrWhiteSpace(ImagenSubidaUrl))
+                        @if (_imagenes.Any())
                         {
                             <div class="image-preview">
-                                <div class="image-item">
-                                    <span class="cover-badge"><i class="fas fa-star"></i> Portada</span>
-                                    <img src="@ImagenSubidaUrl" alt="preview"
-                                         style="width: 100%; height: 160px; object-fit: cover; border-radius: 8px;" />
-                                    <button type="button" class="delete-btn" @onclick="QuitarImagen">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
+                                @for (int i = 0; i < _imagenes.Count; i++)
+                                {
+                                    var idx = i;
+                                    <div class="image-item">
+                                        @if (idx == 0)
+                                        {
+                                            <span class="cover-badge"><i class="fas fa-star"></i> Portada</span>
+                                        }
+                                        <img src="@_imagenes[idx]" alt="foto @(idx + 1)"
+                                             style="width: 100%; height: 160px; object-fit: cover; border-radius: 8px;" />
+                                        <button type="button" class="delete-btn" @onclick="() => QuitarImagen(idx)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                }
                             </div>
                         }
                     </div>
@@ -467,6 +481,7 @@
     private bool _verificado;
     private bool _verificacionLista;
     private string _estadoValidacion = "PENDIENTE";
+    private bool _documentoEnviado;   // distingue "en revisión" (ya subió doc) de "aún no enviado"
 
     protected override async Task OnInitializedAsync()
     {
@@ -513,6 +528,13 @@
                     .Where(r => _original.Reglas.Contains(r.Nombre))
                     .Select(r => r.Key).ToHashSet();
 
+                // Galería existente: precargamos las fotos para que el anfitrión las vea y pueda
+                // agregar/quitar. Respaldo: si el original solo tenía portada (imagen única antigua),
+                // la usamos como primera foto.
+                _imagenes = _original.Imagenes is { Count: > 0 }
+                    ? _original.Imagenes.ToList()
+                    : (string.IsNullOrWhiteSpace(_original.ImagenUrl) ? new() : new() { _original.ImagenUrl });
+
                 // El backend solo persiste Ubicacion combinada ("Direccion, Distrito"); Distrito no
                 // round-trip por el DTO. Si Distrito viene vacío, lo derivamos del final de Ubicacion
                 // para no perderlo ni duplicarlo al re-guardar (Ubicacion se reconstruye en Publicar).
@@ -554,6 +576,23 @@
         }
         catch { /* backend caído: nos quedamos con el estado de la sesión */ }
         _verificado = string.Equals(_estadoValidacion, "APROBADO", StringComparison.OrdinalIgnoreCase);
+
+        // Si NO está aprobado, distinguimos si ya envió documento (en revisión) o todavía no (sin enviar),
+        // para no decirle "en revisión" a quien nunca subió nada. 204 -> sin documento -> _doc null.
+        if (!_verificado)
+        {
+            try
+            {
+                var uid = AppState.UsuarioActual?.Id ?? 0;
+                if (uid > 0)
+                {
+                    var doc = await ValidacionSvc.ObtenerDeUsuarioAsync(uid);
+                    _documentoEnviado = doc is not null;
+                }
+            }
+            catch { /* si falla, dejamos _documentoEnviado=false (mensaje neutro de "sube tu documento") */ }
+        }
+
         _verificacionLista = true;
     }
 
@@ -573,9 +612,10 @@
     }
     private HashSet<string> ServiciosSeleccionados = new();
 
-    // Subida real de UNA imagen principal -> ruta servida desde wwwroot/uploads.
-    private string ImagenSubidaUrl = "";
+    // Galería de fotos subidas (rutas servidas desde wwwroot/uploads). La primera es la portada.
+    private List<string> _imagenes = new();
     private string MensajeImagen = "";
+    private const int MaxImagenes = 8;
 
     private record ServicioInfo(string Key, string Nombre, string Icono);
 
@@ -617,25 +657,60 @@
 
     private async Task CargarImagen(InputFileChangeEventArgs e)
     {
-        var file = e.File;
-        if (file is null) return;
-        if (!file.ContentType.StartsWith("image/")) { MensajeImagen = "El archivo debe ser una imagen."; return; }
-        if (file.Size > 5 * 1024 * 1024) { MensajeImagen = "La imagen no debe pasar de 5 MB."; return; }
-
-        var uploadsDir = System.IO.Path.Combine(Env.WebRootPath, "uploads");
-        System.IO.Directory.CreateDirectory(uploadsDir);
-        var ext = System.IO.Path.GetExtension(file.Name);
-        var nombre = $"{Guid.NewGuid():N}{ext}";
-        var ruta = System.IO.Path.Combine(uploadsDir, nombre);
-        await using (var fs = new System.IO.FileStream(ruta, System.IO.FileMode.Create))
-        {
-            await file.OpenReadStream(5 * 1024 * 1024).CopyToAsync(fs);
-        }
-        ImagenSubidaUrl = $"/uploads/{nombre}";
         MensajeImagen = "";
+        // Varios archivos a la vez (multiple). Validamos y subimos cada uno; los inválidos se omiten.
+        var archivos = e.GetMultipleFiles(MaxImagenes);
+        if (archivos.Count == 0) return;
+
+        foreach (var file in archivos)
+        {
+            if (_imagenes.Count >= MaxImagenes)
+            {
+                MensajeImagen = $"Máximo {MaxImagenes} fotos por alojamiento.";
+                break;
+            }
+            // Validar por content-type O extensión (algunos navegadores mandan el tipo vacío).
+            var ext = System.IO.Path.GetExtension(file.Name);
+            var extOk = new[] { ".jpg", ".jpeg", ".png", ".webp", ".gif" }.Contains((ext ?? "").ToLowerInvariant());
+            if (!file.ContentType.StartsWith("image/") && !extOk)
+            {
+                MensajeImagen = $"\"{file.Name}\" no es una imagen válida (se omitió).";
+                continue;
+            }
+            if (file.Size > 5 * 1024 * 1024)
+            {
+                MensajeImagen = $"\"{file.Name}\" pasa de 5 MB (se omitió).";
+                continue;
+            }
+            try
+            {
+                // WebRootPath puede venir null en algunos despliegues; caemos a ContentRoot/wwwroot.
+                var baseDir = !string.IsNullOrWhiteSpace(Env.WebRootPath)
+                    ? Env.WebRootPath
+                    : System.IO.Path.Combine(Env.ContentRootPath, "wwwroot");
+                var uploadsDir = System.IO.Path.Combine(baseDir, "uploads");
+                System.IO.Directory.CreateDirectory(uploadsDir);
+                var nombre = $"{Guid.NewGuid():N}{(string.IsNullOrEmpty(ext) ? ".jpg" : ext)}";
+                var ruta = System.IO.Path.Combine(uploadsDir, nombre);
+                await using (var fs = new System.IO.FileStream(ruta, System.IO.FileMode.Create))
+                {
+                    await file.OpenReadStream(5 * 1024 * 1024).CopyToAsync(fs);
+                }
+                _imagenes.Add($"/uploads/{nombre}");
+            }
+            catch (Exception ex)
+            {
+                // Antes fallaba en silencio (sin try/catch). Mostramos el motivo real (p. ej. permisos
+                // de escritura en el servidor) para poder diagnosticar.
+                MensajeImagen = "No se pudo subir una imagen: " + ex.Message;
+            }
+        }
     }
 
-    private void QuitarImagen() => ImagenSubidaUrl = "";
+    private void QuitarImagen(int idx)
+    {
+        if (idx >= 0 && idx < _imagenes.Count) _imagenes.RemoveAt(idx);
+    }
 
     private async Task Publicar()
     {
@@ -696,7 +771,8 @@
                 AnfitrionId = AppState.UsuarioActual?.Id ?? 0,  // anfitrión = usuario logueado
                 Latitud = 0,    // TODO: el formulario no captura coordenadas todavía; quedará sin pin
                 Longitud = 0,   //       en el mapa hasta agregar selección de ubicación.
-                ImagenUrl = ImagenSubidaUrl,  // ruta del archivo subido; "" si no subió ninguna
+                ImagenUrl = _imagenes.FirstOrDefault() ?? "",  // portada = primera foto
+                Imagenes = _imagenes.ToList(),                 // galería completa
 
                 // Atributos específicos por tipo (RF05): se copian del Formulario al objeto que se envía.
                 // El backend solo usa los del tipo correspondiente; los demás van con su valor por defecto.
@@ -717,7 +793,13 @@
                 // Conserva del original lo que el form no edita, para no perderlo en el PUT.
                 alojamiento.Id = Id!.Value;
                 alojamiento.AnfitrionId = _original?.AnfitrionId ?? alojamiento.AnfitrionId;  // conserva el dueño
-                alojamiento.ImagenUrl = _original?.ImagenUrl ?? "";                            // conserva la imagen actual
+                // Las fotos vienen de la galería editada (_imagenes, precargada al abrir). Solo si quedó
+                // vacía (el anfitrión no tocó/borró todo) conservamos las del original para no perderlas.
+                if (alojamiento.Imagenes.Count == 0)
+                {
+                    alojamiento.Imagenes = _original?.Imagenes ?? new();
+                    alojamiento.ImagenUrl = _original?.ImagenUrl ?? "";
+                }
                 alojamiento.EstadoPublicacion = _original?.EstadoPublicacion ?? "Activo";      // no lo despublica
                 await AlojamientoProvider.ActualizarAsync(alojamiento);   // PUT
             }

@@ -25,14 +25,18 @@ import pe.edu.pe.pucp.proyecto.web.dto.PagoDTO;
 import pe.edu.pe.pucp.proyecto.web.mapper.PagoMapper;
 
 // OpenPDF (fork libre de iText) para generar el comprobante en PDF.
+import com.lowagie.text.Chunk;
 import com.lowagie.text.Document;
 import com.lowagie.text.Element;
 import com.lowagie.text.Font;
+import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
 import com.lowagie.text.Phrase;
+import com.lowagie.text.Rectangle;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
+import com.lowagie.text.pdf.draw.LineSeparator;
 
 import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
@@ -208,17 +212,38 @@ public class PagoRS {
         }
 
         // Generamos el PDF en memoria (no se escribe a disco): el WAR responde con los bytes.
+        // Paleta "Porcelana" (misma que el voucher y los reportes JasperReports) para que el
+        // comprobante VAYA DE ACUERDO con el resto y no parezca un documento de otra app.
+        java.awt.Color verde = new java.awt.Color(31, 107, 94);   // #1F6B5E acento
+        java.awt.Color tinta = new java.awt.Color(28, 26, 23);    // #1C1A17 texto
+
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            Document doc = new Document();
+            Document doc = new Document(PageSize.A4, 36, 36, 36, 36);
             PdfWriter.getInstance(doc, baos);
             doc.open();
 
-            // === TÍTULO ===
-            Font fTitulo = new Font(Font.HELVETICA, 20, Font.BOLD);
-            Paragraph titulo = new Paragraph("Bunki - Comprobante de Pago", fTitulo);
-            titulo.setAlignment(Element.ALIGN_CENTER);
-            doc.add(titulo);
-            doc.add(new Paragraph(" ")); // espacio
+            // === CABECERA DE MARCA: logo "bunki" + tagline + subtítulo + línea verde ===
+            PdfPTable cab = new PdfPTable(2);
+            cab.setWidthPercentage(100);
+            cab.setWidths(new float[]{1f, 1f});
+            PdfPCell cLogo = new PdfPCell(new Phrase("bunki", new Font(Font.HELVETICA, 24, Font.BOLD, verde)));
+            cLogo.setBorder(Rectangle.NO_BORDER);
+            cab.addCell(cLogo);
+            PdfPCell cTag = new PdfPCell(new Phrase("Plataforma de alojamientos - Perú",
+                    new Font(Font.HELVETICA, 9, Font.NORMAL, new java.awt.Color(154, 148, 136))));
+            cTag.setBorder(Rectangle.NO_BORDER);
+            cTag.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            cTag.setVerticalAlignment(Element.ALIGN_BOTTOM);
+            cab.addCell(cTag);
+            doc.add(cab);
+
+            Paragraph subt = new Paragraph("Comprobante de Pago", new Font(Font.HELVETICA, 15, Font.BOLD, tinta));
+            subt.setSpacingBefore(6f);
+            subt.setSpacingAfter(6f);
+            doc.add(subt);
+
+            doc.add(new Chunk(new LineSeparator(1.2f, 100f, verde, Element.ALIGN_CENTER, -3)));
+            doc.add(new Paragraph(" "));
 
             // === DATOS DEL COMPROBANTE (tabla de 2 columnas: etiqueta | valor) ===
             String simbolo = simboloMoneda(pago.getMoneda());
@@ -290,12 +315,34 @@ public class PagoRS {
 
             doc.add(tabla);
 
-            // === PIE ===
+            // === BANDA DE TOTAL (verde, igual que el voucher): lo que pagó el huésped = monto bruto ===
+            PdfPTable bandaTotal = new PdfPTable(2);
+            bandaTotal.setWidthPercentage(100);
+            bandaTotal.setWidths(new float[]{2f, 1f});
+            bandaTotal.setSpacingBefore(12f);
+            PdfPCell tEtq = new PdfPCell(new Phrase("Total pagado",
+                    new Font(Font.HELVETICA, 13, Font.BOLD, java.awt.Color.WHITE)));
+            tEtq.setBackgroundColor(verde);
+            tEtq.setBorder(Rectangle.NO_BORDER);
+            tEtq.setPadding(10f);
+            bandaTotal.addCell(tEtq);
+            PdfPCell tVal = new PdfPCell(new Phrase(formatoMonto(simbolo, pago.getMontoBruto()),
+                    new Font(Font.HELVETICA, 15, Font.BOLD, java.awt.Color.WHITE)));
+            tVal.setBackgroundColor(verde);
+            tVal.setBorder(Rectangle.NO_BORDER);
+            tVal.setPadding(10f);
+            tVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            bandaTotal.addCell(tVal);
+            doc.add(bandaTotal);
+
+            // === PIE (línea hairline + texto de marca apagado, como los reportes) ===
             doc.add(new Paragraph(" "));
-            Font fPie = new Font(Font.HELVETICA, 9, Font.ITALIC);
+            doc.add(new Chunk(new LineSeparator(0.8f, 100f, new java.awt.Color(227, 223, 213), Element.ALIGN_CENTER, -3)));
+            Font fPie = new Font(Font.HELVETICA, 8, Font.NORMAL, new java.awt.Color(154, 148, 136));
             Paragraph pie = new Paragraph(
-                "Documento generado por Bunki. Comprobante de la transacción realizada en la plataforma.", fPie);
+                "Bunki - Plataforma de alojamientos - Perú · Comprobante de la transacción realizada en la plataforma.", fPie);
             pie.setAlignment(Element.ALIGN_CENTER);
+            pie.setSpacingBefore(6f);
             doc.add(pie);
 
         doc.close();
@@ -307,12 +354,22 @@ public class PagoRS {
 
     /** Añade una fila etiqueta|valor a la tabla del comprobante (etiqueta en negrita). */
     private void agregarFila(PdfPTable tabla, String etiqueta, String valor) {
-        Font fEtq = new Font(Font.HELVETICA, 11, Font.BOLD);
-        Font fVal = new Font(Font.HELVETICA, 11, Font.NORMAL);
+        // Estilo limpio "Porcelana": etiqueta apagada, valor en tinta, sin bordes salvo un hairline inferior.
+        java.awt.Color tinta = new java.awt.Color(28, 26, 23);
+        java.awt.Color muted = new java.awt.Color(154, 148, 136);
+        java.awt.Color hair  = new java.awt.Color(227, 223, 213);
+        Font fEtq = new Font(Font.HELVETICA, 10, Font.NORMAL, muted);
+        Font fVal = new Font(Font.HELVETICA, 11, Font.NORMAL, tinta);
         PdfPCell celdaEtq = new PdfPCell(new Phrase(etiqueta, fEtq));
         PdfPCell celdaVal = new PdfPCell(new Phrase(valor != null ? valor : "-", fVal));
-        celdaEtq.setPadding(5f);
-        celdaVal.setPadding(5f);
+        celdaEtq.setBorder(Rectangle.BOTTOM);
+        celdaVal.setBorder(Rectangle.BOTTOM);
+        celdaEtq.setBorderColorBottom(hair);
+        celdaVal.setBorderColorBottom(hair);
+        celdaEtq.setBorderWidthBottom(0.7f);
+        celdaVal.setBorderWidthBottom(0.7f);
+        celdaEtq.setPadding(7f);
+        celdaVal.setPadding(7f);
         tabla.addCell(celdaEtq);
         tabla.addCell(celdaVal);
     }

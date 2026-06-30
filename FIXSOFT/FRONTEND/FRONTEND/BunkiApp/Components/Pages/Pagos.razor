@@ -7,6 +7,7 @@
 @inject ReservaProvider ReservaProvider
 @inject Services.PagoProvider PagoProvider
 @inject Services.NiubizServiceRest NiubizService
+@inject Services.BackendUrls Urls
 @inject IJSRuntime JS
 @implements IDisposable
 
@@ -229,7 +230,7 @@
             </div>
             <h2 style="margin-bottom: 12px;">¡Pago Completado!</h2>
             <p class="card-text" style="margin-bottom: 24px;">
-                Tu reserva ha sido confirmada. Recibirás un correo de confirmación en breve.
+                @MensajeConfirmacion
             </p>
             <button class="btn btn-primary btn-large" @onclick='() => Navigation.NavigateTo("/mis-reservas")'>
                 Ver Mis Reservas
@@ -241,7 +242,7 @@
             @if (_reservaCreadaId > 0)
             {
                 <a class="btn btn-outline btn-large"
-                   href="@($"http://localhost:8080/BunkiBackend/webresources/PagoRS/reserva/{_reservaCreadaId}/comprobante")"
+                   href="@Urls.Para($"PagoRS/reserva/{_reservaCreadaId}/comprobante")"
                    target="_blank" style="margin-top: 12px;">
                     <i class="fas fa-file-pdf"></i> Descargar comprobante
                 </a>
@@ -265,6 +266,14 @@
 
     [Parameter, SupplyParameterFromQuery(Name = "reservaId")]
     public int? ReservaIdQuery { get; set; }
+
+    // Pagar una reserva EXISTENTE (reservaId) la deja CONFIRMADA; una reserva NUEVA nace PENDIENTE y el
+    // anfitrión la confirma luego. El mensaje del modal refleja el estado real (no decimos "confirmada"
+    // ni "te enviaremos un correo": la plataforma no manda emails).
+    private bool EraReservaExistente => ReservaIdQuery is > 0;
+    private string MensajeConfirmacion => EraReservaExistente
+        ? "Tu reserva quedó confirmada. Encuéntrala en \"Mis Reservas\"."
+        : "Tu solicitud de reserva fue enviada. El anfitrión la confirmará pronto; verás el estado en \"Mis Reservas\".";
 
     // Regreso del callback de Niubiz (/niubiz/callback): resultado del pago.
     [Parameter, SupplyParameterFromQuery(Name = "pagoOk")]

@@ -87,16 +87,16 @@ namespace BunkiApp.Services
         {
             try
             {
-                var u = await _rest.ObtenerPorIdAsync(id);
-                if (u is not null) return u;
+                // null del REST = el usuario no existe (resultado válido) -> null, no un mock.
+                return await _rest.ObtenerPorIdAsync(id);
             }
             catch (Exception ex)
             {
                 _log.LogWarning(ex, "REST no disponible al obtener usuario {Id}; usando mock", id);
+                // Solo ante CAÍDA del REST usamos el mock, y solo si su id coincide con el pedido.
+                var actual = _mock.ObtenerUsuarioActual();
+                return actual.Id == id ? actual : null;
             }
-
-            var actual = _mock.ObtenerUsuarioActual();    // MÉTODO REAL de DataService
-            return actual.Id == id ? actual : null;
         }
 
         // Usuario de la sesión: REST por id y, ante fallo, el mock real.

@@ -2,6 +2,7 @@ package pe.edu.pe.pucp.proyecto.web.rs;
 
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -41,6 +42,8 @@ public class ValidacionRS {
 
     private final DocumentoValidacionBL validacionBL = new DocumentoValidacionBLImpl();
     private final UsuarioBL usuarioBL = new UsuarioBLImpl();
+    private final pe.edu.pe.pucp.proyecto.auditoria.bl.AuditoriaEstadoBL auditoriaBL =
+            new pe.edu.pe.pucp.proyecto.auditoria.implbl.AuditoriaEstadoBLImpl();
 
     /**
      * GET ValidacionRS/usuario/{id} -> el documento (estado) del usuario, para que la página
@@ -48,7 +51,22 @@ public class ValidacionRS {
      */
     @GET
     @Path("usuario/{id}")
-    public Response obtenerDeUsuario(@PathParam("id") int idUsuario) {
+    public Response obtenerDeUsuario(@PathParam("id") int idUsuario,
+                                     @HeaderParam("X-Usuario-Id") String hId,
+                                     @HeaderParam("X-Usuario-Rol") String hRol) {
+        // RNF03 (privacidad selectiva): el documento (DNI/Pasaporte + imagen) solo puede verlo el
+        // propio TITULAR o un ADMINISTRADOR. La identidad la adjunta el frontend Blazor en cabeceras
+        // (mismo mecanismo que AuthFilter); el navegador nunca llama directo al backend.
+        boolean esAdmin = hRol != null && "ADMINISTRADOR".equalsIgnoreCase(hRol.trim());
+        boolean esTitular = hId != null && hId.trim().equals(String.valueOf(idUsuario));
+        if (!esAdmin && !esTitular) {
+            if (hId == null || hId.isBlank()) {
+                return Response.status(Response.Status.UNAUTHORIZED)
+                        .entity("{\"error\":\"No autenticado para ver este documento.\"}").build();
+            }
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity("{\"error\":\"Solo el titular o un administrador pueden ver este documento.\"}").build();
+        }
         DocumentoValidacion d = validacionBL.obtenerPorUsuario(idUsuario);
         if (d == null) {
             return Response.noContent().build();
@@ -92,8 +110,13 @@ public class ValidacionRS {
             // El usuario vuelve a "pendiente de validación" mientras el admin revisa.
             Usuario u = usuarioBL.obtenerPorId(dto.getUsuarioId());
             if (u != null) {
+                String anterior = u.getEstadoValidacion();
                 u.setEstadoValidacion(DocumentoValidacion.PENDIENTE);
                 usuarioBL.modificar(u);
+                // RNF09: el envío del documento deja el perfil PENDIENTE -> queda auditado.
+                auditoriaBL.registrar(pe.edu.pe.pucp.proyecto.auditoria.AuditoriaEstado.ENTIDAD_USUARIO,
+                        dto.getUsuarioId(), "estado_validacion", anterior, DocumentoValidacion.PENDIENTE,
+                        "Documento enviado");
             }
 
             return Response.status(Response.Status.CREATED).entity(toDTO(d, false)).build();
@@ -128,6 +151,7 @@ public class ValidacionRS {
             // Sincroniza el estado del usuario con la decisión.
             Usuario u = usuarioBL.obtenerPorId(doc.getIdUsuario());
             if (u != null) {
+                String anterior = u.getEstadoValidacion();
                 if (DocumentoValidacion.APROBADO.equals(estado)) {
                     u.setEstadoValidacion(DocumentoValidacion.APROBADO);
                     u.setEstadoActual(EstadoUsuario.DISPONIBLE);
@@ -136,6 +160,12 @@ public class ValidacionRS {
                     u.setEstadoValidacion(DocumentoValidacion.RECHAZADO);
                 }
                 usuarioBL.modificar(u);
+                // RNF09: la decisión del admin sobre la identidad queda auditada (con quién y por qué).
+                String detalle = "Decisión de admin #" + dto.getAdminId()
+                        + (DocumentoValidacion.RECHAZADO.equals(estado) && dto.getMotivoRechazo() != null
+                            ? " · " + dto.getMotivoRechazo() : "");
+                auditoriaBL.registrar(pe.edu.pe.pucp.proyecto.auditoria.AuditoriaEstado.ENTIDAD_USUARIO,
+                        doc.getIdUsuario(), "estado_validacion", anterior, estado, detalle);
             }
 
             DocumentoValidacion actualizado = validacionBL.obtenerPorId(idDocumento);

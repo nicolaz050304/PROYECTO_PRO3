@@ -93,8 +93,10 @@ public class MensajeRS {
                     // El destinatario es el participante que NO es el emisor.
                     int idDestino = (dto.getIdEmisor() == idHuesped) ? idAnfitrion : idHuesped;
                     if (idDestino > 0) {
-                        notificacionBL.crear("Nuevo mensaje",
-                                "Tienes un nuevo mensaje en una de tus reservas.", idDestino);
+                        // En HILO de segundo plano: no bloqueamos el envío del mensaje esperando el
+                        // INSERT de la notificación (el receptor la verá en su feed igual).
+                        notificacionBL.crearAsync("Nuevo mensaje",
+                                "Tienes un nuevo mensaje en una de tus reservas.", idDestino, "MENSAJE");
                     }
                 }
             } catch (Exception ex) {
